@@ -5,7 +5,8 @@ direcionado a estágio em projetos elétricos e automação industrial.
 
 **Etapa atual: Fase 0 — setup.** Esta entrega prepara a infraestrutura.
 A API, o firmware e as telas serão implementados nas fases correspondentes.
-O encerramento da fase depende também de GitHub e HiveMQ Cloud validados.
+O repositório já está publicado no GitHub. O encerramento da fase depende
+da configuração e validação do HiveMQ Cloud.
 
 ## Arquitetura prevista
 
@@ -84,8 +85,8 @@ Credenciais administrativas ou do backend nunca devem ir para o navegador.
 
 ## Versionamento e continuidade
 
-Após autenticar com `gh auth login -h github.com`, publique no repositório
-GitHub definido pelo proprietário. Use Conventional Commits e mantenha `.env`,
+Repositório público: [monitoramento-iot-temperatura-umidade](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade).
+Use Conventional Commits e mantenha `.env`,
 `config.h`, certificados e dependências fora do Git.
 
 Fases: **0 setup** → 1 backend → 2 ingestão/alertas → 3 firmware → 4 frontend

@@ -48,7 +48,7 @@ As fases 1–6 permanecem não iniciadas.
 | Item | Resultado | Evidência |
 |---|---|---|
 | T0.1 estrutura, MIT, README e Git local | Preparado | Diretórios versionáveis, branch main |
-| T0.1 repositório GitHub clonável | Pendente | Usuário informou não possuir repositório; autenticação e destino solicitados |
+| T0.1 repositório GitHub clonável | Aprovado | Repositório público jorgeluizdossantos/monitoramento-iot-temperatura-umidade criado; branch main publicada |
 | T0.2 HiveMQ TLS/WSS | Bloqueado por configuração externa | Cluster ainda não criado; script check:mqtt preparado |
 | T0.3 MySQL operacional | Aprovado | Docker Compose saudável, MySQL 8.0.46 em 127.0.0.1:13306 |
 | T0.3 schema/seed | Aprovado | 8 tabelas; contagens 2/3/4/4/4/4/9/2, respectivamente empresa/unidade/setor/ambiente/dispositivo/usuario/leitura/alerta |
@@ -62,3 +62,7 @@ A instalação npm exigiu `NODE_OPTIONS=--use-system-ca`, mantendo TLS ativo.
 Não foram executados os testes de API, ingestão, firmware, interface ou latência,
 pois pertencem às próximas fases. Não há comprovação de conectividade MQTT
 até a configuração real do cluster. **Fase 0 ainda não encerrada.**
+
+Repositório: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade
+Publicação autorizada pelo proprietário. Antes do envio, foi confirmada a
+ausência das credenciais locais nos arquivos versionados e a exclusão de `.env`.
