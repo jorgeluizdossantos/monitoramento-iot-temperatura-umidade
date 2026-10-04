@@ -1,0 +1,48 @@
+
+---
+
+## 📄 Documento 2 — PROJETO-DESIGN.md
+```markdown
+# Documento de Projeto (Design) — Sistema Web de Monitoramento IoT de Temperatura e Umidade
+
+> Projeto de Portfólio — Monitoramento IoT com ESP32 e MQTT
+> Versão 1.0 — 03/10/2026
+
+---
+
+## 1. Visão Geral do Design
+
+Este documento especifica a solução técnica (o **COMO**) que materializa os requisitos já definidos (o **QUÊ**). A solução adota arquitetura em camadas com backend intermediário Node.js/Express, frontend estático HTML/JS/CSS + Tailwind, MySQL e broker MQTT (HiveMQ Cloud com TLS para demonstração / Mosquitto local para desenvolvimento).
+
+**Princípios de design:**
+
+- **Simplicidade deliberada:** arquitetura legível e auditável por recrutadores, sem abstrações desnecessárias.
+- **Separação de responsabilidades:** ingestão de telemetria, operações CRUD e renderização isoladas.
+- **Mobile-first:** interface priorizada para telas móveis.
+- **Segurança por padrão:** credenciais fora do repositório, TLS em trânsito, validação em todas as camadas.
+- **Observabilidade básica:** status dos dispositivos via LWT e tratamento centralizado de erros.
+
+## 2. Objetivos da Fase de Projeto
+
+- Traduzir os requisitos em decisões técnicas verificáveis;
+- Definir módulos, interfaces e contratos de dados;
+- Eliminar ambiguidades de implementação;
+- Servir de guia direto para codificação;
+- Permitir avaliação técnica por recrutadores (clareza arquitetural).
+
+**Critérios de saída da fase:** todo módulo com responsabilidade e interface definidas; contratos de API documentados; fluxos principais diagramados; decisões justificadas.
+
+## 3. Decisões de Arquitetura
+
+Arquitetura em **4 camadas**:
+
+1. **Camada de Borda:** ESP32 + DHT22, firmware em C++ (Arduino Core), cliente MQTT PubSubClient, publicação QoS 1 com LWT.
+2. **Camada de Mensageria:** broker MQTT (HiveMQ Cloud TLS 8883/8884 ou Mosquitto local), tópicos hierárquicos.
+3. **Camada de Aplicação:** backend Node.js/Express com três funções — API REST (CRUD + autenticação JWT), serviço de ingestão MQTT (assina tópicos, valida e persiste no MySQL) e serviço de alertas.
+4. **Camada de Apresentação:** SPA estática em HTML/JS/CSS + Tailwind, consumindo API REST e telemetria em tempo real via MQTT over WebSockets (MQTT.js).
+
+**Justificativas-chave:**
+
+- **Backend intermediário obrigatório:** HTML/JS puro não acessa o MySQL diretamente; o backend isola credenciais, centraliza validação e emite tokens JWT.
+- **MQTT over WebSockets direto do navegador:** latência mínima para o requisito de atualização em ≤ 5 s, sem sobrecarregar a API.
+- **Publish/Subscribe:** desacopla a borda da aplicação — novos dispositivos não exigem mudanças no backend.

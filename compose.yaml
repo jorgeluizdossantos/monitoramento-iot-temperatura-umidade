@@ -1,0 +1,22 @@
+name: monitoramento-iot
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Preencha MYSQL_ROOT_PASSWORD no .env}
+      MYSQL_DATABASE: monitoramento_iot
+      MYSQL_USER: monitoramento
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Preencha DB_PASSWORD no .env}
+      TZ: UTC
+    ports:
+      - "127.0.0.1:${DB_PORT:-13306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_ROOT_PASSWORD\" mysql -h 127.0.0.1 -u root -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+volumes:
+  mysql_data:

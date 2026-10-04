@@ -1,0 +1,21 @@
+{
+  "name": "monitoramento-iot-backend",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Fase 0 — preparação do backend Node.js/Express para telemetria IoT",
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "db:setup": "node ../scripts/setup-db.js",
+    "check:db": "node ../scripts/check-db.js",
+    "check:mqtt": "node ../scripts/check-mqtt.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mqtt": "^5.14.1",
+    "mysql2": "^3.14.5"
+  }
+}

@@ -1,0 +1,17 @@
+
+## 9. Integração com MQTT
+
+- **Broker:** HiveMQ Cloud (público, TLS) para demonstração ou Mosquitto local [A CONFIRMAR].
+- **ESP32:** publica via MQTT padrão (porta 1883 / TLS 8883), com autenticação por usuário e senha.
+- **Navegador:** consome via MQTT over WebSockets (biblioteca MQTT.js) ou via API do backend [A CONFIRMAR].
+- **Tópicos:**
+  - Telemetria: `empresa/{empresa_id}/unidade/{unidade_id}/ambiente/{ambiente_id}/telemetria`
+  - Status: `dispositivo/{dispositivo_id}/status`
+- **Payload JSON:**
+```json
+{
+  "dispositivo": "ESP32-A1",
+  "temperatura": 24.6,
+  "umidade": 58.2,
+  "timestamp": "2026-10-03T14:32:00Z"
+}

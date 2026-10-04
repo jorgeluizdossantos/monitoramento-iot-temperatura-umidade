@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.*
+!.env.example
+config.h
+*.pem
+*.key
+*.crt
+*.log
+coverage/
+.DS_Store
+Thumbs.db
+.pio/
