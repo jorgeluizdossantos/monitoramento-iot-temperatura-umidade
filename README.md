@@ -6,13 +6,15 @@ direcionado a estágio em projetos elétricos e automação industrial.
 **Etapa atual: Fase 0 — setup.** Esta entrega prepara a infraestrutura.
 A API, o firmware e as telas serão implementados nas fases correspondentes.
 O repositório já está publicado no GitHub. O encerramento da fase depende
-da configuração e validação do HiveMQ Cloud.
+da configuração e validação de um broker MQTT compatível.
 
 ## Arquitetura prevista
 
 ESP32 + DHT22 → MQTT com TLS → backend Node.js/Express → MySQL 8.
 O frontend HTML/JavaScript/Tailwind consumirá a API REST e MQTT via WSS.
 A sequência segue o plano de implementação: contratos antes de consumidores.
+O broker é intercambiável por configuração: Mosquitto, EMQX Cloud e HiveMQ
+permanecem opções. Veja a [decisão de arquitetura e comparação](docs/arquitetura-brokers.md).
 
 ```text
 backend/   Dependências; API e serviços na Fase 1 em diante
@@ -67,11 +69,20 @@ reais e distintos no seed, exclusivamente para desenvolvimento:
 Ainda não há login HTTP nesta fase. Antes de exposição pública, substitua os
 usuários de demonstração e suas senhas. Datas de telemetria são UTC.
 
-## Validar o HiveMQ Cloud
+## Validar o broker MQTT selecionado
 
-Crie o cluster e uma credencial MQTT no painel do provedor. Preencha no `.env`
-local `MQTT_HOST` (hostname sem protocolo), `MQTT_USERNAME` e `MQTT_PASSWORD`.
-Confirme no painel as portas MQTT TLS e WSS (plano: 8883 e 8884).
+Provisione o serviço escolhido e suas credenciais MQTT. Preencha no `.env`
+local `MQTT_TLS_URL`, `MQTT_WSS_URL`, `MQTT_USERNAME` e `MQTT_PASSWORD`.
+Use os endpoints reais: por exemplo, EMQX Serverless usa TLS 8883 e WSS 8084.
+Hosts e caminho WSS podem ser distintos. A configuração original com
+`MQTT_HOST` e portas continua aceita quando as duas URLs estiverem vazias.
+
+Para guardar alternativas, use `.env.emqx.local`, `.env.mosquitto.local` ou
+`.env.hivemq.local` e selecione com `$env:MQTT_PROFILE='emqx'` no PowerShell.
+O perfil padrão lê `.env`. Arquivos de outros perfis não são mesclados.
+Variáveis MQTT do processo prevalecem; remova overrides antigos ao trocar.
+O comando seleciona a configuração do teste; não provisiona o broker.
+Consulte [exemplos e procedimento de troca](docs/arquitetura-brokers.md).
 
 ```powershell
 npm --prefix backend run check:mqtt
@@ -82,6 +93,12 @@ em ambos os transportes. Não publica telemetria nem inicia ingestão.
 O teste de autenticação não valida permissões de tópicos; ACLs serão
 homologadas antes de conectar dispositivos e consumidores nas fases seguintes.
 Credenciais administrativas ou do backend nunca devem ir para o navegador.
+
+Execute `npm --prefix backend run test:mqtt-config` para validar o contrato de
+configuração sem conexão externa. Para brokers próprios, configure TLS/WSS e
+ACLs antes do smoke test. O HiveMQ Cloud Serverless deixou de aceitar novos
+clusters em 30/09/2026; HiveMQ Lab local e Cloud Starter seguem como opções
+com condições diferentes, detalhadas na decisão de arquitetura.
 
 ## Versionamento e continuidade
 

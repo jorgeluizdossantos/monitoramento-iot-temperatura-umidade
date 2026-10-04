@@ -8,7 +8,8 @@
   "scripts": {
     "db:setup": "node ../scripts/setup-db.js",
     "check:db": "node ../scripts/check-db.js",
-    "check:mqtt": "node ../scripts/check-mqtt.js"
+    "check:mqtt": "node ../scripts/check-mqtt.js",
+    "test:mqtt-config": "node --test ../scripts/mqtt-settings.test.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

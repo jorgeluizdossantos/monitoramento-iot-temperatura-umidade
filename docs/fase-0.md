@@ -49,7 +49,7 @@ As fases 1–6 permanecem não iniciadas.
 |---|---|---|
 | T0.1 estrutura, MIT, README e Git local | Preparado | Diretórios versionáveis, branch main |
 | T0.1 repositório GitHub clonável | Aprovado | Repositório público jorgeluizdossantos/monitoramento-iot-temperatura-umidade criado; branch main publicada |
-| T0.2 HiveMQ TLS/WSS | Bloqueado por configuração externa | Cluster ainda não criado; script check:mqtt preparado |
+| T0.2 broker compatível TLS/WSS (ADR-001) | Pendente de provisionamento | Perfis configuráveis; nenhum broker homologado ainda |
 | T0.3 MySQL operacional | Aprovado | Docker Compose saudável, MySQL 8.0.46 em 127.0.0.1:13306 |
 | T0.3 schema/seed | Aprovado | 8 tabelas; contagens 2/3/4/4/4/4/9/2, respectivamente empresa/unidade/setor/ambiente/dispositivo/usuario/leitura/alerta |
 | T0.3 integridade | Aprovado | FK inválida, faixa invertida e leitura duplicada rejeitadas; histórico preservado na desativação, com rollback |
@@ -66,3 +66,15 @@ até a configuração real do cluster. **Fase 0 ainda não encerrada.**
 Repositório: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade
 Publicação autorizada pelo proprietário. Antes do envio, foi confirmada a
 ausência das credenciais locais nos arquivos versionados e a exclusão de `.env`.
+
+## Revisão de arquitetura — broker intercambiável
+
+Por solicitação do proprietário, a [ADR-001](arquitetura-brokers.md) atualiza
+T0.2 para permitir brokers compatíveis sem dependência de um fornecedor.
+O teste de setup aceita perfis locais, URLs independentes e CA privada,
+preservando o formato antigo do `.env`. A documentação de referência original
+permanece intacta; a ADR prevalece sobre sua escolha exclusiva de HiveMQ Cloud.
+
+Validação da revisão: oito testes de configuração aprovados, sintaxe do smoke
+test verificada e diff sem erros de whitespace. Nenhuma conexão com um novo
+broker foi executada. Fases 1–6 permanecem não iniciadas.
