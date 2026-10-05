@@ -108,6 +108,8 @@ Use Conventional Commits e mantenha `.env`,
 
 Fases: **0 setup** → 1 backend → 2 ingestão/alertas → 3 firmware → 4 frontend
 → 5 integração → 6 qualidade/deploy/portfólio. Consulte
+o [plano de implementação atualizado](docs/plano-de-implementacao.md), com
+status por tarefa, pendências e próximos passos, e o
 [controle da Fase 0](docs/fase-0.md) antes de iniciar a próxima etapa.
 
 Para parar o MySQL preservando os dados: `docker compose stop`.

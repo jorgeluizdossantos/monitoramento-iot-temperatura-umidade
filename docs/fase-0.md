@@ -2,6 +2,10 @@
 
 Data: 04/10/2026. Escopo: T0.1–T0.4 do plano de implementação.
 
+Acompanhamento consolidado: [plano de implementação](plano-de-implementacao.md).
+T0.1, T0.3 e T0.4 concluídas; T0.2 parcial. Próximo passo: selecionar e
+provisionar o primeiro broker, depois validar autenticação/PINGRESP TLS e WSS.
+
 ## Documentação analisada
 
 As referências foram copiadas para `docs/referencias/` em UTF-8 para permitir
@@ -47,7 +51,7 @@ As fases 1–6 permanecem não iniciadas.
 
 | Item | Resultado | Evidência |
 |---|---|---|
-| T0.1 estrutura, MIT, README e Git local | Preparado | Diretórios versionáveis, branch main |
+| T0.1 estrutura, MIT, README e Git local | Aprovado | Diretórios versionados, branch main |
 | T0.1 repositório GitHub clonável | Aprovado | Repositório público jorgeluizdossantos/monitoramento-iot-temperatura-umidade criado; branch main publicada |
 | T0.2 broker compatível TLS/WSS (ADR-001) | Pendente de provisionamento | Perfis configuráveis; nenhum broker homologado ainda |
 | T0.3 MySQL operacional | Aprovado | Docker Compose saudável, MySQL 8.0.46 em 127.0.0.1:13306 |
