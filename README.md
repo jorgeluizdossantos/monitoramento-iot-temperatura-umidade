@@ -102,6 +102,10 @@ com condições diferentes, detalhadas na decisão de arquitetura.
 
 ## Versionamento e continuidade
 
+Para publicar também na conta wxlv7h, siga o
+[roteiro de convite e colaboração no GitHub](docs/tutorial-colaborador-github.md).
+O segundo repositório depende de convite aceito e URL confirmada.
+
 Repositório público: [monitoramento-iot-temperatura-umidade](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade).
 Use Conventional Commits e mantenha `.env`,
 `config.h`, certificados e dependências fora do Git.

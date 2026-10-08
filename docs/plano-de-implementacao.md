@@ -1,7 +1,7 @@
 # Plano de Implementação — Sistema Web de Monitoramento IoT de Temperatura e Umidade
 
 > Projeto de Portfólio — Monitoramento IoT com ESP32 e MQTT
-> Versão 1.1 — 04/10/2026 — acompanhamento da execução
+> Versão 1.2 — 08/10/2026 — acompanhamento da execução
 
 ---
 
@@ -81,6 +81,17 @@ na biblioteca do firmware; definir credenciais/ACLs de leitura por empresa
 no frontend. Permanecem como decisões futuras, sem implementação antecipada.
 
 ## 2.3. Rotina de acompanhamento
+
+**Atualização de 08/10/2026 — segundo repositório:** tutorial detalhado entregue
+em `tutorial-colaborador-github.md`, com convite de wxlv7h a jorgeluizdossantos,
+aceitação, verificação de escrita e procedimento posterior para dois remotes.
+Faltam: confirmar a URL do repositório de wxlv7h, enviar/aceitar o convite,
+verificar o acesso e publicar o histórico nesse segundo destino. Próximo passo
+administrativo: wxlv7h seguir o roteiro e informar a URL e o envio do convite.
+Nenhuma dessas ações externas foi executada nesta entrega documental.
+T0.1 continua concluída para o repositório original; a publicação adicional
+é uma nova pendência de versionamento, sem concluir nem antecipar fases.
+O próximo passo técnico continua sendo T0.2: provisionar e validar um broker.
 
 A cada entrega, atualizar o status das tarefas, a evidência de verificação,
 as pendências e os próximos passos deste plano. A resposta ao usuário deve
@@ -224,3 +235,4 @@ O plano articula 7 fases em 4 marcos, com ˜ 72 h de esforço estimado, ordenado
 |---|---|---|---|
 | 1.0 | 04/10/2026 | Aluno (Redator de Requisitos) | Emissão inicial do plano de implementação |
 | 1.1 | 04/10/2026 | Acompanhamento da implementação | Status por tarefa, evidências, pendências, próximos passos e atualização T0.2 conforme ADR-001; runtime utilizado registrado |
+| 1.2 | 08/10/2026 | Acompanhamento da implementação | Tutorial de colaboração entregue; segundo repositório e convite pendentes; fases técnicas inalteradas |
