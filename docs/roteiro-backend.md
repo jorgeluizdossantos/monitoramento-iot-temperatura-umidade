@@ -1,7 +1,7 @@
 # Roteiro didático do backend STMA
 
 Início: 12/10/2026. Fases 1 e 2 concluídas. **Fase 3 — Cadastros e auditoria**
-implementada, em validação final. Registros nas seções 10 e 11.
+concluída com testes locais e CI aprovados. Registros nas seções 10 e 11.
 Este roteiro acompanha a implementação real; fases futuras serão acrescentadas
 somente quando executadas. O roteiro do frontend será criado ao iniciar o frontend.
 
@@ -247,6 +247,9 @@ Situação ao encerrar a Fase 1: Fases 2–7 e frontend ainda não iniciados.
 Evidência CI: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38311559868
 
 ## 10. Fase 2 — autenticação, sessão e perfis
+
+Registro histórico da entrega da Fase 2. As pendências descritas nesta seção
+foram atualizadas na seção 11, que inclui cadastros e o primeiro acesso real.
 
 ### 10.1 Escopo e sequência da implementação
 
@@ -634,12 +637,14 @@ primeira execução como aprovada.
 | Primeiro acesso local e Aiven | Login 200, me 200, logout 204 e sessão revogada 401 |
 | Conexão Aiven no primeiro acesso | TLS ativo |
 | Segredo temporário BOOTSTRAP_PASSWORD | Esvaziado no .env após validar os dois bancos |
-| GitHub/CI | Publicação e validação remota em andamento |
+| GitHub/CI | Aprovado: execução 38316891647, commit 28b071d, tag backend-fase-3 |
 
 O superadmin real foi criado somente após o proprietário informar nome,
 e-mail e destinos, e confirmar a senha no arquivo local. Não publicamos
 credenciais. Nenhuma empresa, fixture ou usuário demo foi criado no Aiven.
 O login verificado gerou uma sessão real que terminou revogada pelo logout.
+
+Evidência remota: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38316891647
 
 Falta: Fases 4–7 e frontend. Próxima etapa após aceite: ingestão MQTT com
 broker selecionável por configuração, validação, idempotência e persistência.

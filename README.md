@@ -3,7 +3,7 @@
 Portfólio de Desenvolvimento de Sistemas do SENAI, voltado a projetos elétricos
 e automação industrial. Implementação gradual, com documentação didática.
 
-**Fase 3 implementada, em validação final.** Node.js 22, Express, TypeScript
+**Fase 3 concluída; testes locais e CI aprovados.** Node.js 22, Express, TypeScript
 estrito e MySQL sem ORM. A API oferece autenticação e cadastros de empresas,
 unidades, setores, ambientes, usuários e dispositivos, com auditoria.
 Ingestão MQTT, SSE e frontend pertencem às fases seguintes.
