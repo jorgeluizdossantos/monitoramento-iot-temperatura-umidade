@@ -759,3 +759,9 @@ As Fases 5–7 e o frontend permanecem não iniciados. A tag de conclusão da Fa
 Validação local executada: ESLint, TypeScript e build aprovados; 36 testes unitários/HTTP, 31 de integração MySQL e 8 de integração MQTT aprovados (75 no total). CI remoto aprovado no commit 4c668dc: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38320360868. A repetição dos testes afetados pelo formato de porta também foi aprovada.
 
 O proprietário confirmou broker público broker.hivemq.com e payload identificado compatível sem timestamp, QoS 0. O firmware colado difere do tráfego observado; localização do .ino atual e modalidade do broker da conta permanecem pendentes. Formatos Porta Aberta/Porta Fechada foram incorporados ao contrato e aos testes.
+
+### Atualização: broker Lab identificado e conexão validada
+
+O proprietário confirmou HiveMQ Software, nome Lively Honey, pacote Lab. Foi encontrado o contêiner local hivemq em execução, publicando MQTT em 1883 e Control Center em 8080. O diagnóstico mqtt:check, com MQTT_URL=mqtt://127.0.0.1:1883 somente no ambiente do comando, conectou e obteve as três assinaturas QoS 1. TLS não foi usado porque a conexão foi loopback local. O arquivo .env não foi alterado e o diagnóstico não gravou telemetria.
+
+A modalidade e o endpoint local estão confirmados. Ainda falta localizar o .ino efetivamente em uso, apontar ESP32 e backend ao mesmo broker e validar a leitura física no banco/ambiente escolhido. O ESP32 deve usar o IPv4 da máquina na mesma rede, porta 1883; localhost na placa apontaria para a própria placa. O computador e o Docker precisam permanecer ligados. Não foi criado serviço Cloud nem contratado plano.

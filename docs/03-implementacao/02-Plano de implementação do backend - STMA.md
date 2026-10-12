@@ -243,3 +243,9 @@ A publicação adicional em wxlv7h aguarda confirmação do destino/acesso.
 Sem timestamp válido, usar recebimento; não prometer deduplicação nesse caso. Próximo passo: seguir docs/roteiro-hivemq-fase4.md e concluir a validação física. Fases 5–7 permanecem não iniciadas.
 
 Evidência: commit 4c668dc, 75 testes locais aprovados e CI remoto aprovado: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38320360868. Sem tag de encerramento enquanto a validação física estiver pendente.
+
+### Atualização: broker Lab identificado e conexão validada
+
+O proprietário confirmou HiveMQ Software, nome Lively Honey, pacote Lab. Foi encontrado o contêiner local hivemq em execução, publicando MQTT em 1883 e Control Center em 8080. O diagnóstico mqtt:check, com MQTT_URL=mqtt://127.0.0.1:1883 somente no ambiente do comando, conectou e obteve as três assinaturas QoS 1. TLS não foi usado porque a conexão foi loopback local. O arquivo .env não foi alterado e o diagnóstico não gravou telemetria.
+
+A modalidade e o endpoint local estão confirmados. Ainda falta localizar o .ino efetivamente em uso, apontar ESP32 e backend ao mesmo broker e validar a leitura física no banco/ambiente escolhido. O ESP32 deve usar o IPv4 da máquina na mesma rede, porta 1883; localhost na placa apontaria para a própria placa. O computador e o Docker precisam permanecer ligados. Não foi criado serviço Cloud nem contratado plano.
