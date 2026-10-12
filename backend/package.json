@@ -12,8 +12,8 @@
     "check:db": "node ../scripts/check-db.js",
     "check:mqtt": "node ../scripts/check-mqtt.js",
     "test:mqtt-config": "node --test ../scripts/mqtt-settings.test.js",
-    "test:integration": "vitest run tests/database.integration.test.ts",
-    "test": "vitest run tests/foundation.test.ts",
+    "test:integration": "vitest run tests/database.integration.test.ts tests/auth.integration.test.ts",
+    "test": "vitest run tests/foundation.test.ts tests/auth.test.ts",
     "migrate": "tsx src/db/migrate.ts",
     "lint": "eslint src tests",
     "dev": "tsx watch src/main.ts",
@@ -23,9 +23,12 @@
     "db:check": "tsx src/db/check.ts"
   },
   "dependencies": {
+    "argon2": "^0.45.1",
     "bcryptjs": "^3.0.2",
+    "cookie": "^1.1.1",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.7.1",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2",
     "mqtt": "^5.14.1",

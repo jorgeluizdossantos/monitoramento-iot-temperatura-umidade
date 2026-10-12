@@ -3,9 +3,10 @@
 Portfólio de Desenvolvimento de Sistemas do SENAI, voltado a projetos elétricos
 e automação industrial. Implementação gradual, com documentação didática.
 
-**Fase 1 do backend STMA concluída.** Node.js 22,
-Express, TypeScript estrito e MySQL sem ORM. A API já oferece `GET /health`;
-login, cadastros, ingestão MQTT, SSE e frontend pertencem às fases seguintes.
+**Fase 2 do backend STMA implementada; validação local aprovada.** Node.js 22,
+Express, TypeScript estrito e MySQL sem ORM. A API oferece `GET /health` e
+login, consulta de sessão e logout em `/api/v1/auth`. Cadastros, ingestão MQTT,
+SSE e frontend pertencem às fases seguintes.
 
 ## Documentação vigente
 
@@ -71,7 +72,24 @@ npm --prefix backend run build
 ```
 
 O CI em `.github/workflows/backend.yml` executa esses checks com MySQL real.
-Testes de integração recusam Aiven e usam rollback para preservar dados.
+Testes de integração recusam Aiven. A base usa rollback; autenticação cria
+dados locais identificados por UUID e remove somente seus próprios registros.
+São 18 testes sem banco e 8 com MySQL real. Não há conta pública de acesso;
+os testes criam e removem os usuários necessários. O cadastro de usuários
+e o provisionamento do primeiro administrador serão tratados na Fase 3.
+
+## Autenticação — Fase 2
+
+| Método e rota | Resultado |
+|---|---|
+| POST /api/v1/auth/login | Recebe `{ "email": "...", "senha": "..." }`; emite cookie e retorna usuário |
+| GET /api/v1/auth/me | Retorna o usuário, perfil e empresa da sessão válida |
+| POST /api/v1/auth/logout | Recebe JSON `{}`; revoga sessão, remove cookie e retorna 204 |
+
+Cookie HttpOnly, Secure e SameSite=Lax; token aleatório com SHA-256 no banco,
+senha Argon2id. Em HTTP local, configure `SESSION_COOKIE_SECURE=false` apenas
+em desenvolvimento; produção exige `true` e `PUBLIC_ORIGIN` HTTPS. A sessão
+expira em 8 horas, configurável. Consulte exemplos e decisões no roteiro.
 
 ## Histórico e continuidade
 
@@ -81,6 +99,6 @@ como histórico, com o banco `monitoramento_iot`. Para STMA use `compose.stma.ya
 
 Repositório: [jorgeluizdossantos/monitoramento-iot-temperatura-umidade](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade).
 A publicação em wxlv7h ainda depende da URL e do acesso de colaborador confirmados.
-Próxima etapa: **Fase 2 — autenticação e perfis**.
+Próxima etapa, após aceite: **Fase 3 — cadastros e auditoria**.
 Frontend somente após terminar o backend, conforme orientação do proprietário.
 Licença [MIT](LICENSE).

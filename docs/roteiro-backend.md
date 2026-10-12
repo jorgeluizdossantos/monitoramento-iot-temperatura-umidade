@@ -1,6 +1,7 @@
 # Roteiro didático do backend STMA
 
-Início: 12/10/2026. Etapa entregue: **Fase 1 — Base do projeto**, concluída conforme o plano STMA.
+Início: 12/10/2026. Fase 1 concluída; **Fase 2 — Autenticação e perfis**
+implementada e validada localmente. Registro da Fase 2 na seção 10.
 Este roteiro acompanha a implementação real; fases futuras serão acrescentadas
 somente quando executadas. O roteiro do frontend será criado ao iniciar o frontend.
 
@@ -14,7 +15,7 @@ A instrução de 12/10 prevalece sobre a proposta de Prisma do plano: usamos
 **Node.js + Express + TypeScript estrito + mysql2, sem ORM**. Node 22.23.3 já
 instalado foi mantido; o CI também usa Node 22. O plano mencionava Node 20.
 Prisma é uma evolução futura do adaptador de persistência, não uma dependência
-desta versão. Autenticação com sessão/argon2 será implementada na Fase 2.
+desta versão. Autenticação com sessão/argon2 está descrita na seção 10.
 
 O diagrama novo substitui a conexão direta navegador/broker por **SSE via API**.
 O backend recebe MQTT, persiste e avisa somente a empresa autorizada. O frontend
@@ -241,6 +242,175 @@ publicada: o Aiven é o banco de destino validado, ainda sem dados de negócio.
 Feito: base MVC/contratos, local/Aiven, documentação e CI remoto aprovado.
 Entrega: commit ea1ea4c, tag backend-fase-1. Fase 1 encerrada.
 Próximo passo: Fase 2, autenticação por sessão, argon2 e isolamento por empresa.
-Fases 2–7 do backend e todas as fases do frontend permanecem não iniciadas.
+Situação ao encerrar a Fase 1: Fases 2–7 e frontend ainda não iniciados.
 
 Evidência CI: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38311559868
+
+## 10. Fase 2 — autenticação, sessão e perfis
+
+### 10.1 Escopo e sequência da implementação
+
+1. Revisamos RF001, RF015, RN001 e RN007, a matriz de perfis e as tabelas
+   `usuario`, `empresa` e `sessao` do schema definitivo. Não houve alteração
+   de schema nem reaplicação da migração 001.
+2. Instalamos Argon2 para senhas, `cookie` para ler cookies e
+   `express-rate-limit` para limitar tentativas. O parser `cookie` 2 usa uma
+   resolução de módulos incompatível com a configuração existente; usamos
+   a versão 1, compatível com CommonJS, e validamos compilação e testes.
+3. Criamos o contrato `AuthRepository`, o serviço, o adaptador MySQL, os
+   middlewares de sessão/perfil, o controller e as rotas.
+4. Montamos essas dependências em `main.ts` e acrescentamos configuração
+   validada, respostas de erro e testes automatizados.
+5. Validamos localmente 18 testes sem banco e 8 testes com MySQL real, além
+   de lint, typecheck e build. O CI executa os mesmos comandos.
+
+### 10.2 Responsabilidades e caminho de uma requisição
+
+| Arquivo em backend/src/modules/auth/ | Responsabilidade |
+|---|---|
+| auth.repository.ts | Tipos de usuário/perfil e contrato de persistência |
+| mysql-auth.repository.ts | SQL parametrizado; transação de criação/rotação de sessão |
+| auth.service.ts | Verificar senha, gerar token, autenticar sessão e revogar |
+| auth.middleware.ts | Ler cookie, preencher req.auth e verificar permissão explícita |
+| auth.controller.ts | Converter requisição em chamada de serviço; JSON, cookies e status |
+| auth.routes.ts | Associar URL, validação, limite de tentativas e controller |
+
+O serviço não importa Express nem mysql2. Para adotar Prisma futuramente,
+substitua o adaptador que implementa `AuthRepository`, preservando os testes
+e a transação. Os perfis e o identificador da empresa são dados do banco;
+não são aceitos como autoridade em parâmetros enviados pelo cliente.
+
+Fluxo de login:
+
+1. O Express exige JSON e verifica a origem informada pelo navegador.
+2. Aplica limite por IP, valida os campos e normaliza o e-mail para minúsculas.
+3. Aplica limite por e-mail; procura usuário e empresa ativos.
+4. Verifica a senha com Argon2. Para e-mail inexistente, também verifica um
+   hash Argon2 válido, gerado ao iniciar o serviço. Ambos os erros retornam
+   a mesma resposta 401; isso não constitui garantia de tempo constante.
+5. Gera 32 bytes aleatórios, representados por 64 caracteres hexadecimais.
+   O navegador recebe o token; o banco recebe somente seu SHA-256.
+6. Numa transação, revalida usuário/empresa, insere sessão, atualiza
+   `ultimo_login_em` e revoga a sessão do cookie anterior, se houver.
+7. Após o commit, o controller emite o cookie e devolve o usuário sem senha.
+
+O cookie não precisa de uma chave de assinatura: o servidor só aceita tokens
+aleatórios cujo hash existe como sessão válida no banco. Não usamos JWT nem
+bcrypt no módulo novo. As dependências legadas não definem esta arquitetura.
+
+### 10.3 Configuração e contrato HTTP
+
+Acrescente ou ajuste em `backend/.env`:
+
+```dotenv
+SESSION_TTL_HOURS=8
+SESSION_COOKIE_SECURE=true
+PUBLIC_ORIGIN=http://localhost:3000
+AUTH_IP_LIMIT=20
+AUTH_EMAIL_LIMIT=5
+```
+
+Para experimentar com navegador em **HTTP local**, use explicitamente
+`SESSION_COOKIE_SECURE=false` em desenvolvimento. Para produção, use `true`
+e a origem HTTPS pública do frontend, sem caminho nem barra final.
+`NODE_ENV=production` recusa cookie inseguro ou origem HTTP. Reinicie o backend
+depois de editar. A escolha do banco continua sendo somente `DB_TARGET`;
+o módulo de autenticação não possui SQL específico do Aiven.
+
+| Requisição | Entrada | Saída esperada |
+|---|---|---|
+| POST /api/v1/auth/login | JSON com email e senha | 200, `{ usuario: { id, empresa_id, nome, email, perfil } }` e Set-Cookie |
+| GET /api/v1/auth/me | Cookie da sessão | 200 e mesmo formato de usuário |
+| POST /api/v1/auth/logout | Cookie e JSON vazio `{}` | 204, cookie removido e revogada_em preenchida |
+
+Respostas de autenticação usam `Cache-Control: no-store`. O cookie é host-only
+(sem Domain), Path=/, HttpOnly, SameSite=Lax e Secure por padrão. A expiração
+é fixa, sem renovação silenciosa. Novo login gira o token e revoga o anterior
+apresentado; sessões de outros dispositivos continuam válidas até expirar ou
+realizar logout. Repetir logout com sessão revogada retorna 401.
+
+Toda requisição autenticada consulta a sessão, usuário e empresa novamente.
+Expiração, revogação, desativação ou alteração de perfil têm efeito na próxima
+requisição. `req.auth` recebe somente o usuário e seu escopo atual.
+
+Erros seguem `{ erro: { codigo, mensagem, campos: [] } }`: validação 400,
+credenciais/sessão 401, perfil/origem 403, recurso de outra empresa 404,
+Content-Type inadequado 415 e excesso de tentativas 429 com Retry-After.
+Erros internos continuam genéricos, sem SQL, credenciais ou token nos logs.
+
+### 10.4 Perfis, isolamento e proteção do navegador
+
+`requireRoles(...)` exige uma lista explícita. Administrador pode ser incluído
+nas rotas de cadastro; operador nas rotas de operação; leitor somente nas
+rotas de leitura. Superadmin não herda acesso aos dados das empresas. A função
+`companyId(req.auth)` rejeita usuários sem vínculo com empresa.
+
+Na Fase 3, cada repositório de recurso deve obrigatoriamente consultar com
+`WHERE id=? AND empresa_id=?`, usando o segundo parâmetro da sessão. Retornar
+404 quando não houver linha impede revelar a existência de recurso alheio.
+Nesta fase, uma rota criada **apenas no teste** consulta uma empresa pelo ID
+pedido e pelo escopo autenticado. O teste prova 200 para A, 404 para B e 403
+para escrita por leitor. Não há CRUD público implementado nesta entrega.
+
+POST exige JSON; uma origem presente deve coincidir com PUBLIC_ORIGIN, e
+`Sec-Fetch-Site: cross-site` é rejeitado. Não habilitamos CORS. Clientes de
+terminal sem Origin continuam permitidos. O frontend usará o mesmo domínio
+por proxy conforme o plano; estes controles devem acompanhar futuras rotas
+de escrita. SameSite não é a única proteção aplicada.
+
+Limites: 20 tentativas por IP e 5 por e-mail a cada 15 minutos, contando
+sucessos e falhas. O armazenamento é em memória de um processo; reiniciar
+zera contadores. Antes de múltiplas instâncias, adotar armazenamento
+compartilhado. O Express mantém `trust proxy` desabilitado: no deploy,
+configurar somente os proxies confiáveis da hospedagem para recuperar o IP
+real; não confiar livremente em X-Forwarded-For enviado pelo cliente.
+
+### 10.5 Reproduzir e interpretar os testes
+
+Execute os comandos da seção 7. Não execute `migrate` novamente num banco
+já instalado. Os testes sem banco cobrem cookie, hash do token, senha errada,
+e-mail inexistente, origem, validação, rate limit por IP/e-mail, quatro perfis
+e configuração segura de produção.
+
+Os testes de integração criam duas empresas e um usuário com Argon2id no
+MySQL local. Chamam as rotas reais por Supertest e verificam sessão persistida,
+último login, revogação, rotação, expiração, desativação, mudança de perfil e
+isolamento. Dados têm UUID por execução; a limpeza remove exclusivamente os
+IDs criados pelo teste, com cascade das sessões. A base da Fase 1 mantém seu
+rollback. Se o processo for interrompido à força, pode restar fixture local;
+inspecione o UUID antes de qualquer remoção manual. Aiven e produção são
+recusados por estes testes.
+
+Não criamos conta padrão nem carregamos `stma_seed_demo.sql`. Por isso, ainda
+não existe um login de demonstração fornecido ao usuário. O cadastro real e
+a criação controlada do primeiro administrador serão tratados na Fase 3;
+seed demo permanece na Fase 7. A validação da Fase 2 é reproduzível pelos
+testes, que criam e removem suas próprias credenciais locais.
+
+Quando existir uma conta cadastrada, este exemplo PowerShell preserva o
+cookie sem imprimir sua senha nem token (API local com Secure=false):
+
+```powershell
+$credencial = Get-Credential -Message 'Informe e-mail e senha do usuário STMA'
+$corpo = @{ email = $credencial.UserName; senha = $credencial.GetNetworkCredential().Password } | ConvertTo-Json
+Invoke-RestMethod http://localhost:3000/api/v1/auth/login -Method Post -ContentType 'application/json' -Body $corpo -SessionVariable sessao
+Remove-Variable corpo,credencial
+Invoke-RestMethod http://localhost:3000/api/v1/auth/me -WebSession $sessao
+Invoke-RestMethod http://localhost:3000/api/v1/auth/logout -Method Post -ContentType 'application/json' -Body '{}' -WebSession $sessao
+```
+
+### 10.6 Evidências, pendências e próxima fase
+
+- Local: lint, typecheck, build e 26 testes aprovados (18 sem banco, 8 MySQL).
+- Dependências: instalação reportou zero vulnerabilidades.
+- GitHub: publicação e CI da Fase 2 em validação; registro será atualizado após resultado.
+- Aiven: schema preservado, sem fixtures ou usuários criados nesta fase.
+- Pendente: Fases 3–7, configuração operacional de produção e frontend.
+- Próximo passo após aceite: Fase 3, cadastros com escopo, desativação lógica
+  e auditoria. Ingestão MQTT e troca de broker continuam na Fase 4.
+- Segundo repositório wxlv7h: destino e acesso ainda pendentes.
+
+Referências técnicas: [node-argon2](https://github.com/ranisalt/node-argon2),
+[express-rate-limit](https://github.com/express-rate-limit/express-rate-limit),
+[OWASP — sessões](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
+e [OWASP — CSRF](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html).

@@ -15,6 +15,11 @@ export function parseEnvironment(env: NodeJS.ProcessEnv) {
     DB_TARGET: z.enum(['local', 'aiven']).default('local'),
     DB_POOL_LIMIT: positiveInteger(5, 50),
     DB_CONNECT_TIMEOUT_MS: positiveInteger(5000, 30000),
+    SESSION_TTL_HOURS: positiveInteger(8, 168),
+    SESSION_COOKIE_SECURE: z.enum(['true', 'false']).default('true').transform(v => v === 'true'),
+    PUBLIC_ORIGIN: z.string().url().default('http://localhost:3000'),
+    AUTH_IP_LIMIT: positiveInteger(20, 1000),
+    AUTH_EMAIL_LIMIT: positiveInteger(5, 100),
   }).safeParse(env);
   if (!common.success) throw new Error(`Configuração inválida: ${common.error.issues.map(i => i.path.join('.')).join(', ')}`);
   const prefix = common.data.DB_TARGET === 'aiven' ? 'DB_AIVEN_' : 'DB_LOCAL_';
@@ -33,6 +38,9 @@ export function parseEnvironment(env: NodeJS.ProcessEnv) {
   if (common.data.NODE_ENV === 'production' && common.data.DB_TARGET !== 'aiven') {
     throw new Error('Nesta versão, produção exige DB_TARGET=aiven com TLS.');
   }
+  const origin = new URL(common.data.PUBLIC_ORIGIN);
+  if (!['http:', 'https:'].includes(origin.protocol) || origin.origin !== common.data.PUBLIC_ORIGIN) throw new Error('PUBLIC_ORIGIN deve conter somente a origem HTTP(S), sem caminho.');
+  if (common.data.NODE_ENV === 'production' && (!common.data.SESSION_COOKIE_SECURE || origin.protocol !== 'https:')) throw new Error('Produção exige cookie Secure e PUBLIC_ORIGIN HTTPS.');
   return {
     ...common.data, database: {
       ...database.data,
