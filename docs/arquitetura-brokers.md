@@ -1,5 +1,11 @@
 # ADR-001 — Broker MQTT intercambiável
 
+> Atualização de 12/10/2026: a independência de fornecedor permanece, mas o plano
+> STMA novo substitui MQTT/WSS no navegador por SSE autenticado na API e usa
+> tópicos engeasier/{device_id}/dados, /porta e /status. WSS no broker deixa de
+> ser requisito do frontend. Os exemplos abaixo documentam o setup anterior.
+> A implementação da ingestão será na Fase 4 do backend; consulte roteiro-backend.md.
+
 Status: aceito conforme solicitação do proprietário em 04/10/2026.
 Escopo implementado: arquitetura e configuração dos testes da Fase 0.
 Esta decisão atualiza a escolha de broker e a tarefa T0.2 das referências

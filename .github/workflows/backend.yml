@@ -1,0 +1,44 @@
+name: Backend STMA
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-only-root
+          MYSQL_DATABASE: stma_db
+          MYSQL_USER: stma
+          MYSQL_PASSWORD: ci-only-password
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci-only-root"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    env:
+      NODE_ENV: test
+      DB_TARGET: local
+      DB_LOCAL_HOST: 127.0.0.1
+      DB_LOCAL_PORT: 3306
+      DB_LOCAL_NAME: stma_db
+      DB_LOCAL_USER: stma
+      DB_LOCAL_PASSWORD: ci-only-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run migrate
+      - run: npm run test:integration
+      - run: npm run build

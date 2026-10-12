@@ -1,0 +1,21 @@
+name: stma
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${STMA_MYSQL_ROOT_PASSWORD:?Preencha backend/.env}
+      MYSQL_DATABASE: ${DB_LOCAL_NAME:-stma_db}
+      MYSQL_USER: ${DB_LOCAL_USER:-stma}
+      MYSQL_PASSWORD: ${DB_LOCAL_PASSWORD:?Preencha backend/.env}
+      TZ: UTC
+    ports:
+      - "127.0.0.1:${DB_LOCAL_PORT:-13308}:3306"
+    volumes:
+      - stma_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_ROOT_PASSWORD\" mysql -h 127.0.0.1 -u root -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+volumes:
+  stma_data:

@@ -1,3 +1,10 @@
+> **Plano histórico — substituído para novas implementações em 12/10/2026.**
+> O proprietário determinou iniciar o backend com os planos STMA em
+> `docs/03-implementacao/`, usando MySQL local/Aiven e sem ORM nesta versão.
+> O schema definitivo de 13 tabelas foi confirmado. A pendência antiga T0.2
+> não bloqueia a nova Fase 1; MQTT será implementado na Fase 4 do backend.
+> Acompanhamento vigente: `03-implementacao/02-Plano de implementação do backend - STMA.md`
+> e `roteiro-backend.md`. As marcações abaixo preservam a execução anterior.
 # Plano de Implementação — Sistema Web de Monitoramento IoT de Temperatura e Umidade
 
 > Projeto de Portfólio — Monitoramento IoT com ESP32 e MQTT

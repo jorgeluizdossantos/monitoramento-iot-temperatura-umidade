@@ -2,21 +2,47 @@
   "name": "monitoramento-iot-backend",
   "version": "0.0.0",
   "private": true,
-  "description": "Fase 0 — preparação do backend Node.js/Express para telemetria IoT",
+  "description": "Backend STMA — Node.js, Express, TypeScript e MySQL sem ORM",
   "license": "MIT",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "db:setup": "node ../scripts/setup-db.js",
     "check:db": "node ../scripts/check-db.js",
     "check:mqtt": "node ../scripts/check-mqtt.js",
-    "test:mqtt-config": "node --test ../scripts/mqtt-settings.test.js"
+    "test:mqtt-config": "node --test ../scripts/mqtt-settings.test.js",
+    "test:integration": "vitest run tests/database.integration.test.ts",
+    "test": "vitest run tests/foundation.test.ts",
+    "migrate": "tsx src/db/migrate.ts",
+    "lint": "eslint src tests",
+    "dev": "tsx watch src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/main.js",
+    "build": "tsc",
+    "db:check": "tsx src/db/check.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2",
     "mqtt": "^5.14.1",
-    "mysql2": "^3.14.5"
+    "mysql2": "^3.14.5",
+    "pino": "^9.14.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/express": "^4.17.25",
+    "@types/node": "^22.20.5",
+    "@types/supertest": "^6.0.3",
+    "eslint": "^10.12.0",
+    "supertest": "^7.3.1",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.2",
+    "vitest": "^5.0.4"
   }
 }

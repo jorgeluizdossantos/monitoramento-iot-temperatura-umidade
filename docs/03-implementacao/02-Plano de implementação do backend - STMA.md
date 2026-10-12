@@ -1,0 +1,181 @@
+# Plano de implementação do backend: Monitoramento IoT (STMA)
+
+12/10/2026 · Jorge Luiz dos Santos
+
+> Revisão de execução: segue a instrução do proprietário de 12/10/2026.
+> Schema confirmado: stma_schema.sql definitivo, 13 tabelas. Backend antes do
+> frontend; sem ORM nesta versão. Evidências em ../roteiro-backend.md.
+>
+> **Fase 1 em validação:** base MVC, configuração local/Aiven, schema local,
+> health, lint, testes e CI preparados. Aiven e resultado do CI serão registrados
+> após verificação. Fases 2–7 não iniciadas. Nenhum critério futuro foi antecipado.
+
+## 1. Resumo
+
+O backend é um único serviço Node.js que faz duas coisas sobre o banco `stma_db`: recebe a telemetria dos ESP32 pelo MQTT e serve a API REST do painel. Começa como um monólito modular, com ingestão e API no mesmo processo, e só se divide se o volume exigir. O plano tem sete fases, da base do projeto até a implantação, e cada uma termina com um critério de aceite verificável.
+
+A base é o schema definitivo (`stma_schema.sql`) e o documento de requisitos (RF001 a RF017, RNF001 a RNF008, RN001 a RN007).
+
+### 1.1 Stack proposta
+
+| Camada | Escolha | Motivo |
+| --- | --- | --- |
+| Linguagem e runtime | TypeScript estrito, Node.js 22 | Mesma stack dos seus outros projetos |
+| API | Express | Idem; simples e bem conhecido |
+| Acesso ao banco | mysql2 com SQL parametrizado e repositórios por interface; Prisma somente em evolução futura | Instrução do proprietário em 12/10: não usar ORM; regras de negócio independem do driver |
+| Validação | Zod | Valida entrada da API e payload MQTT com o mesmo mecanismo |
+| Cliente MQTT | `mqtt` (mqtt.js) | Suporta QoS 1, TLS e reconexão automática |
+| Senhas e sessão | argon2 e token aleatório com hash SHA-256 no banco | O schema já guarda só o hash do token (`sessao.token_hash`) |
+| Agendamento | `node-cron` | Resumo por hora, offline e expurgo; roda no mesmo processo |
+| Logs | pino | Log estruturado em JSON |
+| Testes | Vitest e Supertest, MySQL real num contêiner | Os CHECK e as chaves compostas só se provam num MySQL de verdade |
+
+### 1.2 Premissas
+
+- O arquivo `stma_schema.sql` é a fonte da verdade. O schema é aplicado por SQL versionado; CHECK e chaves compostas são preservados. Uma adoção futura de Prisma deverá respeitar os contratos dos repositórios e essas restrições.
+- Os tópicos MQTT seguem o firmware atual: `engeasier/<device_id>/...`. O `requisitos.md` (seção 9) prevê IDs da hierarquia no tópico; o schema e o firmware ficaram com o `device_id`, e o backend resolve o ambiente pelo banco.
+- A conexão do banco abre com `SET time_zone = '+00:00'`. Todo horário é UTC; a conversão para America/Bahia é do frontend.
+- Os pontos em aberto (superadmin, retenção de 90 dias, DHT11 ou DHT22) estão na seção 10.4 do documento do schema e não bloqueiam as fases 1 a 4.
+
+## 2. Arquitetura
+
+O serviço tem três módulos que compartilham o mesmo acesso ao banco: a ingestão, as rotinas e a API. O navegador nunca fala com o broker nem com o banco; a ingestão avisa a API quando grava uma leitura, e a API repassa pelo stream só à empresa dona do ambiente.
+
+![Arquitetura do backend: um serviço, três módulos](arquitetura-backend.png)
+
+Cada módulo de negócio tem rotas, serviço e repositório, para que a regra (por exemplo, quando abrir um alerta) não dependa de Express nem de MQTT e possa ser testada sozinha.
+
+```text
+src/
+  config/       variáveis de ambiente validadas com Zod
+  db/           pool mysql2, UTC, TLS e scripts de SQL versionado
+  modules/
+    auth/       login, sessão, middleware de perfil
+    cadastros/  empresas, unidades, setores, ambientes, usuários, dispositivos
+    telemetria/ ingestão MQTT, leituras, alertas, série por hora
+    stream/     SSE por empresa
+    jobs/       resumo por hora, offline, expurgo, sessões
+  shared/       erros, paginação, auditoria, log
+  app.ts        monta o Express
+  main.ts       sobe a API, o cliente MQTT e o agendador
+tests/
+```
+
+## 3. Fases de implementação
+
+As fases seguem a dependência dos requisitos: sem login não há escopo por empresa, sem cadastro não há dispositivo para a ingestão reconhecer. A ingestão (fase 4) pode andar em paralelo com a fase 3 depois que a tabela `dispositivo` existir.
+
+| Fase | Entrega | Requisitos | Critério de aceite | Status |
+| --- | --- | --- | --- | --- |
+| 1. Base do projeto | Repositório TypeScript, Docker Compose com MySQL 8, `stma_schema.sql` aplicado, repositórios sem ORM e conexão local/Aiven por .env, configuração por variáveis de ambiente, lint, CI | RNF006, RNF008 | `GET /health` responde 200 e testa o banco; o CI roda os testes contra um MySQL real | Em validação final — local e Aiven aprovados; CI pendente |
+| 2. Autenticação e perfis | Login, logout, sessão por token, middleware que injeta `empresa_id` e perfil, guarda por perfil | RF001, RF015, RN001, RN007 | Senha errada dá 401; usuário da empresa A não lê nada da empresa B (teste automatizado); leitor não escreve | Não iniciada |
+| 3. Cadastros | CRUD de empresa, unidade, setor, ambiente, usuário e dispositivo, com desativação lógica e auditoria | RF002 a RF007, RN002 a RN004 | Criar filho com pai de outra empresa é recusado pelo banco e pela API; `DELETE` só marca `ativo = 0` | Não iniciada |
+| 4. Ingestão MQTT | Assinante dos tópicos, validação do payload, gravação idempotente, última leitura no dispositivo, fila de dispositivos pendentes | RF008, RF014, RNF005 | Leitura publicada aparece no banco; a mesma leitura reenviada não duplica; ID desconhecido vai para `dispositivo_pendente` | Não iniciada |
+| 5. Leituras, painel e alertas | Endpoints do painel, histórico paginado, série por hora, CSV, alertas como episódios, reconhecimento de alerta | RF009 a RF013, RF016, RN005 | Histórico de 100.000 registros em menos de 3 s (RNF007); alerta abre ao sair da faixa e fecha ao voltar | Não iniciada |
+| 6. Rotinas agendadas | Resumo por hora, marcação de offline, expurgo em lotes, limpeza de sessões expiradas | RF014, RN006 | Reexecutar o resumo da mesma hora não altera o resultado; o expurgo apaga em lotes e preserva os alertas | Não iniciada |
+| 7. Implantação e demonstração | Deploy, TLS no MQTT, três usuários de banco, `stma_seed_demo.sql`, modo demonstração público, README | RF017, RNF002, RNF003, RNF008 | Leitura publicada no broker chega ao painel em até 5 s; um terceiro sobe o projeto seguindo o README | Não iniciada |
+
+Cada fase fecha com seus testes passando e um commit etiquetado. A fase 5 só começa depois da 4, porque o alerta nasce na gravação da leitura.
+
+## 4. API REST
+
+A API tem prefixo `/api/v1`, fala JSON e identifica o usuário por um cookie `httpOnly`, `Secure` e `SameSite=Lax` que carrega o token de sessão. O servidor guarda só o SHA-256 do token. O `empresa_id` e o perfil vêm sempre da sessão, nunca do corpo da requisição ou da URL (RN001).
+
+### 4.1 Perfis
+
+| Perfil | Pode |
+| --- | --- |
+| superadmin | Cadastrar empresas e seus primeiros administradores; não pertence a empresa |
+| administrador | Tudo dentro da própria empresa, inclusive cadastros e usuários (RN007) |
+| operador | Ler tudo, reconhecer alertas e marcar dispositivo em manutenção |
+| leitor | Somente ler painel, histórico, gráficos e alertas |
+
+### 4.2 Rotas
+
+| Rota | Perfil mínimo | Requisito |
+| --- | --- | --- |
+| `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` | público, qualquer, qualquer | RF001 |
+| `GET/POST/PATCH /empresas` | superadmin | RF002 |
+| `GET/POST/PATCH /unidades`, `/setores`, `/ambientes` | leitor para ler, administrador para escrever | RF003 a RF005 |
+| `GET/POST/PATCH /usuarios` | administrador | RF006 |
+| `GET/POST/PATCH /dispositivos` | leitor para ler, administrador para escrever | RF007, RN006 |
+| `GET /dispositivos-pendentes`, `POST /dispositivos-pendentes/:id/adotar` | administrador | RF007 |
+| `GET /painel` | leitor | RF009, RF010, RF014 |
+| `GET /ambientes/:id/leituras?de&ate&pagina` | leitor | RF011 |
+| `GET /ambientes/:id/serie?de&ate` | leitor | RF012 |
+| `GET /ambientes/:id/leituras.csv?de&ate` | leitor | RF016 |
+| `GET /alertas?situacao=aberto`, `POST /alertas/:id/reconhecer` | leitor para ler, operador para reconhecer | RF013 |
+| `GET /stream` (Server-Sent Events) | leitor | RF009 |
+| `GET /demo/painel` | público, somente empresa com `eh_demo = 1` | RF017 |
+
+Os cadastros nunca têm `DELETE` real. A desativação é um `PATCH` com `ativo = false` (RN004), e as listagens escondem os inativos por padrão.
+
+### 4.3 Convenções
+
+- Erros no formato `{ "erro": { "codigo": "...", "mensagem": "...", "campos": [] } }`, com 400 para validação, 401 sem sessão, 403 sem perfil, 404 para recurso de outra empresa (não revela que existe) e 409 para duplicidade.
+- Paginação por `pagina` e `tamanho`, com `tamanho` máximo de 500. O período de consulta tem limite máximo de dias; acima dele a API responde com a série por hora.
+- Toda escrita de cadastro grava uma linha em `auditoria` com os valores antes e depois.
+- Toda consulta de leitura junta `ambiente` para filtrar por `empresa_id`, como nas consultas da seção 10.1 do documento do schema.
+- O `GET /stream` existe porque o `requisitos.md` prevê o painel assinando o broker direto por WebSocket, e num broker público qualquer pessoa assina `engeasier/#` e lê os dados de todas as empresas. Com o stream, o navegador nunca fala com o broker: o servidor recebe a leitura, grava e repassa só às sessões da empresa dona do ambiente. O stream envia um comentário de batimento a cada 25 s, para proxies não fecharem a conexão ociosa.
+
+## 5. Ingestão MQTT e rotinas agendadas
+
+O módulo de ingestão é o coração do sistema e o que mais precisa de teste. Ele assina `engeasier/+/dados`, `engeasier/+/porta` e `engeasier/+/status` com QoS 1, conecta ao broker por TLS (porta 8883) com client ID fixo e sessão persistente, para receber o que foi publicado enquanto o serviço estava fora. As credenciais vêm de variáveis de ambiente (RNF003).
+
+### 5.1 Tratamento de uma mensagem
+
+1. Extrair o `device_id` do tópico e validar com a mesma expressão do `CHECK` do banco (`^[a-z0-9_-]{3,64}$`).
+2. Validar o payload com Zod: temperatura entre -50 e 100, umidade entre 0 e 100, hora opcional. Payload inválido é registrado no log e descartado, sem derrubar o serviço. O mapeamento campo a campo do firmware está na seção 9.3 do documento do schema.
+3. Buscar o dispositivo ativo por `device_id`. Se não existir, fazer upsert em `dispositivo_pendente` (contador e último payload) e parar: a leitura não é gravada.
+4. Definir `medido_em`: a hora do payload se existir e for plausível, senão a hora de recebimento. Enquanto o firmware não enviar NTP, vale sempre a hora de recebimento.
+5. Gravar numa transação: a leitura (idempotente, `ON DUPLICATE KEY UPDATE id = id`) e a cópia da última leitura no dispositivo. O SQL está na seção 10.2 do documento do schema.
+6. Aplicar a lógica de alerta (abrir, atualizar ou fechar o episódio) e, depois do commit, publicar o evento para o `GET /stream`.
+
+Mensagens de `porta` gravam em `evento_porta` só quando o estado muda. Mensagens de `status` atualizam `status_conexao` e `ultimo_contato_em`; se o firmware configurar um último testamento (LWT) no tópico de status, o broker avisa a queda na hora e o dispositivo vira offline sem esperar o prazo.
+
+### 5.2 Rotinas agendadas
+
+| Rotina | Frequência | O que faz |
+| --- | --- | --- |
+| Resumo por hora | A cada hora, para a hora anterior; ao iniciar, recalcula as últimas 48 h | `INSERT ... ON DUPLICATE KEY UPDATE` em `leitura_hora`; reexecutar não muda o resultado |
+| Marcação de offline | A cada minuto | Dispositivo online sem contato há mais de `offline_apos_seg` passa a offline (RF014) |
+| Expurgo de leituras | Diária, de madrugada | Apaga em lotes de 10.000 as leituras com mais de 90 dias, só se o resumo por hora do período existir |
+| Limpeza de sessões | Diária | Remove sessões expiradas ou revogadas há mais de 30 dias |
+
+Se o serviço rodar em mais de uma instância, as rotinas passam a disputar um `GET_LOCK` do MySQL para que só uma execute, e a ingestão usa assinatura compartilhada (`$share`) para não gravar a mesma mensagem duas vezes.
+
+## 6. Segurança, testes, implantação e riscos
+
+### 6.1 Segurança
+
+- Senhas com argon2; o token de sessão é aleatório, vai no cookie e só o SHA-256 dele fica no banco. Logout preenche `revogada_em`.
+- Limite de tentativas no login (por IP e por e-mail) e mensagem de erro igual para e-mail inexistente e senha errada.
+- Três usuários de banco: a API (SELECT, INSERT e UPDATE, e DELETE só em `sessao`), a manutenção (DELETE em `leitura_telemetria`) e um somente leitura para a demonstração.
+- Todas as consultas parametrizadas; o Prisma e o SQL cru usam parâmetros, nunca concatenação.
+- Segredos (banco, broker, chave do cookie) só em variáveis de ambiente; `.env` fora do Git e um `.env.example` sem valores reais (RNF003).
+- O frontend chama `/api` no próprio domínio (rewrite da Vercel), então o cookie fica no mesmo site e não há CORS aberto; `helmet` ativo e corpo de requisição com tamanho máximo.
+- O endpoint público de demonstração usa o usuário de banco somente leitura e só enxerga a empresa com `eh_demo = 1`.
+
+### 6.2 Testes
+
+| Nível | O que cobre | Como |
+| --- | --- | --- |
+| Unitário | Validação do payload, cálculo de severidade do alerta, escolha de `medido_em` | Vitest, sem banco |
+| Integração com banco | Chaves compostas, CHECK, idempotência, resumo por hora, expurgo | Vitest contra MySQL 8 em contêiner, com o `stma_schema.sql` real |
+| API | Autenticação, perfis e isolamento entre empresas (usuário A pedindo dado da B deve receber 404) | Supertest |
+| Ingestão ponta a ponta | Publicar no broker de teste e ver a linha no banco; reenvio; ID desconhecido | Mosquitto em contêiner |
+| Carga | Histórico de 100.000 leituras em menos de 3 s (RNF007) | Script que popula e mede |
+
+### 6.3 Implantação
+
+O ambiente de desenvolvimento sobe com Docker Compose (MySQL 8 e Mosquitto). Em produção, o serviço Node roda numa hospedagem simples (Railway, na sua stack) apontando para um MySQL 8.0.16 ou superior gerenciado. As migrações são arquivos SQL numerados aplicados em ordem, a partir do `stma_schema.sql`.
+
+### 6.4 Riscos
+
+| Risco | Efeito | Mitigação |
+| --- | --- | --- |
+| Broker público (HiveMQ) sem autenticação | Qualquer pessoa lê ou publica nos tópicos `engeasier/#` | Autenticar o backend e, para uso real, trocar por broker com usuário e TLS; tratar todo payload como não confiável |
+| Firmware publica em QoS 0 (PubSubClient) | Perda de leituras sem aviso, contra o RNF005 | Trocar a biblioteca do firmware por uma com QoS 1 |
+| Firmware sem hora (sem NTP) | `medido_em` vira hora de recebimento; reenvio atrasado fica com a hora errada | Adicionar NTP ao firmware |
+| Intervalo de 2 s no firmware | Cerca de 1,8 GB por dispositivo por ano | Subir para 30 s (RN006) antes de ligar na nuvem |
+| Duas instâncias do serviço | Rotinas e ingestão duplicadas | `GET_LOCK` e assinatura compartilhada, como na seção 5.2 |
