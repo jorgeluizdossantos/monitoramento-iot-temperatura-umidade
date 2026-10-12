@@ -41,4 +41,6 @@ jobs:
       - run: npm test
       - run: npm run migrate
       - run: npm run test:integration
+      - run: docker compose -f ../compose.mqtt.yaml --profile test up -d --wait
+      - run: npm run test:mqtt
       - run: npm run build

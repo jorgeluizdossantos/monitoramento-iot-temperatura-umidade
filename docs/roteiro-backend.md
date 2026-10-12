@@ -650,3 +650,112 @@ Falta: Fases 4–7 e frontend. Próxima etapa após aceite: ingestão MQTT com
 broker selecionável por configuração, validação, idempotência e persistência.
 Antes dela, esclarecer timestamps/duplicatas e o escopo de adoção dos IDs
 pendentes. Publicação em wxlv7h segue pendente de destino e acesso.
+
+## 12. Fase 4 — ingestão implementada; validação do ESP32 pendente
+
+### 12.1 Decisões confirmadas pelo proprietário
+
+- Aceitar mensagens sem timestamp usando a hora de recebimento. Deduplicar por dispositivo e timestamp válido; valores iguais isoladamente não identificam uma retransmissão.
+- Somente superadmin lista a fila global e adota dispositivos, escolhendo o ambiente de destino. Um administrador de empresa não pode acessar dispositivos ainda sem empresa.
+- Validar o equipamento físico com o HiveMQ disponível ao proprietário. Dois brokers Mosquitto locais servem à automação dos testes, sem definir o fornecedor de produção.
+
+### 12.2 Caminho da mensagem e responsabilidades
+
+1. `src/config/mqtt.ts` valida URL, credenciais, client ID, prefixo e tempos. `MQTT_ENABLED=false` mantém a ingestão desligada por padrão.
+2. `mqtt-consumer.ts` encapsula MQTT.js e assina `<prefixo>/+/dados`, `/status` e `/porta`. Nenhuma regra de negócio depende de SDK do HiveMQ.
+3. `telemetry.service.ts` valida tópico, identidade, JSON, campos e limites; normaliza valores e horário. Não executa SQL.
+4. `telemetry.repository.ts` define o contrato de persistência. `mysql-telemetry.repository.ts` implementa transações parametrizadas com mysql2. Uma versão Prisma poderá substituir esse repositório preservando o serviço.
+5. `main.ts` compõe as dependências, inicia o consumidor quando habilitado e o encerra antes de fechar o pool MySQL.
+
+O banco resolve a empresa e o ambiente pelo dispositivo cadastrado. O payload não pode escolher empresa. A transação grava histórico e estado atual juntos; falha faz rollback. Leituras atrasadas entram no histórico sem fazer a última leitura retroceder. Dispositivo ou ancestral inativo não é reativado por telemetria.
+
+### 12.3 Contrato MQTT
+
+Tópico de exemplo: `engeasier/esp32_01/dados`.
+
+```json
+{"id":"esp32_01","temperatura":22.5,"umidade":55,"timestamp":"2026-10-12T15:00:00.000Z"}
+```
+
+Use o horário real da medição; o exemplo é ilustrativo. `dispositivo` pode substituir `id`; se ambos existirem, ambos devem coincidir com o tópico. Identificadores usam letras minúsculas, números, `_` e `-`, com 3 a 64 caracteres. Temperatura aceita -50 a 100 °C e umidade 0 a 100%; valores são normalizados para uma casa decimal. Campos extras, identidade divergente e JSON inválido são descartados. O limite de payload é 32 KiB.
+
+Timestamp aceita RFC3339 com fuso e até três casas de milissegundos. Ausente, inválido ou fora da janela configurada usa recebimento. A janela padrão aceita até 168 horas de atraso e 60 segundos no futuro. Portanto, a deduplicação só é garantida com timestamp válido dentro dessa janela; retransmissões sem horário ou muito antigas não têm essa garantia. Mesmo dispositivo/horário com valores diferentes gera conflito e preserva a primeira leitura.
+
+`/status` aceita `online`/`offline` ou JSON com `status`. `/porta` aceita ABERTA/FECHADA, Porta Aberta/Porta Fechada, ABERTO/FECHADO, OPEN/CLOSED, 1/0 ou JSON `{"aberta":true}`. Porta usa hora de recebimento e grava mudanças de estado. Dados e porta retidos são recusados; status online retido não comprova presença atual. LWT offline não inventa novo horário de contato.
+
+### 12.4 Confirmação, falhas e reconexão
+
+O adaptador usa MQTT 3.1.1, sessão persistente, client ID estável e assinatura QoS 1. `handleMessage` posterga o PUBACK até o serviço terminar. Erro de banco interrompe a conexão sem confirmar a mensagem, permitindo reentrega. Mensagem inválida é descartada e confirmada para não bloquear a fila indefinidamente.
+
+Essa estratégia foi exercitada com falha antes da gravação, falha depois do commit, reconexão e publicação enquanto o consumidor estava desconectado. Não é uma promessa de entrega exatamente uma vez em qualquer situação: exige publicador QoS 1, sessão/fila preservada pelo broker e capacidade de armazenamento disponível. Assinar QoS 1 não transforma publicação QoS 0 em QoS 1. Confira a biblioteca do ESP32; o método comum de publicação de PubSubClient usa QoS 0.
+
+### 12.5 Dispositivos desconhecidos e adoção
+
+IDs desconhecidos atualizam `dispositivo_pendente`, contador e último payload normalizado. Não criam leituras nem empresa automaticamente.
+
+- `GET /api/v1/dispositivos-pendentes`: sessão de superadmin, paginação e filtro `situacao` (padrão `pendente`).
+- `POST /api/v1/dispositivos-pendentes/:id/adotar`: sessão de superadmin e corpo como `{"ambiente_id":123,"sensor":"DHT22","nome":"Sensor sala"}`.
+
+A adoção valida hierarquia ativa, cria o dispositivo, marca a pendência como adotada e registra duas auditorias na mesma transação. Não importa retroativamente o último payload da fila; as próximas publicações passam a gerar leituras. Administrador recebe 403; adoção repetida recebe 409. Não houve alteração do schema de 13 tabelas.
+
+### 12.6 Executar e trocar brokers
+
+Na raiz do projeto, o broker local de desenvolvimento pode ser iniciado com:
+
+```powershell
+docker compose -f compose.mqtt.yaml up -d --wait
+```
+
+Configure no arquivo `backend/.env`:
+
+```dotenv
+MQTT_ENABLED=true
+MQTT_URL=mqtt://127.0.0.1:18884
+MQTT_CLIENT_ID=stma-backend-local
+MQTT_TOPIC_PREFIX=engeasier
+MQTT_USERNAME=
+MQTT_PASSWORD=
+```
+
+O Mosquitto de teste fica restrito ao loopback e não atende o ESP32 pela rede. O backend só aceita MQTT sem TLS em loopback fora de produção. Em broker remoto use `mqtts://HOST:PORTA`, credenciais e, quando necessária, CA em `MQTT_CA_FILE`. Não desative a verificação do certificado.
+
+```powershell
+npm --prefix backend run mqtt:check
+npm --prefix backend run dev
+# Em outro terminal, apenas em ambiente destinado à demonstração:
+npm --prefix backend run mqtt:publish -- --device esp32_01 --temperature 22.5 --humidity 55
+```
+
+`mqtt:check` usa client ID temporário, conecta e verifica assinaturas, sem gravar no banco. Os dois comandos explícitos de MQTT aplicam as regras de segurança mesmo quando a ingestão da API está desabilitada. `mqtt:publish` envia QoS 1 sem retain; sua confirmação indica recebimento pelo broker, não commit no MySQL. Para credenciais separadas, preencha `MQTT_PUBLISH_USERNAME` e `MQTT_PUBLISH_PASSWORD` apenas no `.env` local.
+
+Para trocar HiveMQ, Mosquitto ou outro broker MQTT compatível, altere URL, credenciais e CA e reinicie o backend. Cada instalação precisa de client ID exclusivo e estável. Configure o ESP32 no mesmo destino e mantenha tópicos/payloads compatíveis. Sessões, filas e mensagens retidas do broker anterior não são migradas pelo `.env`. O destino do banco continua independente: `DB_TARGET=local` ou `aiven`.
+
+Guia específico: [Configuração HiveMQ e validação física](roteiro-hivemq-fase4.md).
+
+### 12.7 Testes e pendências
+
+Os testes de banco e MQTT usam exclusivamente MySQL local, fixtures com identificadores próprios e remoção dos registros criados. Nenhuma fixture desta fase foi enviada ao Aiven.
+
+```powershell
+docker compose -f compose.mqtt.yaml --profile test up -d --wait
+npm --prefix backend run lint
+npm --prefix backend run typecheck
+npm --prefix backend test
+$env:NODE_ENV='test'
+$env:DB_TARGET='local'
+npm --prefix backend run test:integration
+npm --prefix backend run test:mqtt
+Remove-Item Env:NODE_ENV
+Remove-Item Env:DB_TARGET
+npm --prefix backend run build
+```
+
+As suítes cobrem normalização, transação, duplicata, conflito, concorrência, atraso, hierarquia inativa, adoção auditada, isolamento de permissões, falhas de persistência, fila offline, LWT, porta e troca entre dois endpoints de broker. O CI passa a subir esses brokers para repetir os testes.
+
+Pendente para concluir a fase: confirmar modalidade/endpoint do HiveMQ, ajustar o firmware real ao contrato, configurar credenciais localmente e validar ESP32 → broker → backend → MySQL no destino acordado. A conexão MQTT TLS externa ainda não foi comprovada. `/health` verifica o banco; não certifica a prontidão MQTT. Verifique `mqtt:check` e o evento de assinatura nos logs.
+
+As Fases 5–7 e o frontend permanecem não iniciados. A tag de conclusão da Fase 4 depende dessa validação e do aceite. A publicação no segundo repositório depende de URL e acesso.
+
+Validação local executada: ESLint, TypeScript e build aprovados; 36 testes unitários/HTTP, 31 de integração MySQL e 8 de integração MQTT aprovados (75 no total). A execução remota do CI será registrada após publicação.
+
+O proprietário confirmou broker público broker.hivemq.com e payload identificado compatível sem timestamp, QoS 0. O firmware colado difere do tráfego observado; localização do .ino atual e modalidade do broker da conta permanecem pendentes. Formatos Porta Aberta/Porta Fechada foram incorporados ao contrato e aos testes.

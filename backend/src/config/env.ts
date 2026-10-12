@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import dotenv from 'dotenv';
 import { z } from 'zod';
+import { parseMqttEnvironment } from './mqtt';
 
 export const backendRoot = path.resolve(__dirname, '../..');
 const positiveInteger = (fallback: number, max: number) =>
@@ -42,7 +43,7 @@ export function parseEnvironment(env: NodeJS.ProcessEnv) {
   if (!['http:', 'https:'].includes(origin.protocol) || origin.origin !== common.data.PUBLIC_ORIGIN) throw new Error('PUBLIC_ORIGIN deve conter somente a origem HTTP(S), sem caminho.');
   if (common.data.NODE_ENV === 'production' && (!common.data.SESSION_COOKIE_SECURE || origin.protocol !== 'https:')) throw new Error('Produção exige cookie Secure e PUBLIC_ORIGIN HTTPS.');
   return {
-    ...common.data, database: {
+    ...common.data, mqtt: parseMqttEnvironment(env, common.data.NODE_ENV === 'production'), database: {
       ...database.data,
       caFile: common.data.DB_TARGET === 'aiven' ? env.DB_AIVEN_CA_FILE : undefined,
     },

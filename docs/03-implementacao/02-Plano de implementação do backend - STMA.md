@@ -8,7 +8,7 @@
 >
 > **Fase 1 concluída:** base MVC, configuração local/Aiven, schema local e Aiven,
 > health, lint, testes e CI aprovados. Evidência: commit ea1ea4c, tag backend-fase-1,
-> execução GitHub Actions 38311559868. Fase 2 concluída: commit 7d664fe, tag backend-fase-2, CI 38314809772 aprovado. Fase 3 concluída: commit 28b071d, tag backend-fase-3, CI 38316891647 aprovado. Fases 4–7 não iniciadas.
+> execução GitHub Actions 38311559868. Fase 2 concluída: commit 7d664fe, tag backend-fase-2, CI 38314809772 aprovado. Fase 3 concluída: commit 28b071d, tag backend-fase-3, CI 38316891647 aprovado. Fase 4 em andamento: ingestão, adoção e testes locais implementados; decisões de timestamp e permissão confirmadas. Validação com HiveMQ/ESP32 pendente. Fases 5–7 não iniciadas.
 
 ## 1. Resumo
 
@@ -70,7 +70,7 @@ As fases seguem a dependência dos requisitos: sem login não há escopo por emp
 | 1. Base do projeto | Repositório TypeScript, Docker Compose com MySQL 8, `stma_schema.sql` aplicado, repositórios sem ORM e conexão local/Aiven por .env, configuração por variáveis de ambiente, lint, CI | RNF006, RNF008 | `GET /health` responde 200 e testa o banco; o CI roda os testes contra um MySQL real | [x] Concluída — local, Aiven e CI aprovados |
 | 2. Autenticação e perfis | Login, logout, sessão por token, middleware que injeta `empresa_id` e perfil, guarda por perfil | RF001, RF015, RN001, RN007 | Senha errada dá 401; usuário da empresa A não lê nada da empresa B (teste automatizado); leitor não escreve | [x] Concluída — 26 testes locais e CI aprovados |
 | 3. Cadastros | CRUD de empresa, unidade, setor, ambiente, usuário e dispositivo, com desativação lógica e auditoria | RF002 a RF007, RN002 a RN004 | Criar filho com pai de outra empresa é recusado pelo banco e pela API; `DELETE` só marca `ativo = 0` | [x] Concluída — 45 testes locais e CI aprovados |
-| 4. Ingestão MQTT | Assinante dos tópicos, validação do payload, gravação idempotente, última leitura no dispositivo, fila de dispositivos pendentes | RF008, RF014, RNF005 | Leitura publicada aparece no banco; a mesma leitura reenviada não duplica; ID desconhecido vai para `dispositivo_pendente` | Não iniciada |
+| 4. Ingestão MQTT | Assinante dos tópicos, validação do payload, gravação idempotente, última leitura no dispositivo, fila de dispositivos pendentes | RF008, RF014, RNF005 | Leitura publicada aparece no banco; a mesma leitura reenviada não duplica; ID desconhecido vai para `dispositivo_pendente` | Em andamento — fluxo MQTT/MySQL e troca de broker testados localmente; HiveMQ/ESP32 pendente |
 | 5. Leituras, painel e alertas | Endpoints do painel, histórico paginado, série por hora, CSV, alertas como episódios, reconhecimento de alerta | RF009 a RF013, RF016, RN005 | Histórico de 100.000 registros em menos de 3 s (RNF007); alerta abre ao sair da faixa e fecha ao voltar | Não iniciada |
 | 6. Rotinas agendadas | Resumo por hora, marcação de offline, expurgo em lotes, limpeza de sessões expiradas | RF014, RN006 | Reexecutar o resumo da mesma hora não altera o resultado; o expurgo apaga em lotes e preserva os alertas | Não iniciada |
 | 7. Implantação e demonstração | Deploy, TLS no MQTT, três usuários de banco, `stma_seed_demo.sql`, modo demonstração público, README | RF017, RNF002, RNF003, RNF008 | Leitura publicada no broker chega ao painel em até 5 s; um terceiro sobe o projeto seguindo o README | Não iniciada |
@@ -99,7 +99,7 @@ A API tem prefixo `/api/v1`, fala JSON e identifica o usuário por um cookie `ht
 | `GET/POST/PATCH /unidades`, `/setores`, `/ambientes` | leitor para ler, administrador para escrever | RF003 a RF005 |
 | `GET/POST/PATCH /usuarios` | administrador | RF006 |
 | `GET/POST/PATCH /dispositivos` | leitor para ler, administrador para escrever | RF007, RN006 |
-| `GET /dispositivos-pendentes`, `POST /dispositivos-pendentes/:id/adotar` | administrador | RF007 |
+| `GET /dispositivos-pendentes`, `POST /dispositivos-pendentes/:id/adotar` | superadmin | RF007 |
 | `GET /painel` | leitor | RF009, RF010, RF014 |
 | `GET /ambientes/:id/leituras?de&ate&pagina` | leitor | RF011 |
 | `GET /ambientes/:id/serie?de&ate` | leitor | RF012 |
@@ -228,3 +228,16 @@ seed demo, endpoint de telemetria ou implementação de frontend nesta etapa.
 leituras/alertas, rotinas e implantação. O frontend permanece não iniciado.
 **Próximo passo após aceite:** Fase 4 — ingestão MQTT, validação, idempotência, persistência e configuração do broker. Esclarecer timestamps e adoção de dispositivos pendentes antes de implementar.
 A publicação adicional em wxlv7h aguarda confirmação do destino/acesso.
+
+## Acompanhamento da Fase 4 — 12/10/2026
+
+- [x] Configuração independente do fornecedor e TLS validado na configuração.
+- [x] Consumidor, validação, transação, deduplicação com timestamp e estado atual.
+- [x] Fila global e adoção exclusiva por superadmin, conforme autorização do proprietário.
+- [x] Testes locais com dois brokers, MySQL real, reconexão, reentrega e LWT.
+- [x] Roteiro didático e comandos de diagnóstico/publicação.
+- [ ] Confirmar modalidade do HiveMQ, host, porta e contrato do firmware real.
+- [ ] Validar conexão externa e leitura física do ESP32 no banco escolhido.
+- [ ] Aceite e tag de conclusão da Fase 4.
+
+Sem timestamp válido, usar recebimento; não prometer deduplicação nesse caso. Próximo passo: seguir docs/roteiro-hivemq-fase4.md e concluir a validação física. Fases 5–7 permanecem não iniciadas.

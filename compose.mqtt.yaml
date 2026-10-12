@@ -1,0 +1,30 @@
+name: stma-mqtt
+services:
+  broker:
+    image: eclipse-mosquitto:2
+    ports:
+      - "127.0.0.1:18884:1883"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - broker_data:/mosquitto/data
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "127.0.0.1", "-t", "stma-health", "-m", "ok"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  broker-secondary:
+    image: eclipse-mosquitto:2
+    profiles: [test]
+    ports:
+      - "127.0.0.1:18885:1883"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - broker_secondary_data:/mosquitto/data
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "127.0.0.1", "-t", "stma-health", "-m", "ok"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+volumes:
+  broker_data:
+  broker_secondary_data:

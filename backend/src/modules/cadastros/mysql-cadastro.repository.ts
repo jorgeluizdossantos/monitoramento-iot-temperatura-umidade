@@ -82,6 +82,7 @@ function session(c: PoolConnection): CadastroTransaction {
     },
   };
 }
+export { session as createMysqlCadastroTransaction };
 export function createMysqlCadastroRepository(db: Database): CadastroRepository {
   return {
     find: (resource, id, empresaId) => db.withConnection(c => session(c).find(resource, id, empresaId)),

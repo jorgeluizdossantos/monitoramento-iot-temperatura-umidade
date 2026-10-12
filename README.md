@@ -3,10 +3,10 @@
 Portfólio de Desenvolvimento de Sistemas do SENAI, voltado a projetos elétricos
 e automação industrial. Implementação gradual, com documentação didática.
 
-**Fase 3 concluída; testes locais e CI aprovados.** Node.js 22, Express, TypeScript
+**Fases 1–3 concluídas; Fase 4 implementada e testada localmente, com validação física pendente.** Node.js 22, Express, TypeScript
 estrito e MySQL sem ORM. A API oferece autenticação e cadastros de empresas,
 unidades, setores, ambientes, usuários e dispositivos, com auditoria.
-Ingestão MQTT, SSE e frontend pertencem às fases seguintes.
+Ingestão MQTT e adoção de dispositivos estão implementadas. SSE e frontend pertencem às fases seguintes.
 
 ## Documentação vigente
 
@@ -18,7 +18,7 @@ Ingestão MQTT, SSE e frontend pertencem às fases seguintes.
 
 O plano STMA de 12/10/2026 substitui o plano inicial. O backend recebe MQTT,
 persiste no MySQL e transmite eventos autenticados via SSE ao navegador.
-A troca de broker será configurável no adaptador de ingestão da Fase 4.
+A troca de broker é configurável por URL, credenciais e CA no adaptador de ingestão.
 Regras de negócio usam interfaces de repositório para permitir Prisma futuramente.
 
 ## Executar a base do backend
@@ -125,3 +125,9 @@ A publicação em wxlv7h ainda depende da URL e do acesso de colaborador confirm
 Próxima etapa, após aceite: **Fase 4 — ingestão MQTT**.
 Frontend somente após terminar o backend, conforme orientação do proprietário.
 Licença [MIT](LICENSE).
+
+## Ingestão MQTT — Fase 4
+
+Consulte [o roteiro HiveMQ](docs/roteiro-hivemq-fase4.md) e a seção 12 do roteiro do backend. MQTT permanece desabilitado por padrão; configure o arquivo backend/.env antes de habilitá-lo. O comando mqtt:check verifica conexão e assinatura; mqtt:publish permite uma publicação controlada. O teste ponta a ponta usa dois brokers locais de compose.mqtt.yaml e MySQL local.
+
+Próximo passo: identificar o broker da conta HiveMQ e validar o ESP32 físico. O firmware fornecido usa o broker público, diferente do broker da conta. Fases 5–7 e frontend não iniciados.

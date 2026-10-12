@@ -6,7 +6,7 @@ export type Fields = Record<string, unknown>;
 export interface Cadastro extends Fields { id: number; ativo: boolean; empresa_id?: number | null }
 export interface Page { pagina: number; tamanho: number; incluir_inativos: boolean }
 export interface PageResult { dados: Cadastro[]; pagina: number; tamanho: number; total: number }
-export interface Audit { empresaId: number | null; usuarioId: number | null; acao: string; entidade: Resource; entidadeId: number; antes: Fields | null; depois: Fields; ip: string | null }
+export interface Audit { empresaId: number | null; usuarioId: number | null; acao: string; entidade: Resource | 'dispositivo_pendente'; entidadeId: number; antes: Fields | null; depois: Fields; ip: string | null }
 export interface WriteContext { actor: Principal; ip: string | null }
 
 export interface CadastroReader {
