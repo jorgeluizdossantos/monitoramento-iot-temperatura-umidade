@@ -241,3 +241,5 @@ A publicação adicional em wxlv7h aguarda confirmação do destino/acesso.
 - [ ] Aceite e tag de conclusão da Fase 4.
 
 Sem timestamp válido, usar recebimento; não prometer deduplicação nesse caso. Próximo passo: seguir docs/roteiro-hivemq-fase4.md e concluir a validação física. Fases 5–7 permanecem não iniciadas.
+
+Evidência: commit 4c668dc, 75 testes locais aprovados e CI remoto aprovado: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38320360868. Sem tag de encerramento enquanto a validação física estiver pendente.

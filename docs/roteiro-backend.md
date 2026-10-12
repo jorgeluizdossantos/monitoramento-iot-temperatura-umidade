@@ -756,6 +756,6 @@ Pendente para concluir a fase: confirmar modalidade/endpoint do HiveMQ, ajustar 
 
 As Fases 5–7 e o frontend permanecem não iniciados. A tag de conclusão da Fase 4 depende dessa validação e do aceite. A publicação no segundo repositório depende de URL e acesso.
 
-Validação local executada: ESLint, TypeScript e build aprovados; 36 testes unitários/HTTP, 31 de integração MySQL e 8 de integração MQTT aprovados (75 no total). A execução remota do CI será registrada após publicação.
+Validação local executada: ESLint, TypeScript e build aprovados; 36 testes unitários/HTTP, 31 de integração MySQL e 8 de integração MQTT aprovados (75 no total). CI remoto aprovado no commit 4c668dc: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38320360868. A repetição dos testes afetados pelo formato de porta também foi aprovada.
 
 O proprietário confirmou broker público broker.hivemq.com e payload identificado compatível sem timestamp, QoS 0. O firmware colado difere do tráfego observado; localização do .ino atual e modalidade do broker da conta permanecem pendentes. Formatos Porta Aberta/Porta Fechada foram incorporados ao contrato e aos testes.
