@@ -3,7 +3,7 @@
 Portfólio de Desenvolvimento de Sistemas do SENAI, voltado a projetos elétricos
 e automação industrial. Implementação gradual, com documentação didática.
 
-**Fase 2 do backend STMA implementada; validação local aprovada.** Node.js 22,
+**Fase 2 do backend STMA concluída; testes locais e CI aprovados.** Node.js 22,
 Express, TypeScript estrito e MySQL sem ORM. A API oferece `GET /health` e
 login, consulta de sessão e logout em `/api/v1/auth`. Cadastros, ingestão MQTT,
 SSE e frontend pertencem às fases seguintes.

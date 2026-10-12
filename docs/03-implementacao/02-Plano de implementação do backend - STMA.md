@@ -8,7 +8,7 @@
 >
 > **Fase 1 concluída:** base MVC, configuração local/Aiven, schema local e Aiven,
 > health, lint, testes e CI aprovados. Evidência: commit ea1ea4c, tag backend-fase-1,
-> execução GitHub Actions 38311559868. Fase 2 implementada e validada localmente; CI em validação. Fases 3–7 não iniciadas.
+> execução GitHub Actions 38311559868. Fase 2 concluída: commit 7d664fe, tag backend-fase-2, CI 38314809772 aprovado. Fases 3–7 não iniciadas.
 
 ## 1. Resumo
 
@@ -68,7 +68,7 @@ As fases seguem a dependência dos requisitos: sem login não há escopo por emp
 | Fase | Entrega | Requisitos | Critério de aceite | Status |
 | --- | --- | --- | --- | --- |
 | 1. Base do projeto | Repositório TypeScript, Docker Compose com MySQL 8, `stma_schema.sql` aplicado, repositórios sem ORM e conexão local/Aiven por .env, configuração por variáveis de ambiente, lint, CI | RNF006, RNF008 | `GET /health` responde 200 e testa o banco; o CI roda os testes contra um MySQL real | [x] Concluída — local, Aiven e CI aprovados |
-| 2. Autenticação e perfis | Login, logout, sessão por token, middleware que injeta `empresa_id` e perfil, guarda por perfil | RF001, RF015, RN001, RN007 | Senha errada dá 401; usuário da empresa A não lê nada da empresa B (teste automatizado); leitor não escreve | Implementada — testes locais aprovados; CI em validação |
+| 2. Autenticação e perfis | Login, logout, sessão por token, middleware que injeta `empresa_id` e perfil, guarda por perfil | RF001, RF015, RN001, RN007 | Senha errada dá 401; usuário da empresa A não lê nada da empresa B (teste automatizado); leitor não escreve | [x] Concluída — 26 testes locais e CI aprovados |
 | 3. Cadastros | CRUD de empresa, unidade, setor, ambiente, usuário e dispositivo, com desativação lógica e auditoria | RF002 a RF007, RN002 a RN004 | Criar filho com pai de outra empresa é recusado pelo banco e pela API; `DELETE` só marca `ativo = 0` | Não iniciada |
 | 4. Ingestão MQTT | Assinante dos tópicos, validação do payload, gravação idempotente, última leitura no dispositivo, fila de dispositivos pendentes | RF008, RF014, RNF005 | Leitura publicada aparece no banco; a mesma leitura reenviada não duplica; ID desconhecido vai para `dispositivo_pendente` | Não iniciada |
 | 5. Leituras, painel e alertas | Endpoints do painel, histórico paginado, série por hora, CSV, alertas como episódios, reconhecimento de alerta | RF009 a RF013, RF016, RN005 | Histórico de 100.000 registros em menos de 3 s (RNF007); alerta abre ao sair da faixa e fecha ao voltar | Não iniciada |
@@ -190,6 +190,22 @@ O ambiente de desenvolvimento sobe com Docker Compose (MySQL 8 e Mosquitto). Em 
 - [x] Lint, typecheck, build, 6 testes HTTP/configuração e 3 testes de integração.
 - [x] CI com MySQL real aprovado: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38311559868
 - [x] Roteiro didático entregue em docs/roteiro-backend.md; commit ea1ea4c e tag backend-fase-1.
+
+### Fase 2 — concluída
+
+- [x] Login, consulta da sessão e logout em /api/v1/auth.
+- [x] Senhas Argon2id; token aleatório no cookie e somente SHA-256 no banco.
+- [x] Cookie HttpOnly/Secure/SameSite=Lax, expiração e revogação persistidas.
+- [x] Escopo/perfil consultados no banco; guardas sem privilégio implícito para superadmin.
+- [x] Limites de login por IP/e-mail e validação de origem/JSON.
+- [x] Testes de 401/403/404, expiração, desativação, rotação e isolamento.
+- [x] Lint, typecheck, build e 26 testes aprovados: 18 sem banco e 8 com MySQL real.
+- [x] CI aprovado: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38314809772
+- [x] Roteiro atualizado, commit 7d664fe e tag backend-fase-2.
+
+Isolamento validado com rota exclusiva de teste; os cadastros reais receberão
+o filtro obrigatório por empresa e testes próprios na Fase 3. Não foram
+criados usuários no Aiven nem carregado o seed demo.
 
 **Falta:** Fases 3–7 do backend, incluindo cadastros, ingestão,
 leituras/alertas, rotinas e implantação. O frontend permanece não iniciado.

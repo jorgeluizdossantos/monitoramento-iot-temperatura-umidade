@@ -1,7 +1,7 @@
 # Roteiro didático do backend STMA
 
 Início: 12/10/2026. Fase 1 concluída; **Fase 2 — Autenticação e perfis**
-implementada e validada localmente. Registro da Fase 2 na seção 10.
+concluída com testes locais e CI aprovados. Registro na seção 10.
 Este roteiro acompanha a implementação real; fases futuras serão acrescentadas
 somente quando executadas. O roteiro do frontend será criado ao iniciar o frontend.
 
@@ -403,7 +403,7 @@ Invoke-RestMethod http://localhost:3000/api/v1/auth/logout -Method Post -Content
 
 - Local: lint, typecheck, build e 26 testes aprovados (18 sem banco, 8 MySQL).
 - Dependências: instalação reportou zero vulnerabilidades.
-- GitHub: publicação e CI da Fase 2 em validação; registro será atualizado após resultado.
+- GitHub: commit 7d664fe, tag backend-fase-2; CI aprovado: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38314809772
 - Aiven: schema preservado, sem fixtures ou usuários criados nesta fase.
 - Pendente: Fases 3–7, configuração operacional de produção e frontend.
 - Próximo passo após aceite: Fase 3, cadastros com escopo, desativação lógica
