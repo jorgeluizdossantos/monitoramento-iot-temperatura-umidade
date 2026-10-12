@@ -5,6 +5,8 @@ import { createLogger } from './shared/logger';
 import { createApp } from './app';
 import { createAuthService } from './modules/auth/auth.service';
 import { createMysqlAuthRepository } from './modules/auth/mysql-auth.repository';
+import { createMysqlCadastroRepository } from './modules/cadastros/mysql-cadastro.repository';
+import { createCadastroService } from './modules/cadastros/cadastro.service';
 
 async function main() {
   const env = loadEnvironment();
@@ -14,7 +16,8 @@ async function main() {
   try { await healthRepository.ping(); }
   catch { await database.close(); throw new Error('Banco indisponível; confira o perfil e a conexão.'); }
   const authService = await createAuthService(createMysqlAuthRepository(database), env.SESSION_TTL_HOURS);
-  const server = createApp({ healthRepository, logger, auth: { service: authService, env } }).listen(env.PORT, () => {
+  const cadastros = createCadastroService(createMysqlCadastroRepository(database));
+  const server = createApp({ healthRepository, logger, auth: { service: authService, env }, cadastros }).listen(env.PORT, () => {
     logger.info({ port: env.PORT, databaseTarget: env.DB_TARGET }, 'Backend STMA iniciado');
   });
   let stopping = false;

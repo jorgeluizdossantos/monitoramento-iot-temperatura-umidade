@@ -14,8 +14,8 @@ export function createMysqlAuthRepository(db: Database): AuthRepository {
       await c.beginTransaction();
       try {
         // Revalida o usuário antes de persistir a sessão e mantém login/rotação atômicos.
-        const [rows] = await c.execute<RowDataPacket[]>(`SELECT u.id FROM usuario u LEFT JOIN empresa e ON e.id=u.empresa_id WHERE u.id=? AND ${active} FOR UPDATE`, [session.usuarioId]);
-        if (!rows.length) { await c.rollback(); return false; }
+        const [rows] = await c.execute<RowDataPacket[]>(`SELECT u.id,u.senha_hash FROM usuario u LEFT JOIN empresa e ON e.id=u.empresa_id WHERE u.id=? AND ${active} FOR UPDATE`, [session.usuarioId]);
+        if (!rows.length || rows[0].senha_hash !== session.passwordSnapshot) { await c.rollback(); return false; }
         await c.execute('INSERT INTO sessao (usuario_id,token_hash,expira_em,ip,user_agent) VALUES (?,?,?,?,?)', [session.usuarioId, session.tokenHash, session.expiresAt, session.ip, session.userAgent]);
         await c.execute('UPDATE usuario SET ultimo_login_em=UTC_TIMESTAMP(3) WHERE id=?', [session.usuarioId]);
         if (session.previousHash) await c.execute('UPDATE sessao SET revogada_em=COALESCE(revogada_em,UTC_TIMESTAMP(3)) WHERE token_hash=?', [session.previousHash]);

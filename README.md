@@ -3,10 +3,10 @@
 Portfólio de Desenvolvimento de Sistemas do SENAI, voltado a projetos elétricos
 e automação industrial. Implementação gradual, com documentação didática.
 
-**Fase 2 do backend STMA concluída; testes locais e CI aprovados.** Node.js 22,
-Express, TypeScript estrito e MySQL sem ORM. A API oferece `GET /health` e
-login, consulta de sessão e logout em `/api/v1/auth`. Cadastros, ingestão MQTT,
-SSE e frontend pertencem às fases seguintes.
+**Fase 3 implementada, em validação final.** Node.js 22, Express, TypeScript
+estrito e MySQL sem ORM. A API oferece autenticação e cadastros de empresas,
+unidades, setores, ambientes, usuários e dispositivos, com auditoria.
+Ingestão MQTT, SSE e frontend pertencem às fases seguintes.
 
 ## Documentação vigente
 
@@ -55,7 +55,7 @@ Local: `127.0.0.1:13308`, banco `stma_db`, volume isolado do setup anterior.
 Aiven: hostname e porta fornecidos pelo serviço, credenciais próprias e CA em
 `DB_AIVEN_CA_FILE`. TLS e verificação de identidade são obrigatórios no Aiven.
 Certificados e arquivos `.env` não são versionados. Não há senha pública do
-backend novo nem seed de usuários nesta fase.
+backend novo nem seed de demonstração nesta fase.
 
 ## Verificação
 
@@ -74,9 +74,8 @@ npm --prefix backend run build
 O CI em `.github/workflows/backend.yml` executa esses checks com MySQL real.
 Testes de integração recusam Aiven. A base usa rollback; autenticação cria
 dados locais identificados por UUID e remove somente seus próprios registros.
-São 18 testes sem banco e 8 com MySQL real. Não há conta pública de acesso;
-os testes criam e removem os usuários necessários. O cadastro de usuários
-e o provisionamento do primeiro administrador serão tratados na Fase 3.
+Os testes criam e removem seus próprios usuários. A integração não deve ser
+executada contra Aiven. O roteiro descreve resultados e evidências por fase.
 
 ## Autenticação — Fase 2
 
@@ -91,6 +90,30 @@ senha Argon2id. Em HTTP local, configure `SESSION_COOKIE_SECURE=false` apenas
 em desenvolvimento; produção exige `true` e `PUBLIC_ORIGIN` HTTPS. A sessão
 expira em 8 horas, configurável. Consulte exemplos e decisões no roteiro.
 
+## Cadastros — Fase 3
+
+Todas as rotas abaixo usam `/api/v1`, sessão autenticada e JSON.
+
+| Recurso | Leitura | Escrita |
+|---|---|---|
+| /empresas | superadmin | superadmin; criação inclui primeiro administrador |
+| /unidades, /setores, /ambientes, /dispositivos | administrador, operador, leitor da empresa | administrador da empresa |
+| /usuarios | administrador da empresa | administrador da empresa |
+| /dispositivos/:id/manutencao | — | PATCH por administrador ou operador |
+
+Cada cadastro tem GET de lista e `/:id`, POST e PATCH `/:id`. PATCH com
+`ativo=false` desativa; DELETE `/:id` com JSON `{}` é um alias de desativação.
+Não há remoção física. Listas aceitam `pagina`, `tamanho` (máximo 500) e
+`incluir_inativos=true`. Dados e auditoria são gravados na mesma transação.
+
+Para o primeiro acesso, preencha `BOOTSTRAP_NAME`, `BOOTSTRAP_EMAIL` e
+`BOOTSTRAP_PASSWORD` (12–128 caracteres) apenas em `backend/.env`. Confira
+`DB_TARGET` e execute `npm --prefix backend run auth:bootstrap`. O comando
+cria um superadmin uma única vez, sem sobrescrever contas. Retire a senha de
+bootstrap do arquivo após o provisionamento. Faça login e crie uma empresa
+com o primeiro administrador conforme os exemplos do roteiro. Não há
+cadastro público nem senha padrão.
+
 ## Histórico e continuidade
 
 O setup inicial (`compose.yaml`, scripts da raiz e `docs/fase-0.md`) permanece
@@ -99,6 +122,6 @@ como histórico, com o banco `monitoramento_iot`. Para STMA use `compose.stma.ya
 
 Repositório: [jorgeluizdossantos/monitoramento-iot-temperatura-umidade](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade).
 A publicação em wxlv7h ainda depende da URL e do acesso de colaborador confirmados.
-Próxima etapa, após aceite: **Fase 3 — cadastros e auditoria**.
+Próxima etapa, após aceite: **Fase 4 — ingestão MQTT**.
 Frontend somente após terminar o backend, conforme orientação do proprietário.
 Licença [MIT](LICENSE).

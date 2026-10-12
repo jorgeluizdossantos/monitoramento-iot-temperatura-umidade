@@ -8,14 +8,17 @@ import type { Environment } from './config/env';
 import type { AuthService } from './modules/auth/auth.service';
 import { createAuthRouter } from './modules/auth/auth.routes';
 import { HttpError } from './shared/http-error';
+import type { CadastroService } from './modules/cadastros/cadastro.service';
+import { createCadastroRouter } from './modules/cadastros/cadastro.routes';
 
-export function createApp(dependencies: { healthRepository: HealthRepository; logger: Logger; auth?: { service: AuthService; env: Environment } }) {
+export function createApp(dependencies: { healthRepository: HealthRepository; logger: Logger; auth?: { service: AuthService; env: Environment }; cadastros?: CadastroService }) {
   const app = express();
   app.disable('x-powered-by');
   app.use(helmet());
   app.use(express.json({ limit: '32kb' }));
   app.get('/health', createHealthController(createHealthService(dependencies.healthRepository)));
   if (dependencies.auth) app.use('/api/v1/auth', createAuthRouter(dependencies.auth.service, dependencies.auth.env));
+  if (dependencies.cadastros && dependencies.auth) app.use('/api/v1', createCadastroRouter(dependencies.cadastros, dependencies.auth.service, dependencies.auth.env));
   app.use((_req, res) => { res.status(404).json({ erro: { codigo: 'NAO_ENCONTRADO', mensagem: 'Rota não encontrada.', campos: [] } }); });
   const handleError: ErrorRequestHandler = (error: unknown, req, res, _next) => {
     if (error instanceof HttpError) {

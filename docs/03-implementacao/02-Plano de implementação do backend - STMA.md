@@ -8,7 +8,7 @@
 >
 > **Fase 1 concluída:** base MVC, configuração local/Aiven, schema local e Aiven,
 > health, lint, testes e CI aprovados. Evidência: commit ea1ea4c, tag backend-fase-1,
-> execução GitHub Actions 38311559868. Fase 2 concluída: commit 7d664fe, tag backend-fase-2, CI 38314809772 aprovado. Fases 3–7 não iniciadas.
+> execução GitHub Actions 38311559868. Fase 2 concluída: commit 7d664fe, tag backend-fase-2, CI 38314809772 aprovado. Fase 3 implementada e validada localmente; CI em validação. Fases 4–7 não iniciadas.
 
 ## 1. Resumo
 
@@ -69,7 +69,7 @@ As fases seguem a dependência dos requisitos: sem login não há escopo por emp
 | --- | --- | --- | --- | --- |
 | 1. Base do projeto | Repositório TypeScript, Docker Compose com MySQL 8, `stma_schema.sql` aplicado, repositórios sem ORM e conexão local/Aiven por .env, configuração por variáveis de ambiente, lint, CI | RNF006, RNF008 | `GET /health` responde 200 e testa o banco; o CI roda os testes contra um MySQL real | [x] Concluída — local, Aiven e CI aprovados |
 | 2. Autenticação e perfis | Login, logout, sessão por token, middleware que injeta `empresa_id` e perfil, guarda por perfil | RF001, RF015, RN001, RN007 | Senha errada dá 401; usuário da empresa A não lê nada da empresa B (teste automatizado); leitor não escreve | [x] Concluída — 26 testes locais e CI aprovados |
-| 3. Cadastros | CRUD de empresa, unidade, setor, ambiente, usuário e dispositivo, com desativação lógica e auditoria | RF002 a RF007, RN002 a RN004 | Criar filho com pai de outra empresa é recusado pelo banco e pela API; `DELETE` só marca `ativo = 0` | Não iniciada |
+| 3. Cadastros | CRUD de empresa, unidade, setor, ambiente, usuário e dispositivo, com desativação lógica e auditoria | RF002 a RF007, RN002 a RN004 | Criar filho com pai de outra empresa é recusado pelo banco e pela API; `DELETE` só marca `ativo = 0` | Implementada — 45 testes locais aprovados; CI em validação |
 | 4. Ingestão MQTT | Assinante dos tópicos, validação do payload, gravação idempotente, última leitura no dispositivo, fila de dispositivos pendentes | RF008, RF014, RNF005 | Leitura publicada aparece no banco; a mesma leitura reenviada não duplica; ID desconhecido vai para `dispositivo_pendente` | Não iniciada |
 | 5. Leituras, painel e alertas | Endpoints do painel, histórico paginado, série por hora, CSV, alertas como episódios, reconhecimento de alerta | RF009 a RF013, RF016, RN005 | Histórico de 100.000 registros em menos de 3 s (RNF007); alerta abre ao sair da faixa e fecha ao voltar | Não iniciada |
 | 6. Rotinas agendadas | Resumo por hora, marcação de offline, expurgo em lotes, limpeza de sessões expiradas | RF014, RN006 | Reexecutar o resumo da mesma hora não altera o resultado; o expurgo apaga em lotes e preserva os alertas | Não iniciada |
@@ -207,7 +207,24 @@ Isolamento validado com rota exclusiva de teste; os cadastros reais receberão
 o filtro obrigatório por empresa e testes próprios na Fase 3. Não foram
 criados usuários no Aiven nem carregado o seed demo.
 
-**Falta:** Fases 3–7 do backend, incluindo cadastros, ingestão,
+### Fase 3 — implementação validada localmente
+
+- [x] Cadastros de empresa, unidade, setor, ambiente, usuário e dispositivo.
+- [x] Leitura/escrita com escopo e perfis; manutenção restrita para operador.
+- [x] FKs compostas e validação de pai/ancestrais na API.
+- [x] Paginação, exclusão lógica, reativação e validação de PATCH de faixas.
+- [x] Auditoria atômica, sem senha/hash/token; rollback em falha.
+- [x] Proteção concorrente do último administrador e revogação por troca de senha.
+- [x] Empresa e primeiro administrador criados na mesma transação.
+- [x] CLI de bootstrap; superadmin solicitado criado no MySQL local e Aiven.
+- [x] Login/me/logout/revogação verificados nos dois bancos; TLS confirmado no Aiven.
+- [x] Lint, typecheck, build e 45 testes locais aprovados (23 sem banco e 22 com MySQL).
+- [ ] Publicação etiquetada e CI da Fase 3 — em validação.
+
+Dispositivos pendentes/adoção pertencem à Fase 4. Não houve nova migração,
+seed demo, endpoint de telemetria ou implementação de frontend nesta etapa.
+
+**Falta:** Fases 4–7 do backend, incluindo ingestão,
 leituras/alertas, rotinas e implantação. O frontend permanece não iniciado.
-**Próximo passo após aceite:** Fase 3 — cadastros com isolamento, desativação lógica e auditoria. Ingestão MQTT continua na Fase 4.
+**Próximo passo após aceite:** Fase 4 — ingestão MQTT, validação, idempotência, persistência e configuração do broker. Esclarecer timestamps e adoção de dispositivos pendentes antes de implementar.
 A publicação adicional em wxlv7h aguarda confirmação do destino/acesso.

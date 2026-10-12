@@ -17,7 +17,7 @@ export async function createAuthService(repository: AuthRepository, ttlHours: nu
       if (!user || !matches) throw denied();
       const token = randomBytes(32).toString('hex');
       const expiresAt = new Date(Date.now() + ttlHours * 3600000);
-      const saved = await repository.createSession({ usuarioId: user.id, tokenHash: hashToken(token), expiresAt, ip: metadata.ip, userAgent: metadata.userAgent, previousHash: validToken(metadata.previousToken) ? hashToken(metadata.previousToken) : undefined });
+      const saved = await repository.createSession({ usuarioId: user.id, passwordSnapshot: user.senha_hash, tokenHash: hashToken(token), expiresAt, ip: metadata.ip, userAgent: metadata.userAgent, previousHash: validToken(metadata.previousToken) ? hashToken(metadata.previousToken) : undefined });
       if (!saved) throw denied();
       const principal: Principal = { id: user.id, empresa_id: user.empresa_id, nome: user.nome, email: user.email, perfil: user.perfil };
       return { token, expiresAt, principal };

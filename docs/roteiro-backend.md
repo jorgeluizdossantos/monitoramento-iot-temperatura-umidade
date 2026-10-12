@@ -1,7 +1,7 @@
 # Roteiro didático do backend STMA
 
-Início: 12/10/2026. Fase 1 concluída; **Fase 2 — Autenticação e perfis**
-concluída com testes locais e CI aprovados. Registro na seção 10.
+Início: 12/10/2026. Fases 1 e 2 concluídas. **Fase 3 — Cadastros e auditoria**
+implementada, em validação final. Registros nas seções 10 e 11.
 Este roteiro acompanha a implementação real; fases futuras serão acrescentadas
 somente quando executadas. O roteiro do frontend será criado ao iniciar o frontend.
 
@@ -414,3 +414,234 @@ Referências técnicas: [node-argon2](https://github.com/ranisalt/node-argon2),
 [express-rate-limit](https://github.com/express-rate-limit/express-rate-limit),
 [OWASP — sessões](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
 e [OWASP — CSRF](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html).
+
+## 11. Fase 3 — cadastros, exclusão lógica e auditoria
+
+### 11.1 Requisitos e decisões
+
+Esta etapa implementa RF002–RF007, RN002–RN004 e RN007. A hierarquia é
+empresa → unidade → setor → ambiente → dispositivo; usuário pertence à
+empresa. Mantivemos o schema definitivo, sem nova migração e sem ORM.
+
+O critério da Fase 3 menciona DELETE, enquanto a convenção usa PATCH com
+ativo=false. A API oferece ambos: PATCH é a operação principal e DELETE
+é apenas um alias de desativação, retornando o cadastro com ativo=false.
+Não executa SQL DELETE, não apaga filhos e não altera dados de telemetria.
+
+Superadmin pode administrar empresas e criar seu primeiro administrador.
+Para evitar uma empresa sem responsável, POST /empresas exige o objeto
+administrador e grava empresa, usuário e duas auditorias em uma transação.
+Administradores de empresa gerenciam seus próprios usuários; não podem criar
+superadmin nem transferir um usuário/dispositivo para outra empresa.
+
+Dispositivos pendentes e sua adoção permanecem na Fase 4: dependem da ingestão
+e da definição do vínculo de um ID ainda desconhecido. Não criamos endpoints
+que exponham a fila global sem uma regra de escopo. Modo demo e eh_demo
+continuam na Fase 7. O intervalo do dispositivo é configuração persistida;
+esta fase não envia comandos MQTT nem reprograma o firmware.
+
+### 11.2 Sequência de construção e arquitetura
+
+1. Conferimos campos, chaves compostas, CHECKs e limites do schema.
+2. Criamos validação por recurso, contratos de persistência e transação.
+3. Implementamos serviços de autorização, hierarquia e auditoria.
+4. Implementamos o adaptador mysql2 com SQL parametrizado.
+5. Montamos controllers e rotas autenticadas, reutilizando a proteção de
+   origem e exigência de JSON da Fase 2.
+6. Acrescentamos provisionamento CLI do primeiro superadmin.
+7. Exercitamos as rotas reais, transações e concorrência com MySQL local.
+
+| Arquivo em backend/src/ | Responsabilidade |
+|---|---|
+| modules/cadastros/cadastro.validation.ts | Schemas Zod, faixas, paginação e IDs |
+| modules/cadastros/cadastro.repository.ts | Contratos de leitura e unidade de trabalho transacional |
+| modules/cadastros/cadastro.service.ts | Autorização, regras de vínculo e gravação da auditoria |
+| modules/cadastros/mysql-cadastro.repository.ts | SQL e transações; adaptador substituível por Prisma |
+| modules/cadastros/cadastro.controller.ts | Entrada/saída HTTP e status |
+| modules/cadastros/cadastro.routes.ts | Rotas, sessão, perfis e proteção de escrita |
+| modules/cadastros/bootstrap.service.ts | Validar e hashear a senha do primeiro superadmin |
+| db/bootstrap.ts | Comando local de provisionamento, sem endpoint público |
+| shared/mutation-guard.ts | Origem permitida e Content-Type JSON |
+| modules/auth/auth.scope.ts | Regra de escopo independente do Express |
+
+O contrato `transaction(work)` fornece um `CadastroTransaction` ao serviço.
+Todas as operações do callback usam a mesma conexão. O serviço decide as
+regras, e o adaptador controla beginTransaction/commit/rollback. Uma futura
+implementação Prisma precisará preservar esta semântica, além das FKs e
+CHECKs; trocar o driver não deve remover garantias de integridade.
+
+Há seis recursos fixos; nomes de tabela/coluna vêm de listas internas.
+Nenhum identificador SQL é recebido do cliente. Valores são parametrizados;
+campos extras, inclusive empresa_id, senha_hash e valores de telemetria,
+são rejeitados na entrada. A projeção SQL de usuários não seleciona senha_hash.
+
+### 11.3 Como ocorre uma escrita segura
+
+1. A sessão fornece usuário, empresa e perfil. As rotas e o serviço verificam
+   permissões; a empresa de um cadastro não vem do JSON nem da query string.
+2. Zod valida o corpo. Uma senha nova é transformada em Argon2id antes de
+   iniciar a transação para não segurar travas durante o cálculo do hash.
+3. A transação trava a linha da empresa com SELECT FOR UPDATE. Isso serializa
+   mutações daquela empresa e impede desativar pais enquanto se cria um filho.
+4. O serviço revalida usuário ativo e perfil e busca o recurso com seu escopo.
+   Um ID de outra empresa produz 404, assim como um ID inexistente.
+5. Valida pai e ancestrais na mesma empresa. Cadastro ativo exige hierarquia
+   ativa. As FKs compostas ainda impedem vínculo cruzado se alguém ignorar a API.
+6. Para PATCH de faixas, junta o estado persistido com a alteração antes de
+   verificar mínimo/máximo. Um PATCH só do mínimo não pode superar o máximo atual.
+7. Grava o cadastro e uma auditoria com ator, IP, ação, antes e depois.
+8. Confirma a transação. Se a auditoria falhar, a alteração é desfeita.
+
+Essa trava por empresa simplifica a concorrência neste monólito de portfólio;
+ela limita o paralelismo de escritas de uma mesma empresa. Deadlock/timeout
+retorna 409 CONCORRENCIA para tentativa posterior, sem sucesso parcial.
+Não há promessa de desempenho para grande volume de alterações cadastrais.
+
+Senhas, hashes e tokens nunca aparecem na auditoria nem no JSON de usuários.
+Uma alteração de senha registra apenas senha_alterada=true junto ao estado
+público. Atualizar senha/e-mail ou desativar usuário revoga suas sessões.
+Login revalida o hash da senha dentro da transação: um login iniciado antes
+da troca não pode criar sessão depois dela usando a senha antiga.
+
+O último administrador ativo não pode ser desativado ou rebaixado. A checagem
+acontece sob a trava da empresa, inclusive quando duas alterações chegam
+juntas. Cadastre outro administrador antes de remover esse acesso.
+
+### 11.4 Rotas e respostas
+
+Prefixo comum: `/api/v1`. Todas as escritas exigem JSON e sessão válida.
+
+| Rotas | Quem pode |
+|---|---|
+| GET/POST /empresas; GET/PATCH/DELETE /empresas/:id | superadmin |
+| GET /unidades, /setores, /ambientes, /dispositivos; GET /recurso/:id | administrador, operador e leitor da própria empresa |
+| POST /unidades, /setores, /ambientes, /dispositivos; PATCH/DELETE /recurso/:id | administrador da própria empresa |
+| GET/POST /usuarios; GET/PATCH/DELETE /usuarios/:id | administrador da própria empresa |
+| PATCH /dispositivos/:id/manutencao | administrador ou operador; apenas em_manutencao |
+
+POST retorna 201 com Location e `{ dados: cadastro }`. GET de detalhe e
+PATCH/DELETE retornam 200 com o mesmo envelope. Listas retornam
+`{ dados: [], pagina: 1, tamanho: 20, total: 0 }`, ordenadas por ID, e aceitam
+pagina, tamanho (1–500) e incluir_inativos (`true`/`false`). Parâmetros
+desconhecidos são recusados, evitando filtros que pareçam funcionar sem efeito.
+
+O detalhe pode mostrar um registro inativo da própria empresa; a lista o
+oculta por padrão. Desativar um pai preserva os filhos e seus flags. Criar,
+mover ou reativar um filho ativo sob pai/ancestral inativo retorna 409.
+Não há cascata automática de flags: a interface futura deverá explicar a
+hierarquia inativa. Reativar empresa restaura a elegibilidade das sessões
+ainda não expiradas/revogadas, conforme a regra da Fase 2.
+
+Erros: 400 para validação, 401 sem sessão, 403 sem permissão/origem indevida,
+404 para vínculo/recurso não encontrado no escopo, 409 para duplicidade,
+hierarquia inativa, último administrador ou concorrência; 415 sem JSON.
+O erro de duplicidade não revela qual registro de outra empresa existe.
+
+### 11.5 Campos e exemplos de corpos
+
+Os exemplos abaixo são JSON para estudo; substitua nomes, IDs e credenciais.
+Não use as senhas de exemplos como credenciais reais.
+
+```json
+{
+  "nome": "Empresa de exemplo",
+  "cnpj": null,
+  "administrador": {
+    "nome": "Administrador da empresa",
+    "email": "admin@example.com",
+    "senha": "SUBSTITUA-POR-SENHA-PRIVADA"
+  }
+}
+```
+
+Esse é o corpo de POST /empresas por superadmin. Depois, faça login com o
+administrador criado para cadastrar a hierarquia:
+
+| POST | Corpo de exemplo |
+|---|---|
+| /unidades | `{"nome":"Matriz","endereco":null,"fuso_horario":"America/Bahia"}` |
+| /setores | `{"nome":"Produção","unidade_id":1}` |
+| /ambientes | `{"nome":"Sala elétrica","setor_id":1,"temp_min_ideal":18,"temp_max_ideal":28,"umid_max_ideal":70,"temp_tolerancia":2}` |
+| /dispositivos | `{"ambiente_id":1,"device_id":"esp32-sala-01","sensor":"DHT22","intervalo_leitura_seg":30,"offline_apos_seg":120}` |
+| /usuarios | `{"nome":"Operador","email":"operador@example.com","senha":"SUBSTITUA-POR-SENHA-PRIVADA","perfil":"operador"}` |
+
+Use os IDs realmente retornados pela API. Faixas são opcionais e aceitam
+null; temperaturas ficam entre -50 e 100 e umidades entre 0 e 100, com uma
+casa decimal. Tolerâncias: 0–99,9. Intervalo: 2–3600 segundos (padrão 30);
+offline: 10–86400 (padrão 120). Sensores: DHT11, DHT22, SHT31 ou OUTRO.
+device_id: 3–64 caracteres minúsculos, números, hífen e sublinhado.
+
+CNPJ aceita null ou o formato do CHECK do schema: 12 caracteres numéricos
+ou letras maiúsculas, seguidos de dois dígitos. Esta validação é de formato,
+não comprova existência nem situação cadastral. O fuso é validado com Intl;
+horários no banco continuam UTC. Campos omitidos mantêm os defaults do schema.
+
+Exemplos de alteração com a sessão PowerShell obtida na seção 10.5:
+
+```powershell
+# Substitua 1 pelo ID real retornado no seu cadastro.
+Invoke-RestMethod http://localhost:3000/api/v1/ambientes/1 -Method Patch -ContentType 'application/json' -Body '{"temp_max_ideal":29}' -WebSession $sessao
+Invoke-RestMethod http://localhost:3000/api/v1/dispositivos/1/manutencao -Method Patch -ContentType 'application/json' -Body '{"em_manutencao":true}' -WebSession $sessao
+Invoke-RestMethod http://localhost:3000/api/v1/unidades/1 -Method Delete -ContentType 'application/json' -Body '{}' -WebSession $sessao
+Invoke-RestMethod 'http://localhost:3000/api/v1/unidades?incluir_inativos=true' -WebSession $sessao
+Invoke-RestMethod http://localhost:3000/api/v1/unidades/1 -Method Patch -ContentType 'application/json' -Body '{"ativo":true}' -WebSession $sessao
+```
+
+### 11.6 Primeiro acesso: provisionar superadmin
+
+1. Instale o schema se o banco estiver vazio. Em banco já instalado, use
+   `db:check`; não reaplique a migração 001.
+2. Preencha BOOTSTRAP_NAME, BOOTSTRAP_EMAIL e BOOTSTRAP_PASSWORD somente em
+   backend/.env. Senha: 12–128 caracteres. Arquivo ignorado pelo Git.
+3. Confira DB_TARGET e execute `npm --prefix backend run auth:bootstrap`.
+4. O comando cria a conta e a auditoria, com empresa_id NULL e perfil
+   superadmin. Imprime somente resultado, destino e ID; não imprime senha/hash.
+5. Para outro banco, altere DB_TARGET e repita. São contas independentes;
+   nenhuma sincronização de usuários ou senhas acontece entre bancos.
+6. Remova BOOTSTRAP_PASSWORD do arquivo após concluir nos destinos desejados.
+7. Inicie a API, faça login como superadmin e crie a empresa com seu primeiro
+   administrador. Use esse administrador para os demais cadastros.
+
+O comando usa trava nomeada por banco, transação e verificação de existência.
+Se já houver qualquer superadmin (mesmo inativo), recusa alterar/criar contas.
+Não é um comando de recuperação de senha. Não existe rota pública de bootstrap.
+Esse provisionamento administrativo é diferente do seed demo da Fase 7.
+
+### 11.7 Testes, evidências e pendências
+
+Execute os comandos da seção 7. As fixtures de cadastro usam UUID e são
+removidas por IDs de empresas criadas exclusivamente pelo teste, em ordem
+compatível com as FKs; o teste nunca limpa uma empresa preexistente.
+
+Cobertura da Fase 3: seis cadastros, CRUD lógico, consulta/alteração de IDs de
+outra empresa, FKs compostas, validação de faixas no PATCH, perfis, manutenção,
+tentativa de atribuir campos protegidos, paginação, duplicidade, rollback de
+empresa/admin e rollback quando auditoria falha. Testamos ainda revogação por
+senha e duas desativações concorrentes preservando o último administrador.
+Bootstrap é testado para validação/hash e recusa de conta já existente.
+
+A primeira execução encontrou comparação estrita entre número e texto no
+resultado de GET_LOCK, pois o pool preserva inteiros grandes como texto.
+A conversão foi corrigida e a suíte foi reexecutada; não registramos essa
+primeira execução como aprovada.
+
+| Validação desta fase | Resultado |
+|---|---|
+| ESLint, TypeScript e build | Aprovados |
+| Testes sem banco | 23 aprovados |
+| Integração MySQL real | 22 aprovados |
+| Superadmin solicitado | Criado no MySQL local e no Aiven |
+| Primeiro acesso local e Aiven | Login 200, me 200, logout 204 e sessão revogada 401 |
+| Conexão Aiven no primeiro acesso | TLS ativo |
+| Segredo temporário BOOTSTRAP_PASSWORD | Esvaziado no .env após validar os dois bancos |
+| GitHub/CI | Publicação e validação remota em andamento |
+
+O superadmin real foi criado somente após o proprietário informar nome,
+e-mail e destinos, e confirmar a senha no arquivo local. Não publicamos
+credenciais. Nenhuma empresa, fixture ou usuário demo foi criado no Aiven.
+O login verificado gerou uma sessão real que terminou revogada pelo logout.
+
+Falta: Fases 4–7 e frontend. Próxima etapa após aceite: ingestão MQTT com
+broker selecionável por configuração, validação, idempotência e persistência.
+Antes dela, esclarecer timestamps/duplicatas e o escopo de adoção dos IDs
+pendentes. Publicação em wxlv7h segue pendente de destino e acesso.

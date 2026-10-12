@@ -6,15 +6,12 @@ import { HttpError } from '../../shared/http-error';
 import { requireSession } from './auth.middleware';
 import { hashToken, type AuthService } from './auth.service';
 import { createAuthController } from './auth.controller';
+import { mutationGuard } from '../../shared/mutation-guard';
 
 export function createAuthRouter(service: AuthService, env: Environment) {
   const router = Router();
   router.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
-  const mutation: RequestHandler = (req, _res, next) => {
-    if (req.get('sec-fetch-site') === 'cross-site' || (req.get('origin') && req.get('origin') !== env.PUBLIC_ORIGIN)) return next(new HttpError(403, 'ORIGEM_INVALIDA', 'Origem não autorizada.'));
-    if (!req.is('application/json')) return next(new HttpError(415, 'TIPO_INVALIDO', 'Envie Content-Type application/json.'));
-    next();
-  };
+  const mutation = mutationGuard(env.PUBLIC_ORIGIN);
   const limited = { erro: { codigo: 'LIMITE_TENTATIVAS', mensagem: 'Muitas tentativas. Tente novamente mais tarde.', campos: [] } };
   const options = { windowMs: 15 * 60000, standardHeaders: 'draft-8' as const, legacyHeaders: false, message: limited };
   const ipLimit = rateLimit({ ...options, limit: env.AUTH_IP_LIMIT });
