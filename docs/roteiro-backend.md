@@ -1,6 +1,6 @@
 # Roteiro didático do backend STMA
 
-Início: 12/10/2026. Etapa atual: **Fase 1 — Base do projeto** do plano STMA.
+Início: 12/10/2026. Etapa entregue: **Fase 1 — Base do projeto**, concluída conforme o plano STMA.
 Este roteiro acompanha a implementação real; fases futuras serão acrescentadas
 somente quando executadas. O roteiro do frontend será criado ao iniciar o frontend.
 
@@ -223,7 +223,7 @@ de publicação, persistência, reconexão e falhas quando chegarmos a essa fase
 | Schema MySQL Aiven | 13 tabelas, view, UTC e TLS ativo confirmados |
 | HTTP compilado apontando ao Aiven | GET /health: 200, status ok, database up |
 | Auditoria npm após atualização das ferramentas | 0 vulnerabilidades reportadas |
-| CI no GitHub | Aguardando publicação e execução |
+| CI no GitHub | Aprovado — execução 38311559868, commit ea1ea4c |
 
 Problemas encontrados e resolvidos: nome da CA diferente do exemplo (ajustado
 para certs/ca.pem); primeira conexão Aiven expirou (timeout local configurado
@@ -238,7 +238,9 @@ informada para provisionamento; antes de expor a aplicação, separar usuário
 de migração e usuário de execução conforme o plano. Não há aplicação em produção
 publicada: o Aiven é o banco de destino validado, ainda sem dados de negócio.
 
-Feito: base MVC/contratos, local/Aiven e documentação. Falta para encerrar esta
-etapa: comprovar CI remoto e registrar o commit/tag. Próximo passo técnico após
-esse aceite: Fase 2, autenticação por sessão, argon2 e isolamento por empresa.
+Feito: base MVC/contratos, local/Aiven, documentação e CI remoto aprovado.
+Entrega: commit ea1ea4c, tag backend-fase-1. Fase 1 encerrada.
+Próximo passo: Fase 2, autenticação por sessão, argon2 e isolamento por empresa.
 Fases 2–7 do backend e todas as fases do frontend permanecem não iniciadas.
+
+Evidência CI: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38311559868

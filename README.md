@@ -3,7 +3,7 @@
 Portfólio de Desenvolvimento de Sistemas do SENAI, voltado a projetos elétricos
 e automação industrial. Implementação gradual, com documentação didática.
 
-**Etapa atual: Fase 1 do backend STMA, em validação final.** Node.js 22,
+**Fase 1 do backend STMA concluída.** Node.js 22,
 Express, TypeScript estrito e MySQL sem ORM. A API já oferece `GET /health`;
 login, cadastros, ingestão MQTT, SSE e frontend pertencem às fases seguintes.
 
@@ -81,6 +81,6 @@ como histórico, com o banco `monitoramento_iot`. Para STMA use `compose.stma.ya
 
 Repositório: [jorgeluizdossantos/monitoramento-iot-temperatura-umidade](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade).
 A publicação em wxlv7h ainda depende da URL e do acesso de colaborador confirmados.
-Próxima etapa, após o aceite da base: **Fase 2 — autenticação e perfis**.
+Próxima etapa: **Fase 2 — autenticação e perfis**.
 Frontend somente após terminar o backend, conforme orientação do proprietário.
 Licença [MIT](LICENSE).

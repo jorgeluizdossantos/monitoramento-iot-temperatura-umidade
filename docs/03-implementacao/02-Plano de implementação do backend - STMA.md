@@ -6,9 +6,9 @@
 > Schema confirmado: stma_schema.sql definitivo, 13 tabelas. Backend antes do
 > frontend; sem ORM nesta versão. Evidências em ../roteiro-backend.md.
 >
-> **Fase 1 em validação:** base MVC, configuração local/Aiven, schema local,
-> health, lint, testes e CI preparados. Aiven e resultado do CI serão registrados
-> após verificação. Fases 2–7 não iniciadas. Nenhum critério futuro foi antecipado.
+> **Fase 1 concluída:** base MVC, configuração local/Aiven, schema local e Aiven,
+> health, lint, testes e CI aprovados. Evidência: commit ea1ea4c, tag backend-fase-1,
+> execução GitHub Actions 38311559868. Fases 2–7 não iniciadas.
 
 ## 1. Resumo
 
@@ -67,7 +67,7 @@ As fases seguem a dependência dos requisitos: sem login não há escopo por emp
 
 | Fase | Entrega | Requisitos | Critério de aceite | Status |
 | --- | --- | --- | --- | --- |
-| 1. Base do projeto | Repositório TypeScript, Docker Compose com MySQL 8, `stma_schema.sql` aplicado, repositórios sem ORM e conexão local/Aiven por .env, configuração por variáveis de ambiente, lint, CI | RNF006, RNF008 | `GET /health` responde 200 e testa o banco; o CI roda os testes contra um MySQL real | Em validação final — local e Aiven aprovados; CI pendente |
+| 1. Base do projeto | Repositório TypeScript, Docker Compose com MySQL 8, `stma_schema.sql` aplicado, repositórios sem ORM e conexão local/Aiven por .env, configuração por variáveis de ambiente, lint, CI | RNF006, RNF008 | `GET /health` responde 200 e testa o banco; o CI roda os testes contra um MySQL real | [x] Concluída — local, Aiven e CI aprovados |
 | 2. Autenticação e perfis | Login, logout, sessão por token, middleware que injeta `empresa_id` e perfil, guarda por perfil | RF001, RF015, RN001, RN007 | Senha errada dá 401; usuário da empresa A não lê nada da empresa B (teste automatizado); leitor não escreve | Não iniciada |
 | 3. Cadastros | CRUD de empresa, unidade, setor, ambiente, usuário e dispositivo, com desativação lógica e auditoria | RF002 a RF007, RN002 a RN004 | Criar filho com pai de outra empresa é recusado pelo banco e pela API; `DELETE` só marca `ativo = 0` | Não iniciada |
 | 4. Ingestão MQTT | Assinante dos tópicos, validação do payload, gravação idempotente, última leitura no dispositivo, fila de dispositivos pendentes | RF008, RF014, RNF005 | Leitura publicada aparece no banco; a mesma leitura reenviada não duplica; ID desconhecido vai para `dispositivo_pendente` | Não iniciada |
@@ -179,3 +179,20 @@ O ambiente de desenvolvimento sobe com Docker Compose (MySQL 8 e Mosquitto). Em 
 | Firmware sem hora (sem NTP) | `medido_em` vira hora de recebimento; reenvio atrasado fica com a hora errada | Adicionar NTP ao firmware |
 | Intervalo de 2 s no firmware | Cerca de 1,8 GB por dispositivo por ano | Subir para 30 s (RN006) antes de ligar na nuvem |
 | Duas instâncias do serviço | Rotinas e ingestão duplicadas | `GET_LOCK` e assinatura compartilhada, como na seção 5.2 |
+
+## 7. Acompanhamento da execução — 12/10/2026
+
+- [x] Base TypeScript/Express com controllers, serviços e repositórios por contrato.
+- [x] Pool mysql2 sem ORM, UTC e consultas parametrizadas.
+- [x] Alternância local/Aiven por backend/.env, TLS com CA no Aiven.
+- [x] Schema definitivo aplicado no MySQL local e no serviço Aiven informado.
+- [x] GET /health validado localmente e no Aiven; erro controlado quando indisponível.
+- [x] Lint, typecheck, build, 6 testes HTTP/configuração e 3 testes de integração.
+- [x] CI com MySQL real aprovado: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38311559868
+- [x] Roteiro didático entregue em docs/roteiro-backend.md; commit ea1ea4c e tag backend-fase-1.
+
+**Falta:** Fases 2–7 do backend, incluindo autenticação, cadastros, ingestão,
+leituras/alertas, rotinas e implantação. O frontend permanece não iniciado.
+**Próximo passo:** Fase 2 — sessões, argon2, login/logout, escopo por empresa e
+perfis, com testes de 401/403/404 e isolamento. Ingestão MQTT continua na Fase 4.
+A publicação adicional em wxlv7h aguarda confirmação do destino/acesso.
