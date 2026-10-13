@@ -8,7 +8,7 @@
 >
 > **Fase 1 concluída:** base MVC, configuração local/Aiven, schema local e Aiven,
 > health, lint, testes e CI aprovados. Evidência: commit ea1ea4c, tag backend-fase-1,
-> execução GitHub Actions 38311559868. Fase 2 concluída: commit 7d664fe, tag backend-fase-2, CI 38314809772 aprovado. Fase 3 concluída: commit 28b071d, tag backend-fase-3, CI 38316891647 aprovado. Fase 4 concluída: testes locais/CI aprovados e ESP32 físico validado com HiveMQ Lab e MySQL local. Fase 5 iniciada por autorização do proprietário; Fases 6–7 não iniciadas.
+> execução GitHub Actions 38311559868. Fase 2 concluída: commit 7d664fe, tag backend-fase-2, CI 38314809772 aprovado. Fase 3 concluída: commit 28b071d, tag backend-fase-3, CI 38316891647 aprovado. Fase 4 concluída: testes locais/CI aprovados e ESP32 físico validado com HiveMQ Lab e MySQL local. Fase 5 concluída: 94 testes locais e CI 38445259187 aprovados; endpoints autenticados verificados na bancada. Fases 6–7 não iniciadas.
 
 ## 1. Resumo
 
@@ -71,7 +71,7 @@ As fases seguem a dependência dos requisitos: sem login não há escopo por emp
 | 2. Autenticação e perfis | Login, logout, sessão por token, middleware que injeta `empresa_id` e perfil, guarda por perfil | RF001, RF015, RN001, RN007 | Senha errada dá 401; usuário da empresa A não lê nada da empresa B (teste automatizado); leitor não escreve | [x] Concluída — 26 testes locais e CI aprovados |
 | 3. Cadastros | CRUD de empresa, unidade, setor, ambiente, usuário e dispositivo, com desativação lógica e auditoria | RF002 a RF007, RN002 a RN004 | Criar filho com pai de outra empresa é recusado pelo banco e pela API; `DELETE` só marca `ativo = 0` | [x] Concluída — 45 testes locais e CI aprovados |
 | 4. Ingestão MQTT | Assinante dos tópicos, validação do payload, gravação idempotente, última leitura no dispositivo, fila de dispositivos pendentes | RF008, RF014, RNF005 | Leitura publicada aparece no banco; a mesma leitura reenviada não duplica; ID desconhecido vai para `dispositivo_pendente` | [x] Concluída — 75 testes e CI aprovados; ESP32 → HiveMQ Lab → MySQL local comprovado |
-| 5. Leituras, painel e alertas | Endpoints do painel, histórico paginado, série por hora, CSV, alertas como episódios, reconhecimento de alerta | RF009 a RF013, RF016, RN005 | Histórico de 100.000 registros em menos de 3 s (RNF007); alerta abre ao sair da faixa e fecha ao voltar | Em validação final — histórico/CSV/série, episódios e SSE implementados; teste local de 100 mil registros aprovado |
+| 5. Leituras, painel e alertas | Endpoints do painel, histórico paginado, série por hora, CSV, alertas como episódios, reconhecimento de alerta | RF009 a RF013, RF016, RN005 | Histórico de 100.000 registros em menos de 3 s (RNF007); alerta abre ao sair da faixa e fecha ao voltar | [x] Concluída — 94 testes e CI aprovados; consulta de 100 mil leituras abaixo de 3 s |
 | 6. Rotinas agendadas | Resumo por hora, marcação de offline, expurgo em lotes, limpeza de sessões expiradas | RF014, RN006 | Reexecutar o resumo da mesma hora não altera o resultado; o expurgo apaga em lotes e preserva os alertas | Não iniciada |
 | 7. Implantação e demonstração | Deploy, TLS no MQTT, três usuários de banco, `stma_seed_demo.sql`, modo demonstração público, README | RF017, RNF002, RNF003, RNF008 | Leitura publicada no broker chega ao painel em até 5 s; um terceiro sobe o projeto seguindo o README | Não iniciada |
 
@@ -282,19 +282,21 @@ Evidências complementares: 75 testes locais e CI do código 4c668dc aprovados; 
 
 Próximo passo: aceite do proprietário para iniciar a Fase 5 (leituras, painel e alertas). Fases 5–7 e frontend continuam não iniciados. Publicação em wxlv7h permanece dependente de URL e acesso ao segundo repositório.
 
-## Fase 5 — primeira etapa de implementação
+## Fase 5 — concluída em 13/10/2026
 
 - [x] Revisar regras do schema definitivo e preservar arquitetura sem ORM.
 - [x] Implementar classificação pura de violação, tolerância inclusiva e maior severidade/pior valor.
 - [x] Implementar painel com hierarquia ativa e escopo da empresa autenticada.
 - [x] Implementar listagem paginada de alertas e reconhecimento idempotente, auditado e transacional.
-- [x] Confirmar limites de período e tratamento dos episódios diante de leituras atrasadas (questões enviadas ao proprietário).
+- [x] Confirmar limites de período e tratamento dos episódios diante de leituras atrasadas (confirmado pelo proprietário).
 - [x] Integrar abertura/atualização/fechamento de episódios na transação da ingestão.
 - [x] Implementar histórico paginado, CSV em fluxo e série por hora.
 - [x] Implementar SSE após commit, isolado por empresa e com revalidação de sessão.
 - [x] Medir consulta com 100.000 registros e confirmar tempo inferior a 3 segundos.
-- [ ] Concluir testes da fase, CI e tag backend-fase-5.
+- [x] Concluir testes da fase, CI e tag backend-fase-5.
 
 A versão da Fase 4 em execução não foi reiniciada com código parcial. Não foi criada rotina de resumo por hora, expurgo ou marcação agendada de offline (Fase 6), nem frontend.
 
 Decisões confirmadas: histórico/CSV até 31 dias; série por hora até 366 dias calculada das leituras brutas nesta fase; leituras atrasadas não alteram episódios atuais. Detalhes e evidências na seção 13 do roteiro-backend.md. Sem alteração do schema e sem antecipar rotinas da Fase 6.
+
+Encerramento: commit de código 3281f01, CI aprovado https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38445259187, tag backend-fase-5. Próximo passo, após aceite: Fase 6 (rotinas de resumo, offline, expurgo e sessões). Frontend e Fase 7 permanecem pendentes; segundo repositório depende de URL/acesso.

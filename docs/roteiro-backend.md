@@ -798,7 +798,7 @@ Evidências complementares: 75 testes locais e CI do código 4c668dc aprovados; 
 
 Próximo passo: aceite do proprietário para iniciar a Fase 5 (leituras, painel e alertas). Fases 5–7 e frontend continuam não iniciados. Publicação em wxlv7h permanece dependente de URL e acesso ao segundo repositório.
 
-## 13. Fase 5 — em implementação
+## 13. Fase 5 — concluída em 13/10/2026
 
 ### 13.1 Política de alertas
 
@@ -881,7 +881,7 @@ Os testes acrescentados cobrem limites inclusivos de severidade, episódios por 
 
 As tentativas iniciais apresentaram ECONNRESET e, na execução paralela, timeouts inclusive em testes antigos. A suíte passou a manter um servidor HTTP ativo e um cliente sem reaproveitamento de conexões; os arquivos de integração executam sequencialmente para não disputar o MySQL com a carga. Os testes internos de concorrência permanecem paralelos. A limpeza de 100 mil registros ganhou prazo próprio, sem relaxar o limite de 3 s da consulta. Na execução isolada corrigida, página 1: 127 ms; página 200: 1.248 ms, ambas com 500 leituras, abaixo dos 3 s exigidos. CSV completo aprovado. Esses números são evidências do ambiente local, não garantia universal de latência.
 
-Validação conjunta e CI desta entrega serão registrados após conclusão. Não há alteração de schema nesta fase. Próxima fase, somente após aceite: rotinas de resumo, offline, expurgo e limpeza de sessões. Frontend e demonstração pública permanecem fora desta entrega.
+Validação conjunta e CI desta entrega aprovados; evidências na seção 13.8. Não há alteração de schema nesta fase. Próxima fase, somente após aceite: rotinas de resumo, offline, expurgo e limpeza de sessões. Frontend e demonstração pública permanecem fora desta entrega.
 
 A execução conjunta corrigida passou: 42 testes MySQL e 43 testes sem banco. Testes são restritos a MySQL local. Falhas das tentativas anteriores não foram contabilizadas como aceite.
 
@@ -891,4 +891,8 @@ Lint, TypeScript e build aprovados. Total: 94 testes (43 sem banco, 42 MySQL e 9
 
 Backend recompilado e reiniciado na porta 3000 com MySQL local e HiveMQ local. A primeira troca de processo falhou porque a versão antiga continuava ocupando a porta; foi corrigida antes do aceite. Checagem autenticada da versão nova: login 200, painel 200 (1 ambiente), alertas 200, histórico 200 (4.562 leituras), série 200 (4 horas com dados), CSV 200 (4.563 linhas com cabeçalho), SSE 200 com aviso inicial, logout 204. Nenhum limite de alerta foi inventado para a bancada real; os episódios foram exercitados em fixtures próprias dos testes.
 
-CI e publicação da tag de conclusão serão registrados após a execução remota.
+CI aprovado no commit 3281f01: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38445259187. Tag de conclusão: backend-fase-5.
+
+Na última observação da bancada, o dispositivo estava offline e o total permaneceu em 4.562 leituras; não foi alegada nova coleta física nessa checagem. As APIs foram verificadas com o histórico existente. O backend da Fase 5 está ativo na porta 3000 e conectado ao HiveMQ local. Os testes MQTT da nova versão validaram ingestão e episódios com publicador controlado. O Aiven não foi alterado.
+
+Próximo passo após aceite: Fase 6. Não foram antecipados agendamentos, expurgo, frontend ou deploy de produção. A publicação em wxlv7h continua pendente de URL e acesso.
