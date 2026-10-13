@@ -14,8 +14,11 @@ import type { PendingService } from './modules/telemetria/pending.service';
 import { createPendingRouter } from './modules/telemetria/pending.routes';
 import type { MonitoringService } from './modules/telemetria/monitoring.service';
 import { createMonitoringRouter } from './modules/telemetria/monitoring.routes';
+import type { HistoryService } from './modules/telemetria/history.service';
+import { createHistoryRouter } from './modules/telemetria/history.routes';
+import { createStreamRouter, type StreamHub } from './modules/stream/stream';
 
-export function createApp(dependencies: { healthRepository: HealthRepository; logger: Logger; auth?: { service: AuthService; env: Environment }; cadastros?: CadastroService; pending?: PendingService; monitoring?: MonitoringService }) {
+export function createApp(dependencies: { healthRepository: HealthRepository; logger: Logger; auth?: { service: AuthService; env: Environment }; cadastros?: CadastroService; pending?: PendingService; monitoring?: MonitoringService; history?: HistoryService; stream?: StreamHub }) {
   const app = express();
   app.disable('x-powered-by');
   app.use(helmet());
@@ -25,6 +28,8 @@ export function createApp(dependencies: { healthRepository: HealthRepository; lo
   if (dependencies.cadastros && dependencies.auth) app.use('/api/v1', createCadastroRouter(dependencies.cadastros, dependencies.auth.service, dependencies.auth.env));
   if (dependencies.pending && dependencies.auth) app.use('/api/v1/dispositivos-pendentes', createPendingRouter(dependencies.pending, dependencies.auth.service, dependencies.auth.env.PUBLIC_ORIGIN));
   if (dependencies.monitoring && dependencies.auth) app.use('/api/v1', createMonitoringRouter(dependencies.monitoring, dependencies.auth.service, dependencies.auth.env.PUBLIC_ORIGIN));
+  if (dependencies.history && dependencies.auth) app.use('/api/v1', createHistoryRouter(dependencies.history, dependencies.auth.service));
+  if (dependencies.stream && dependencies.auth) app.use('/api/v1', createStreamRouter(dependencies.stream, dependencies.auth.service));
   app.use((_req, res) => { res.status(404).json({ erro: { codigo: 'NAO_ENCONTRADO', mensagem: 'Rota não encontrada.', campos: [] } }); });
   const handleError: ErrorRequestHandler = (error: unknown, req, res, _next) => {
     if (error instanceof HttpError) {

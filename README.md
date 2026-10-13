@@ -3,10 +3,10 @@
 Portfólio de Desenvolvimento de Sistemas do SENAI, voltado a projetos elétricos
 e automação industrial. Implementação gradual, com documentação didática.
 
-**Fases 1–4 concluídas; ESP32 físico validado com HiveMQ Lab e MySQL local.** Node.js 22, Express, TypeScript
+**Fases 1–4 concluídas; Fase 5 em validação final. ESP32 físico validado com HiveMQ Lab e MySQL local.** Node.js 22, Express, TypeScript
 estrito e MySQL sem ORM. A API oferece autenticação e cadastros de empresas,
 unidades, setores, ambientes, usuários e dispositivos, com auditoria.
-Ingestão MQTT e adoção de dispositivos estão implementadas. SSE e frontend pertencem às fases seguintes.
+Ingestão MQTT, adoção de dispositivos, histórico/CSV/série, episódios de alerta e SSE autenticado estão implementados. Frontend e rotinas agendadas pertencem às fases seguintes.
 
 ## Documentação vigente
 
@@ -131,3 +131,9 @@ Licença [MIT](LICENSE).
 Consulte [o roteiro HiveMQ](docs/roteiro-hivemq-fase4.md) e a seção 12 do roteiro do backend. MQTT permanece desabilitado por padrão; configure o arquivo backend/.env antes de habilitá-lo. O comando mqtt:check verifica conexão e assinatura; mqtt:publish permite uma publicação controlada. O teste ponta a ponta usa dois brokers locais de compose.mqtt.yaml e MySQL local.
 
 Firmware gravado na COM13 e apontado ao HiveMQ local; dispositivo adotado e leituras físicas persistidas. Consulte o encerramento da Fase 4 no roteiro. Próximo passo, após aceite: Fase 5. Fases 5–7 e frontend não iniciados.
+
+## Leituras, painel e alertas — Fase 5
+
+GET /api/v1/painel e /alertas exigem sessão vinculada à empresa. Histórico e CSV em /ambientes/:id/leituras e /ambientes/:id/leituras.csv aceitam de/ate com fuso até 31 dias; /ambientes/:id/serie aceita até 366 dias e calcula por hora das leituras brutas. POST /alertas/:id/reconhecer exige operador ou administrador. GET /stream envia avisos para reconsulta somente à empresa autenticada, após commit da ingestão. Consulte a seção 13 do roteiro para exemplos e limites.
+
+Os testes de integração executam um arquivo por vez para isolar a carga de 100 mil leituras. Não execute esses testes no Aiven. A Fase 6 (rotinas) depende do aceite da Fase 5; não há frontend nesta entrega.

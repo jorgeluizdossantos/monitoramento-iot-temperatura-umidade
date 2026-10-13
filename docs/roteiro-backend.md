@@ -804,7 +804,7 @@ Próximo passo: aceite do proprietário para iniciar a Fase 5 (leituras, painel 
 
 alert-policy.ts contém funções puras, sem SQL, HTTP ou MQTT. Valores iguais aos limites são normais. Violação até a tolerância é atenção; acima dela é crítica. Tolerância nula equivale a zero. Limite nulo não impõe restrição daquele lado. A comparação em décimos evita imprecisão binária nos limites decimais do schema. O episódio conserva o pior valor e não reduz a maior severidade já atingida.
 
-A integração dessa política à ingestão ainda está pendente. Foram solicitadas decisões sobre leituras atrasadas e limites de consultas; nenhuma decisão pendente foi tratada como aprovação.
+O proprietário confirmou os limites de 31 dias para histórico/CSV e 366 dias para a série por hora, calculada das leituras nesta fase. Também confirmou que leituras atrasadas não alteram episódios atuais. A política foi integrada à transação de ingestão.
 
 ### 13.2 Painel e reconhecimento
 
@@ -816,8 +816,79 @@ monitoring.repository.ts define o contrato; monitoring.service.ts aplica valida�
 
 IDs BIGINT de alertas são tratados como texto para não perder precisão. Uma empresa não consulta nem reconhece alertas alheios; o recurso alheio responde 404. Superadmin não ganha acesso implícito aos dados internos de uma empresa.
 
-### 13.3 O que falta
+### 13.3 Histórico, CSV e série por hora
 
-Histórico, CSV, série por hora, integração transacional dos episódios, SSE autenticado após commit, teste de desempenho com 100.000 leituras e CI completo. A rotina que materializa leitura_hora permanece na Fase 6. O servidor em execução mantém a Fase 4 até a validação desta entrega.
+`history.repository.ts` define o contrato de consulta; `history.service.ts` valida período e escopo; `mysql-history.repository.ts` usa SQL parametrizado; `history.routes.ts` entrega JSON ou CSV. Nenhuma regra de consulta conhece HiveMQ ou outro fornecedor MQTT.
 
-Validação desta primeira etapa: lint, TypeScript e build aprovados; 39 testes sem banco e 34 testes de integração MySQL aprovados. A Fase 5 permanece parcial e sem tag de conclusão.
+| Endpoint | Comportamento |
+|---|---|
+| GET /api/v1/ambientes/:id/leituras?de&ate&pagina&tamanho | Histórico paginado, até 31 dias, tamanho máximo 500; ordem por medido_em e id decrescentes |
+| GET /api/v1/ambientes/:id/leituras.csv?de&ate | Todas as leituras do período, até 31 dias, em lotes de 500 e ordem cronológica |
+| GET /api/v1/ambientes/:id/serie?de&ate | Média, mínimo, máximo e quantidade por hora UTC; até 366 dias |
+
+`de` e `ate` são obrigatórios em RFC3339 com fuso, por exemplo `2026-10-13T00:00:00Z`. O intervalo inclui `de` e exclui `ate`, permitindo juntar períodos sem repetir a leitura da fronteira. Período inválido ou excessivo recebe 400; histórico acima de 31 dias orienta usar `/serie`. A API não troca silenciosamente o formato de histórico pelo de série.
+
+O histórico é filtrado pelo ambiente registrado na leitura, preservando a rastreabilidade quando um dispositivo muda de ambiente. Ambiente de outra empresa recebe 404; cadastros desativados continuam consultáveis no histórico da própria empresa.
+
+O CSV contém data_hora_utc, temperatura_c, umidade_pct, dispositivo_id e leitura_id. Não inclui textos livres de cadastros. A exportação usa cursor por horário/ID e um ID máximo capturado no início para excluir novas inserções usuais. Isso não representa um snapshot transacional longo: uma futura rotina de exclusão concorrente pode remover linhas durante a exportação. O servidor libera a conexão SQL a cada lote, respeita a vazão da resposta HTTP e revalida a sessão por lote. Desconexão cancela a iteração; falha depois dos cabeçalhos interrompe a resposta, em vez de anexar JSON a um CSV.
+
+A série agrupa as leituras brutas por hora e não inventa pontos para horas sem dados. A resposta declara `fonte: leituras_brutas` e `granularidade: hora`. Horas inicial/final parciais representam somente o intervalo solicitado. O cálculo não grava em `leitura_hora`: materialização, retomada de 48 h e expurgo continuam na Fase 6.
+
+### 13.4 Episódios na transação da ingestão
+
+Depois de inserir uma leitura nova, a ingestão verifica se ela avança o estado atual do dispositivo. Somente nesse caso chama `persistAlertEpisodes`, na mesma conexão e transação. Temperatura e umidade são avaliadas separadamente.
+
+- Fora da faixa sem episódio aberto: cria o episódio vinculado à primeira leitura e ao ambiente.
+- Fora da faixa no mesmo sentido/ambiente: preserva o primeiro valor/limite e atualiza o extremo e a maior severidade.
+- Volta à faixa: registra o encerramento no horário da medição.
+- Passagem direta de acima para abaixo (ou vice-versa): encerra o anterior e abre outro no novo sentido.
+- Mudança de ambiente: a próxima leitura atual encerra o episódio antigo e avalia o novo ambiente, sem reescrever o vínculo histórico.
+- Retransmissão duplicada não cria outro episódio. Leitura atrasada entra no histórico sem mudar o episódio atual.
+
+A trava já existente da empresa/dispositivo serializa a decisão e evita abertura concorrente duplicada, sem alterar o schema. Falha posterior à criação do alerta faz rollback de leitura, alerta e última leitura. Alterar faixas no cadastro produz efeito na próxima medição atual; não reconstrói alertas antigos. O indicador de manutenção permanece informativo, sem regra adicional de supressão de alertas nesta fase.
+
+### 13.5 Atualização autenticada por SSE
+
+`GET /api/v1/stream` exige sessão de administrador, operador ou leitor vinculada a uma empresa. `createStreamHub` distribui somente avisos da mesma empresa; o navegador não se conecta ao broker.
+
+O evento `atualizar` contém `{"reconsultar":true}`. O cliente deve consultar novamente painel/alertas/histórico autorizados. O aviso é emitido depois do commit da ingestão, inclusive quando uma leitura histórica é acrescentada, e nunca após rollback ou duplicata. Falha de observador não transforma um commit bem-sucedido em falha MQTT.
+
+O stream envia um comentário de batimento a cada 25 segundos e revalida a sessão antes de eventos e batimentos. Revogação, expiração, mudança de empresa/perfil ou indisponibilidade da autenticação fecha a conexão. Clientes lentos são desconectados em vez de acumular fila ilimitada; há limite de 50 conexões por empresa e 500 no processo. Reconexão indica nova consulta ao painel, sem replay persistido de eventos. O desligamento da aplicação fecha streams antes de fechar o pool SQL.
+
+Este hub é local ao processo, coerente com o monólito definido no plano. Escala para múltiplas instâncias exige distribuição de eventos entre processos em evolução futura. Reconhecimento retorna seu estado pela própria API; os avisos de ingestão subsequentes também permitem atualizar outras telas.
+
+### 13.6 Exercitar as APIs em PowerShell
+
+Use uma conta da empresa; superadmin não possui acesso implícito ao painel. A conta de laboratório criada na Fase 4 tem sua credencial somente em `backend/.env.lab` local.
+
+```powershell
+$credencial = Get-Credential -UserName 'admin.lab@stma.invalid' -Message 'Administrador do laboratório STMA'
+$login = @{ email = $credencial.UserName; senha = $credencial.GetNetworkCredential().Password } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri 'http://localhost:3000/api/v1/auth/login' -ContentType 'application/json' -Body $login -SessionVariable stmaSessao
+$login = $null
+Invoke-RestMethod 'http://localhost:3000/api/v1/painel' -WebSession $stmaSessao
+# Ajuste ambiente e período conforme os dados existentes. O laboratório usa ambiente 25.
+Invoke-RestMethod 'http://localhost:3000/api/v1/ambientes/25/leituras?de=2026-10-13T00:00:00Z&ate=2026-10-14T00:00:00Z&tamanho=20' -WebSession $stmaSessao
+Invoke-WebRequest 'http://localhost:3000/api/v1/ambientes/25/leituras.csv?de=2026-10-13T00:00:00Z&ate=2026-10-14T00:00:00Z' -WebSession $stmaSessao -OutFile "$env:TEMP\stma-leituras.csv"
+Invoke-RestMethod -Method Post -Uri 'http://localhost:3000/api/v1/auth/logout' -ContentType 'application/json' -Body '{}' -WebSession $stmaSessao
+```
+
+O exemplo pressupõe cookie local sem Secure, já configurado em desenvolvimento; produção exige HTTPS e cookie Secure. Para testar alertas sem modificar faixas da bancada real, use a suíte automatizada, que cria e remove seus próprios ambientes.
+
+### 13.7 Validação e próximos passos
+
+Os testes acrescentados cobrem limites inclusivos de severidade, episódios por tipo/sentido, concorrência, atraso, mudança de ambiente, rollback, notificação posterior ao commit, consulta isolada, CSV, agregação por hora, períodos máximos e revogação SSE. O teste de carga cria 100.000 leituras em uma empresa exclusiva de teste no MySQL local, consulta via HTTP as páginas inicial e final e confere 100.001 linhas no CSV (cabeçalho mais leituras). Nenhum dado de teste é enviado ao Aiven.
+
+As tentativas iniciais apresentaram ECONNRESET e, na execução paralela, timeouts inclusive em testes antigos. A suíte passou a manter um servidor HTTP ativo e um cliente sem reaproveitamento de conexões; os arquivos de integração executam sequencialmente para não disputar o MySQL com a carga. Os testes internos de concorrência permanecem paralelos. A limpeza de 100 mil registros ganhou prazo próprio, sem relaxar o limite de 3 s da consulta. Na execução isolada corrigida, página 1: 127 ms; página 200: 1.248 ms, ambas com 500 leituras, abaixo dos 3 s exigidos. CSV completo aprovado. Esses números são evidências do ambiente local, não garantia universal de latência.
+
+Validação conjunta e CI desta entrega serão registrados após conclusão. Não há alteração de schema nesta fase. Próxima fase, somente após aceite: rotinas de resumo, offline, expurgo e limpeza de sessões. Frontend e demonstração pública permanecem fora desta entrega.
+
+A execução conjunta corrigida passou: 42 testes MySQL e 43 testes sem banco. Testes são restritos a MySQL local. Falhas das tentativas anteriores não foram contabilizadas como aceite.
+
+### 13.8 Validação final local — 13/10/2026
+
+Lint, TypeScript e build aprovados. Total: 94 testes (43 sem banco, 42 MySQL e 9 MQTT). O teste adicional com broker real abriu e fechou episódio e confirmou a notificação da empresa após commit.
+
+Backend recompilado e reiniciado na porta 3000 com MySQL local e HiveMQ local. A primeira troca de processo falhou porque a versão antiga continuava ocupando a porta; foi corrigida antes do aceite. Checagem autenticada da versão nova: login 200, painel 200 (1 ambiente), alertas 200, histórico 200 (4.562 leituras), série 200 (4 horas com dados), CSV 200 (4.563 linhas com cabeçalho), SSE 200 com aviso inicial, logout 204. Nenhum limite de alerta foi inventado para a bancada real; os episódios foram exercitados em fixtures próprias dos testes.
+
+CI e publicação da tag de conclusão serão registrados após a execução remota.

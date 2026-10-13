@@ -23,7 +23,8 @@ if (env.NODE_ENV !== 'test' || env.DB_TARGET !== 'local') throw new Error('MQTT 
 const db = createDatabase(env); const logger = createLogger('silent');
 const suffix = randomUUID(); const deviceId = `e2e-${suffix}`; const unknown = `new-${suffix}`;
 const config = parseMqttEnvironment({ MQTT_ENABLED: 'true', MQTT_CLIENT_ID: `consumer-${suffix}`, MQTT_TOPIC_PREFIX: `test-${suffix.slice(0, 20)}`, MQTT_RECONNECT_MS: '1000' }, false);
-const repo = createMysqlTelemetryRepository(db);
+const committedCompanies: number[] = [];
+const repo = createMysqlTelemetryRepository(db, companyId => { committedCompanies.push(companyId); });
 let failure: 'before' | 'after' | null = null; let attempts = 0; const results: string[] = [];
 const consume = createTelemetryService({ ingest: async message => {
   attempts++;
@@ -80,7 +81,7 @@ afterAll(async () => {
     }
   } finally {
     try {
-      for (const id of [device, adopted].filter(Boolean)) { await sql('DELETE FROM evento_porta WHERE dispositivo_id=?', [id]); await sql('DELETE FROM leitura_telemetria WHERE dispositivo_id=?', [id]); }
+      for (const id of [device, adopted].filter(Boolean)) { await sql('DELETE FROM alerta WHERE dispositivo_id=?', [id]); await sql('DELETE FROM evento_porta WHERE dispositivo_id=?', [id]); await sql('DELETE FROM leitura_telemetria WHERE dispositivo_id=?', [id]); }
       if (company) {
         await sql('DELETE FROM auditoria WHERE empresa_id=?', [company]);
         for (const table of ['dispositivo', 'ambiente', 'setor', 'unidade']) await sql(`DELETE FROM ${table} WHERE empresa_id=?`, [company]);
@@ -151,4 +152,22 @@ it('LWT do broker marca offline; porta grava somente mudança de estado', async 
     await until(async () => { const [[row]] = await db.withConnection(c => c.execute<RowDataPacket[]>('SELECT COUNT(*) AS total FROM evento_porta WHERE dispositivo_id=?', [device])); return Number(row.total) === 2; });
   } finally { await client.endAsync(true); }
   await until(async () => { const [[row]] = await db.withConnection(c => c.execute<RowDataPacket[]>('SELECT status_conexao FROM dispositivo WHERE id=?', [device])); return row.status_conexao === 'offline'; });
+});
+
+it('broker real abre e fecha episódio; commit notifica apenas a empresa do dispositivo', async () => {
+  await sql('UPDATE ambiente SET temp_max_ideal=21,temp_tolerancia=2 WHERE id=?', [room]);
+  const previous = committedCompanies.length;
+  await publish(payload(7000), deviceId, 'dados', false, secondPublisher);
+  await until(async () => {
+    const [rows] = await sql('SELECT id FROM alerta WHERE dispositivo_id=? AND encerrado_em IS NULL', [device]);
+    return (rows as RowDataPacket[]).length === 1;
+  });
+  const normal = JSON.parse(payload(8000)) as { temperatura: number };
+  normal.temperatura = 20;
+  await publish(JSON.stringify(normal), deviceId, 'dados', false, secondPublisher);
+  await until(async () => {
+    const [rows] = await sql('SELECT severidade,encerrado_em FROM alerta WHERE dispositivo_id=?', [device]);
+    return !!(rows as RowDataPacket[])[0]?.encerrado_em;
+  });
+  expect(committedCompanies.slice(previous)).toEqual([company, company]);
 });

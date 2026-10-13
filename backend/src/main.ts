@@ -14,6 +14,9 @@ import { createMysqlPendingRepository } from './modules/telemetria/mysql-pending
 import { createPendingService } from './modules/telemetria/pending.service';
 import { createMonitoringService } from './modules/telemetria/monitoring.service';
 import { createMysqlMonitoringRepository } from './modules/telemetria/mysql-monitoring.repository';
+import { createHistoryService } from './modules/telemetria/history.service';
+import { createMysqlHistoryRepository } from './modules/telemetria/mysql-history.repository';
+import { createStreamHub } from './modules/stream/stream';
 
 async function main() {
   const env = loadEnvironment();
@@ -26,14 +29,17 @@ async function main() {
   const cadastros = createCadastroService(createMysqlCadastroRepository(database));
   const pending = createPendingService(createMysqlPendingRepository(database));
   const monitoring = createMonitoringService(createMysqlMonitoringRepository(database));
-  const consumer = env.mqtt.MQTT_ENABLED ? startMqttConsumer(env.mqtt, createTelemetryService(createMysqlTelemetryRepository(database), env.mqtt, logger), logger) : undefined;
-  const server = createApp({ healthRepository, logger, auth: { service: authService, env }, cadastros, pending, monitoring }).listen(env.PORT, () => {
+  const history = createHistoryService(createMysqlHistoryRepository(database));
+  const stream = createStreamHub();
+  const consumer = env.mqtt.MQTT_ENABLED ? startMqttConsumer(env.mqtt, createTelemetryService(createMysqlTelemetryRepository(database, stream.publish), env.mqtt, logger), logger) : undefined;
+  const server = createApp({ healthRepository, logger, auth: { service: authService, env }, cadastros, pending, monitoring, history, stream }).listen(env.PORT, () => {
     logger.info({ port: env.PORT, databaseTarget: env.DB_TARGET }, 'Backend STMA iniciado');
   });
   let stopping = false;
   function stop() {
     if (stopping) return;
     stopping = true;
+    stream.close();
     const deadline = setTimeout(() => process.exit(1), 10000).unref();
     const httpClosed = new Promise<void>(resolve => server.close(() => resolve()));
     void Promise.all([httpClosed, consumer?.stop()]).then(() => database.close()).then(() => clearTimeout(deadline)).catch(() => { process.exitCode = 1; });
