@@ -94,7 +94,7 @@ Entre como superadmin, selecione o ambiente previamente cadastrado e adote o dis
 - [x] Fluxo com dois brokers de teste e MySQL local automatizado.
 - [x] Payload identificado fornecido pelo proprietário analisado; porta textual compatível.
 - [x] Modalidade Software/Lab e endpoint local confirmados; diagnóstico MQTT aprovado.
-- [ ] Arquivo do firmware efetivamente em uso localizado.
+- [x] Arquivo do firmware em uso localizado e cópia configurável preparada.
 - [ ] ESP32 e backend conectados ao mesmo destino.
 - [ ] Credenciais/TLS validados quando aplicáveis; destino do banco confirmado.
 - [ ] Dispositivo adotado no ambiente escolhido e leitura física persistida.
@@ -105,3 +105,9 @@ Entre como superadmin, selecione o ambiente previamente cadastrado e adote o dis
 O proprietário confirmou HiveMQ Software, nome Lively Honey, pacote Lab. Foi encontrado o contêiner local hivemq em execução, publicando MQTT em 1883 e Control Center em 8080. O diagnóstico mqtt:check, com MQTT_URL=mqtt://127.0.0.1:1883 somente no ambiente do comando, conectou e obteve as três assinaturas QoS 1. TLS não foi usado porque a conexão foi loopback local. O arquivo .env não foi alterado e o diagnóstico não gravou telemetria.
 
 A modalidade e o endpoint local estão confirmados. Ainda falta localizar o .ino efetivamente em uso, apontar ESP32 e backend ao mesmo broker e validar a leitura física no banco/ambiente escolhido. O ESP32 deve usar o IPv4 da máquina na mesma rede, porta 1883; localhost na placa apontaria para a própria placa. O computador e o Docker precisam permanecer ligados. Não foi criado serviço Cloud nem contratado plano.
+
+### Firmware localizado e cópia preparada
+
+O sketch atual mqtt_esp32_aula_pub foi lido no caminho indicado pelo proprietário. Ele gera o ID a partir do MAC e publica o JSON esperado em /dados; o comando de LED usa /comando. Foi criada a cópia firmware/mqtt_esp32_stma, preservando pinos, mensagens e comportamento. Wi-Fi e host/porta foram separados em config.h ignorado pelo Git, com modelo público config.example.h. Host local observado: 192.168.0.102:1883 para a placa; backend no mesmo PC usa 127.0.0.1:1883.
+
+O original foi preservado. Sem compilador arduino-cli disponível no PATH, não foi confirmada compilação desta cópia. Faltam selecionar placa/COM, verificar e carregar pela Arduino IDE, conferir mensagens no HiveMQ local e validar adoção/persistência no banco escolhido. Fase 4 continua aberta. Instruções em firmware/mqtt_esp32_stma/README.md.
