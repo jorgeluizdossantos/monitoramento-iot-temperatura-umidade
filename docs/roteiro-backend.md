@@ -779,3 +779,21 @@ O proprietário confirmou ESP32 Dev Module, COM13, USB e mesma rede Wi-Fi. Autor
 Foi localizado o arduino-cli incluído na Arduino IDE. A compilação com esp32:esp32:esp32 e as bibliotecas Arduino locais foi aprovada: 902380 bytes de programa (68%) e 47328 bytes de RAM (14%). A tentativa de upload falhou ao abrir COM13, com acesso negado/porta ocupada ou indisponível; não houve confirmação de gravação. Solicitado fechar Monitor Serial/Plotter e outros clientes seriais antes de tentar novamente.
 
 Próximo passo: liberar COM13, repetir upload e validar mensagens reais no HiveMQ local; somente depois provisionar a hierarquia autorizada e confirmar a persistência. Nenhum cadastro demonstrativo ou leitura física foi criado nesta tentativa. Fase 4 permanece aberta.
+
+## Encerramento técnico da Fase 4 — 12/10/2026 (America/Bahia)
+
+**Concluída e validada com o ESP32 físico.** Os registros anteriores de COM13 ocupada e validação pendente são históricos e foram resolvidos. A Fase 5 não foi iniciada.
+
+1. Após fechar a Arduino IDE, o upload na COM13 concluiu, verificou o hash e reiniciou a ESP32-D0WD, MAC correspondente ao device_id esp32-a8032a1e7214.
+2. A placa publicou no HiveMQ Software/Lab local, porta 1883. O consumidor identificou o dispositivo desconhecido e gravou a pendência no MySQL local.
+3. Com autorização do proprietário, foram criados Laboratório STMA (empresa 47), Bancada, Testes e Bancada ESP32 (ambiente 25), usando os serviços de cadastro e auditoria. O DHT11 foi adotado pelo serviço de adoção com o superadmin local (dispositivo 25).
+4. Foram confirmadas três leituras físicas de 28,6 °C e 66% às 00:26:06.224, 00:26:08.271 e 00:26:10.216 UTC de 13/10 (21:26 do dia 12 em America/Bahia). Timestamp foi atribuído no recebimento, conforme contrato aprovado.
+5. O processo normal do backend foi iniciado com MQTT_ENABLED=true, MQTT_URL=mqtt://127.0.0.1:1883 e DB_TARGET=local. O histórico passou de 9 para 12 registros em seis segundos; dispositivo online, pendência adotada e última leitura 28,7 °C/66%. GET /health retornou status ok e database up.
+
+O backend permanece em execução nesta sessão na porta 3000, ingerindo as mensagens da placa. Para iniciar após encerrar a sessão: na raiz do projeto, npm --prefix backend start. Não execute outra instância com o mesmo client ID. O HiveMQ e o MySQL precisam permanecer ligados.
+
+A credencial aleatória do administrador de demonstração admin.lab@stma.invalid está somente em backend/.env.lab, ignorado pelo Git. O superadmin existente foi preservado. Aiven não recebeu estes cadastros nem leituras. O script operacional de validação está em backend/.local, ignorado, e não deve ser reexecutado para duplicar a hierarquia.
+
+Evidências complementares: 75 testes locais e CI do código 4c668dc aprovados; firmware compilado (68% programa, 14% RAM). Esta validação física comprova fluxo local QoS 0 sem timestamp do produtor. Reentrega e deduplicação com timestamp foram comprovadas separadamente pelos testes QoS 1; TLS MQTT remoto não foi testado, pois o broker escolhido é local. Não houve teste de atuação física da porta nem comando remoto ao LED nesta sessão.
+
+Próximo passo: aceite do proprietário para iniciar a Fase 5 (leituras, painel e alertas). Fases 5–7 e frontend continuam não iniciados. Publicação em wxlv7h permanece dependente de URL e acesso ao segundo repositório.

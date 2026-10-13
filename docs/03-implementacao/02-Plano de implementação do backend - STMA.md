@@ -8,7 +8,7 @@
 >
 > **Fase 1 concluída:** base MVC, configuração local/Aiven, schema local e Aiven,
 > health, lint, testes e CI aprovados. Evidência: commit ea1ea4c, tag backend-fase-1,
-> execução GitHub Actions 38311559868. Fase 2 concluída: commit 7d664fe, tag backend-fase-2, CI 38314809772 aprovado. Fase 3 concluída: commit 28b071d, tag backend-fase-3, CI 38316891647 aprovado. Fase 4 em andamento: ingestão, adoção e testes locais implementados; decisões de timestamp e permissão confirmadas. Validação com HiveMQ/ESP32 pendente. Fases 5–7 não iniciadas.
+> execução GitHub Actions 38311559868. Fase 2 concluída: commit 7d664fe, tag backend-fase-2, CI 38314809772 aprovado. Fase 3 concluída: commit 28b071d, tag backend-fase-3, CI 38316891647 aprovado. Fase 4 concluída: testes locais/CI aprovados e ESP32 físico validado com HiveMQ Lab e MySQL local. Fases 5–7 não iniciadas.
 
 ## 1. Resumo
 
@@ -70,7 +70,7 @@ As fases seguem a dependência dos requisitos: sem login não há escopo por emp
 | 1. Base do projeto | Repositório TypeScript, Docker Compose com MySQL 8, `stma_schema.sql` aplicado, repositórios sem ORM e conexão local/Aiven por .env, configuração por variáveis de ambiente, lint, CI | RNF006, RNF008 | `GET /health` responde 200 e testa o banco; o CI roda os testes contra um MySQL real | [x] Concluída — local, Aiven e CI aprovados |
 | 2. Autenticação e perfis | Login, logout, sessão por token, middleware que injeta `empresa_id` e perfil, guarda por perfil | RF001, RF015, RN001, RN007 | Senha errada dá 401; usuário da empresa A não lê nada da empresa B (teste automatizado); leitor não escreve | [x] Concluída — 26 testes locais e CI aprovados |
 | 3. Cadastros | CRUD de empresa, unidade, setor, ambiente, usuário e dispositivo, com desativação lógica e auditoria | RF002 a RF007, RN002 a RN004 | Criar filho com pai de outra empresa é recusado pelo banco e pela API; `DELETE` só marca `ativo = 0` | [x] Concluída — 45 testes locais e CI aprovados |
-| 4. Ingestão MQTT | Assinante dos tópicos, validação do payload, gravação idempotente, última leitura no dispositivo, fila de dispositivos pendentes | RF008, RF014, RNF005 | Leitura publicada aparece no banco; a mesma leitura reenviada não duplica; ID desconhecido vai para `dispositivo_pendente` | Em andamento — fluxo MQTT/MySQL e troca de broker testados localmente; HiveMQ/ESP32 pendente |
+| 4. Ingestão MQTT | Assinante dos tópicos, validação do payload, gravação idempotente, última leitura no dispositivo, fila de dispositivos pendentes | RF008, RF014, RNF005 | Leitura publicada aparece no banco; a mesma leitura reenviada não duplica; ID desconhecido vai para `dispositivo_pendente` | [x] Concluída — 75 testes e CI aprovados; ESP32 → HiveMQ Lab → MySQL local comprovado |
 | 5. Leituras, painel e alertas | Endpoints do painel, histórico paginado, série por hora, CSV, alertas como episódios, reconhecimento de alerta | RF009 a RF013, RF016, RN005 | Histórico de 100.000 registros em menos de 3 s (RNF007); alerta abre ao sair da faixa e fecha ao voltar | Não iniciada |
 | 6. Rotinas agendadas | Resumo por hora, marcação de offline, expurgo em lotes, limpeza de sessões expiradas | RF014, RN006 | Reexecutar o resumo da mesma hora não altera o resultado; o expurgo apaga em lotes e preserva os alertas | Não iniciada |
 | 7. Implantação e demonstração | Deploy, TLS no MQTT, três usuários de banco, `stma_seed_demo.sql`, modo demonstração público, README | RF017, RNF002, RNF003, RNF008 | Leitura publicada no broker chega ao painel em até 5 s; um terceiro sobe o projeto seguindo o README | Não iniciada |
@@ -263,3 +263,21 @@ O proprietário confirmou ESP32 Dev Module, COM13, USB e mesma rede Wi-Fi. Autor
 Foi localizado o arduino-cli incluído na Arduino IDE. A compilação com esp32:esp32:esp32 e as bibliotecas Arduino locais foi aprovada: 902380 bytes de programa (68%) e 47328 bytes de RAM (14%). A tentativa de upload falhou ao abrir COM13, com acesso negado/porta ocupada ou indisponível; não houve confirmação de gravação. Solicitado fechar Monitor Serial/Plotter e outros clientes seriais antes de tentar novamente.
 
 Próximo passo: liberar COM13, repetir upload e validar mensagens reais no HiveMQ local; somente depois provisionar a hierarquia autorizada e confirmar a persistência. Nenhum cadastro demonstrativo ou leitura física foi criado nesta tentativa. Fase 4 permanece aberta.
+
+## Encerramento técnico da Fase 4 — 12/10/2026 (America/Bahia)
+
+**Concluída e validada com o ESP32 físico.** Os registros anteriores de COM13 ocupada e validação pendente são históricos e foram resolvidos. A Fase 5 não foi iniciada.
+
+1. Após fechar a Arduino IDE, o upload na COM13 concluiu, verificou o hash e reiniciou a ESP32-D0WD, MAC correspondente ao device_id esp32-a8032a1e7214.
+2. A placa publicou no HiveMQ Software/Lab local, porta 1883. O consumidor identificou o dispositivo desconhecido e gravou a pendência no MySQL local.
+3. Com autorização do proprietário, foram criados Laboratório STMA (empresa 47), Bancada, Testes e Bancada ESP32 (ambiente 25), usando os serviços de cadastro e auditoria. O DHT11 foi adotado pelo serviço de adoção com o superadmin local (dispositivo 25).
+4. Foram confirmadas três leituras físicas de 28,6 °C e 66% às 00:26:06.224, 00:26:08.271 e 00:26:10.216 UTC de 13/10 (21:26 do dia 12 em America/Bahia). Timestamp foi atribuído no recebimento, conforme contrato aprovado.
+5. O processo normal do backend foi iniciado com MQTT_ENABLED=true, MQTT_URL=mqtt://127.0.0.1:1883 e DB_TARGET=local. O histórico passou de 9 para 12 registros em seis segundos; dispositivo online, pendência adotada e última leitura 28,7 °C/66%. GET /health retornou status ok e database up.
+
+O backend permanece em execução nesta sessão na porta 3000, ingerindo as mensagens da placa. Para iniciar após encerrar a sessão: na raiz do projeto, npm --prefix backend start. Não execute outra instância com o mesmo client ID. O HiveMQ e o MySQL precisam permanecer ligados.
+
+A credencial aleatória do administrador de demonstração admin.lab@stma.invalid está somente em backend/.env.lab, ignorado pelo Git. O superadmin existente foi preservado. Aiven não recebeu estes cadastros nem leituras. O script operacional de validação está em backend/.local, ignorado, e não deve ser reexecutado para duplicar a hierarquia.
+
+Evidências complementares: 75 testes locais e CI do código 4c668dc aprovados; firmware compilado (68% programa, 14% RAM). Esta validação física comprova fluxo local QoS 0 sem timestamp do produtor. Reentrega e deduplicação com timestamp foram comprovadas separadamente pelos testes QoS 1; TLS MQTT remoto não foi testado, pois o broker escolhido é local. Não houve teste de atuação física da porta nem comando remoto ao LED nesta sessão.
+
+Próximo passo: aceite do proprietário para iniciar a Fase 5 (leituras, painel e alertas). Fases 5–7 e frontend continuam não iniciados. Publicação em wxlv7h permanece dependente de URL e acesso ao segundo repositório.

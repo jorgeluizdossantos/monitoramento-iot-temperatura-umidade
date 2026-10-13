@@ -18,3 +18,5 @@ Tópicos preservados por dispositivo: /dados, /temperatura, /umidade, /porta, /s
 Esta versão usa WiFiClient para laboratório local, sem TLS. Para Cloud/remoto, será necessária adaptação com TLS e certificado, não apenas troca de host. PubSubClient publica dados em QoS 0; o JSON não tem timestamp e o backend usa recebimento. Não há garantia de reentrega ou deduplicação do firmware atual. Os testes QoS 1 do backend usam um publicador simulado independente.
 
 Validação realizada: compilação aprovada para ESP32 Dev Module (esp32:esp32:esp32), programa 68% e RAM 14%. Upload na COM13 falhou ao abrir a porta com acesso negado. Fechar Monitor Serial/Plotter e outros programas seriais antes de repetir. Gravação e teste físico ainda pendentes.
+
+Atualização: após liberar COM13, upload concluído com hash verificado. JSON físico recebido no HiveMQ local e persistido no MySQL, dispositivo adotado no ambiente Bancada ESP32. Consulte o encerramento da Fase 4 em docs/roteiro-backend.md. A falha de porta acima é histórica e foi resolvida.
