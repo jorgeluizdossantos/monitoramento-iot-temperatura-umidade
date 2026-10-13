@@ -21,6 +21,7 @@ export function parseEnvironment(env: NodeJS.ProcessEnv) {
     PUBLIC_ORIGIN: z.string().url().default('http://localhost:3000'),
     AUTH_IP_LIMIT: positiveInteger(20, 1000),
     AUTH_EMAIL_LIMIT: positiveInteger(5, 100),
+    JOBS_ENABLED: z.enum(['true', 'false']).default('false').transform(v => v === 'true'),
   }).safeParse(env);
   if (!common.success) throw new Error(`Configuração inválida: ${common.error.issues.map(i => i.path.join('.')).join(', ')}`);
   const prefix = common.data.DB_TARGET === 'aiven' ? 'DB_AIVEN_' : 'DB_LOCAL_';

@@ -8,7 +8,7 @@
 >
 > **Fase 1 concluída:** base MVC, configuração local/Aiven, schema local e Aiven,
 > health, lint, testes e CI aprovados. Evidência: commit ea1ea4c, tag backend-fase-1,
-> execução GitHub Actions 38311559868. Fase 2 concluída: commit 7d664fe, tag backend-fase-2, CI 38314809772 aprovado. Fase 3 concluída: commit 28b071d, tag backend-fase-3, CI 38316891647 aprovado. Fase 4 concluída: testes locais/CI aprovados e ESP32 físico validado com HiveMQ Lab e MySQL local. Fase 5 concluída: 94 testes locais e CI 38445259187 aprovados; endpoints autenticados verificados na bancada. Fases 6–7 não iniciadas.
+> execução GitHub Actions 38311559868. Fase 2 concluída: commit 7d664fe, tag backend-fase-2, CI 38314809772 aprovado. Fase 3 concluída: commit 28b071d, tag backend-fase-3, CI 38316891647 aprovado. Fase 4 concluída: testes locais/CI aprovados e ESP32 físico validado com HiveMQ Lab e MySQL local. Fase 5 concluída: 94 testes locais e CI 38445259187 aprovados; endpoints autenticados verificados na bancada. Fase 6 em implementação e validação; Fase 7 não iniciada.
 
 ## 1. Resumo
 
@@ -72,7 +72,7 @@ As fases seguem a dependência dos requisitos: sem login não há escopo por emp
 | 3. Cadastros | CRUD de empresa, unidade, setor, ambiente, usuário e dispositivo, com desativação lógica e auditoria | RF002 a RF007, RN002 a RN004 | Criar filho com pai de outra empresa é recusado pelo banco e pela API; `DELETE` só marca `ativo = 0` | [x] Concluída — 45 testes locais e CI aprovados |
 | 4. Ingestão MQTT | Assinante dos tópicos, validação do payload, gravação idempotente, última leitura no dispositivo, fila de dispositivos pendentes | RF008, RF014, RNF005 | Leitura publicada aparece no banco; a mesma leitura reenviada não duplica; ID desconhecido vai para `dispositivo_pendente` | [x] Concluída — 75 testes e CI aprovados; ESP32 → HiveMQ Lab → MySQL local comprovado |
 | 5. Leituras, painel e alertas | Endpoints do painel, histórico paginado, série por hora, CSV, alertas como episódios, reconhecimento de alerta | RF009 a RF013, RF016, RN005 | Histórico de 100.000 registros em menos de 3 s (RNF007); alerta abre ao sair da faixa e fecha ao voltar | [x] Concluída — 94 testes e CI aprovados; consulta de 100 mil leituras abaixo de 3 s |
-| 6. Rotinas agendadas | Resumo por hora, marcação de offline, expurgo em lotes, limpeza de sessões expiradas | RF014, RN006 | Reexecutar o resumo da mesma hora não altera o resultado; o expurgo apaga em lotes e preserva os alertas | Não iniciada |
+| 6. Rotinas agendadas | Resumo por hora, marcação de offline, expurgo em lotes, limpeza de sessões expiradas | RF014, RN006 | Reexecutar o resumo da mesma hora não altera o resultado; o expurgo apaga em lotes e preserva os alertas | Em validação |
 | 7. Implantação e demonstração | Deploy, TLS no MQTT, três usuários de banco, `stma_seed_demo.sql`, modo demonstração público, README | RF017, RNF002, RNF003, RNF008 | Leitura publicada no broker chega ao painel em até 5 s; um terceiro sobe o projeto seguindo o README | Não iniciada |
 
 Cada fase fecha com seus testes passando e um commit etiquetado. A fase 5 só começa depois da 4, porque o alerta nasce na gravação da leitura.
@@ -300,3 +300,17 @@ A versão da Fase 4 em execução não foi reiniciada com código parcial. Não 
 Decisões confirmadas: histórico/CSV até 31 dias; série por hora até 366 dias calculada das leituras brutas nesta fase; leituras atrasadas não alteram episódios atuais. Detalhes e evidências na seção 13 do roteiro-backend.md. Sem alteração do schema e sem antecipar rotinas da Fase 6.
 
 Encerramento: commit de código 3281f01, CI aprovado https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38445259187, tag backend-fase-5. Próximo passo, após aceite: Fase 6 (rotinas de resumo, offline, expurgo e sessões). Frontend e Fase 7 permanecem pendentes; segundo repositório depende de URL/acesso.
+
+
+### Fase 6 — em implementação e validação (13/10/2026)
+
+- [x] Serviço de manutenção por contrato e adaptador mysql2, sem alteração do schema.
+- [x] Agendador node-cron configurável por JOBS_ENABLED; resumo de 48 h, offline por minuto e rotinas diárias.
+- [x] Expurgo em lotes de 10.000 com resumo e exclusões atômicos por hora; alertas preservados.
+- [x] Locks nomeados compartilhados entre resumo e expurgo; encerramento aguarda tarefas em andamento.
+- [x] Série combina leituras disponíveis e resumos de horas expurgadas sem duplicação.
+- [x] Sete testes MySQL iniciais aprovados, incluindo falha no segundo lote e preservação de 10.001 leituras.
+- [x] Regra conservadora implementada: série anterior à retenção exige início/fim em horas completas UTC; ajuste de preferência proposto ao proprietário.
+- [ ] Validação conjunta final, ativação local e CI/publicação etiquetada.
+
+Detalhamento didático: seção 14 do roteiro-backend.md. Agendamento diário às 03:00/03:30 America/Bahia; UTC no banco. O resumo horário recalcula 48 horas completas para reparar atrasos recentes e o expurgo recalcula a hora antes da exclusão. Fase 7 e frontend não iniciados.

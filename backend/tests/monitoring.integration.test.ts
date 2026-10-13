@@ -92,7 +92,7 @@ it('histórico, série e CSV respeitam período, paginação, UTC e escopo da em
  const response=await request(server).get(`${path}/leituras`).query({...query,tamanho:1,pagina:2}).agent(requestAgent).set('Cookie',cookie(tokens.reader));
  expect(response.status).toBe(200);expect(response.body.total).toBe(2);expect(response.body.dados).toHaveLength(1);expect(response.body.dados[0].medido_em).toBe('2026-01-01T00:00:00.000Z');
  const series=await request(server).get(`${path}/serie`).query(query).agent(requestAgent).set('Cookie',cookie(tokens.reader));
- expect(series.status).toBe(200);expect(series.body.fonte).toBe('leituras_brutas');expect(series.body.dados).toHaveLength(1);expect(Number(series.body.dados[0].temp_media)).toBe(21);
+ expect(series.status).toBe(200);expect(series.body.fonte).toBe('leituras_brutas_e_resumos');expect(series.body.dados).toHaveLength(1);expect(Number(series.body.dados[0].temp_media)).toBe(21);
  const csv=await request(server).get(`${path}/leituras.csv`).query(query).agent(requestAgent).set('Cookie',cookie(tokens.reader));
  expect(csv.status).toBe(200);expect(csv.text.split('\r\n').filter(Boolean)).toHaveLength(3);expect(csv.text).toContain('2026-01-01T00:00:00.000Z,20.0,50.0');
  for(const endpoint of ['leituras','serie','leituras.csv']){
@@ -110,12 +110,15 @@ it('100 mil leituras: páginas inicial/final abaixo de 3 s e CSV completo sem tr
  SELECT ?,?,20,50,TIMESTAMPADD(SECOND,a.n+10*b.n+100*c.n+1000*d.n+10000*e.n,'2026-01-02 00:00:00') FROM ${digits} a CROSS JOIN ${digits} b CROSS JOIN ${digits} c CROSS JOIN ${digits} d CROSS JOIN ${digits} e`,[device,room]);
  console.info('Carga inserida');
  const query={de:'2026-01-02T00:00:00Z',ate:'2026-01-04T00:00:00Z'};
+ const address=server.address();if(!address||typeof address==='string')throw new Error('Servidor de teste indisponível');
+ const base=`http://127.0.0.1:${address.port}/api/v1/ambientes/${room}`;
+ const headers={Cookie:cookie(tokens.reader),Connection:'close'};
  for(const pagina of [1,200]){
-  const start=performance.now();const response=await request(server).get(`/api/v1/ambientes/${room}/leituras`).query({...query,pagina,tamanho:500}).agent(requestAgent).set('Cookie',cookie(tokens.reader));const ms=performance.now()-start;
-  expect(response.status).toBe(200);expect(response.body.total).toBe(100000);expect(response.body.dados).toHaveLength(500);expect(ms).toBeLessThan(3000);
+  const start=performance.now();const response=await fetch(`${base}/leituras?${new URLSearchParams({...query,pagina:String(pagina),tamanho:'500'})}`,{headers,signal:AbortSignal.timeout(3000)});const body=await response.json();const ms=performance.now()-start;
+  expect(response.status).toBe(200);expect(body.total).toBe(100000);expect(body.dados).toHaveLength(500);expect(ms).toBeLessThan(3000);
   console.info(JSON.stringify({benchmark:'historico-http-100000',pagina,ms:Math.round(ms)}));
  }
  console.info('Iniciando CSV de carga');
- const csv=await request(server).get(`/api/v1/ambientes/${room}/leituras.csv`).query(query).agent(requestAgent).set('Cookie',cookie(tokens.reader));
- expect(csv.status).toBe(200);expect(csv.text.split('\r\n').filter(Boolean)).toHaveLength(100001);
+ const csv=await fetch(`${base}/leituras.csv?${new URLSearchParams(query)}`,{headers,signal:AbortSignal.timeout(60000)});
+ expect(csv.status).toBe(200);expect((await csv.text()).split('\r\n').filter(Boolean)).toHaveLength(100001);
 },60000);

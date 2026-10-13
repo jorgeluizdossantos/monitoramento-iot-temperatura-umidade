@@ -12,8 +12,8 @@
     "check:db": "node ../scripts/check-db.js",
     "check:mqtt": "node ../scripts/check-mqtt.js",
     "test:mqtt-config": "node --test ../scripts/mqtt-settings.test.js",
-    "test:integration": "vitest run --maxWorkers=1 tests/database.integration.test.ts tests/auth.integration.test.ts tests/cadastros.integration.test.ts tests/telemetry.integration.test.ts tests/monitoring.integration.test.ts tests/alert-episodes.integration.test.ts",
-    "test": "vitest run tests/foundation.test.ts tests/auth.test.ts tests/cadastros.test.ts tests/mqtt-config.test.ts tests/telemetry.test.ts tests/alert-policy.test.ts tests/history.test.ts tests/stream.test.ts",
+    "test:integration": "vitest run --maxWorkers=1 tests/database.integration.test.ts tests/auth.integration.test.ts tests/cadastros.integration.test.ts tests/telemetry.integration.test.ts tests/monitoring.integration.test.ts tests/alert-episodes.integration.test.ts tests/maintenance.integration.test.ts",
+    "test": "vitest run tests/foundation.test.ts tests/auth.test.ts tests/cadastros.test.ts tests/mqtt-config.test.ts tests/telemetry.test.ts tests/alert-policy.test.ts tests/history.test.ts tests/stream.test.ts tests/maintenance.test.ts",
     "test:mqtt": "vitest run tests/mqtt.integration.test.ts",
     "mqtt:check": "tsx src/mqtt/check.ts",
     "mqtt:publish": "tsx src/mqtt/publish.ts",
@@ -37,6 +37,7 @@
     "jsonwebtoken": "^9.0.2",
     "mqtt": "^5.14.1",
     "mysql2": "^3.14.5",
+    "node-cron": "^4.5.0",
     "pino": "^9.14.0",
     "zod": "^3.25.76"
   },

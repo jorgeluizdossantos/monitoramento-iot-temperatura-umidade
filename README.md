@@ -6,7 +6,7 @@ e automação industrial. Implementação gradual, com documentação didática.
 **Fases 1–5 concluídas; 94 testes e CI aprovados. ESP32 validado com HiveMQ Lab e MySQL local.** Node.js 22, Express, TypeScript
 estrito e MySQL sem ORM. A API oferece autenticação e cadastros de empresas,
 unidades, setores, ambientes, usuários e dispositivos, com auditoria.
-Ingestão MQTT, adoção de dispositivos, histórico/CSV/série, episódios de alerta e SSE autenticado estão implementados. Frontend e rotinas agendadas pertencem às fases seguintes.
+Ingestão MQTT, adoção de dispositivos, histórico/CSV/série, episódios de alerta e SSE autenticado estão implementados. Fase 6 em validação: resumo horário, offline, expurgo e sessões. Frontend permanece posterior à conclusão do backend.
 
 ## Documentação vigente
 

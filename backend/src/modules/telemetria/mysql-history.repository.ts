@@ -16,7 +16,10 @@ export function createMysqlHistoryRepository(db: Database): HistoryRepository {
       try {
         const args = [room, company, page.de, page.ate];
         const [[count]] = await c.execute<RowDataPacket[]>(`SELECT COUNT(*) total ${from}`, args);
-        const [rows] = await c.query<(Reading & RowDataPacket)[]>(`SELECT ${columns} ${from} ORDER BY l.medido_em DESC,l.id DESC LIMIT ? OFFSET ?`, [...args, page.tamanho, (page.pagina - 1) * page.tamanho]);
+        // O deslocamento percorre o índice; só a página final carrega o registro completo.
+        const [rows] = await c.query<(Reading & RowDataPacket)[]>(`SELECT ${columns} FROM leitura_telemetria l
+          JOIN (SELECT l.id ${from} ORDER BY l.medido_em DESC,l.id DESC LIMIT ? OFFSET ?) page ON page.id=l.id
+          ORDER BY l.medido_em DESC,l.id DESC`, [...args, page.tamanho, (page.pagina - 1) * page.tamanho]);
         await c.commit(); return { dados: rows, total: Number(count.total) };
       } catch (error) { await c.rollback(); throw error; }
     }),
@@ -24,7 +27,15 @@ export function createMysqlHistoryRepository(db: Database): HistoryRepository {
       const [rows] = await c.execute<(HourPoint & RowDataPacket)[]>(`SELECT DATE_FORMAT(l.medido_em,'%Y-%m-%dT%H:00:00.000Z') hora_ref,
         COUNT(*) qtd_leituras,ROUND(AVG(l.temperatura_c),1) temp_media,MIN(l.temperatura_c) temp_min,MAX(l.temperatura_c) temp_max,
         ROUND(AVG(l.umidade_pct),1) umid_media,MIN(l.umidade_pct) umid_min,MAX(l.umidade_pct) umid_max
-        ${from} GROUP BY hora_ref ORDER BY hora_ref`, [room, company, period.de, period.ate]);
+        ${from} GROUP BY hora_ref
+        UNION ALL
+        SELECT DATE_FORMAT(h.hora_ref,'%Y-%m-%dT%H:00:00.000Z') hora_ref,
+          h.qtd_leituras,h.temp_media,h.temp_min,h.temp_max,h.umid_media,h.umid_min,h.umid_max
+        FROM leitura_hora h JOIN ambiente a ON a.id=h.ambiente_id
+        WHERE h.ambiente_id=? AND a.empresa_id=? AND h.hora_ref>=? AND TIMESTAMPADD(HOUR,1,h.hora_ref)<=?
+          AND NOT EXISTS (SELECT 1 FROM leitura_telemetria raw WHERE raw.ambiente_id=h.ambiente_id
+            AND raw.medido_em>=h.hora_ref AND raw.medido_em<TIMESTAMPADD(HOUR,1,h.hora_ref))
+        ORDER BY hora_ref`, [room, company, period.de, period.ate, room, company, period.de, period.ate]);
       return rows.map(row => ({ ...row, qtd_leituras: Number(row.qtd_leituras) }));
     }),
     async *exportRows(room, company, period) {

@@ -896,3 +896,101 @@ CI aprovado no commit 3281f01: https://github.com/jorgeluizdossantos/monitoramen
 Na última observação da bancada, o dispositivo estava offline e o total permaneceu em 4.562 leituras; não foi alegada nova coleta física nessa checagem. As APIs foram verificadas com o histórico existente. O backend da Fase 5 está ativo na porta 3000 e conectado ao HiveMQ local. Os testes MQTT da nova versão validaram ingestão e episódios com publicador controlado. O Aiven não foi alterado.
 
 Próximo passo após aceite: Fase 6. Não foram antecipados agendamentos, expurgo, frontend ou deploy de produção. A publicação em wxlv7h continua pendente de URL e acesso.
+
+## 14. Fase 6 — rotinas agendadas (em validação, 13/10/2026)
+
+### 14.1 Objetivo e separação de responsabilidades
+
+A Fase 5 terminou com 94 testes e CI aprovados. Nesta etapa, o backend passa a cuidar do ciclo de vida dos dados: produzir resumos duráveis, detectar ausência de contato e remover registros cuja retenção terminou. O schema de 13 tabelas permanece igual e o acesso continua com mysql2, sem ORM.
+
+O módulo `backend/src/modules/maintenance` separa três responsabilidades:
+
+1. `maintenance.service.ts` calcula os intervalos em UTC e aplica as regras de 48 horas, 90 dias e 30 dias. Recebe relógio e repositório por dependência, permitindo testes sem esperar dias reais.
+2. `mysql-maintenance.repository.ts` executa SQL parametrizado, transações e locks. A futura substituição por Prisma deve preservar o contrato e essas garantias.
+3. `scheduler.ts` usa node-cron para chamar o serviço nos horários definidos. Não contém SQL nem regra de autorização HTTP.
+
+`main.ts` compõe as dependências e conecta a mudança de offline ao hub SSE. A API e o consumidor MQTT continuam no mesmo processo.
+
+### 14.2 Habilitar as rotinas
+
+No arquivo privado `backend/.env`, confira primeiro o destino do banco e acrescente:
+
+```dotenv
+DB_TARGET=local
+JOBS_ENABLED=true
+```
+
+Reinicie o backend para aplicar. `JOBS_ENABLED=false` desliga os agendamentos; esse é o padrão do exemplo para que copiar uma configuração não inicie exclusões sem revisar o destino. A mudança para Aiven usa os mesmos campos `DB_AIVEN_*` já documentados. Não há fallback para outro banco. A validação desta fase usa MySQL local; não execute fixtures no Aiven.
+
+| Rotina | Quando executa | Resultado |
+|---|---|---|
+| Resumo | Inicialização e minuto zero de cada hora UTC | Recalcula as últimas 48 horas completas, incluindo a hora anterior |
+| Offline | A cada minuto | Online e ativo, com contato estritamente anterior ao prazo individual, passa a offline |
+| Expurgo | 03:00, America/Bahia | Resume e remove horas completas anteriores a 90 dias |
+| Sessões | 03:30, America/Bahia | Remove sessão cuja expiração ou revogação ocorreu há mais de 30 dias |
+
+Recalcular 48 horas também na execução horária repara atrasos recentes. Leituras mais atrasadas continuam corretas na série, que prefere os dados brutos disponíveis; antes do expurgo, a hora é sempre recalculada. A hora atual não é materializada. Os horários da madrugada usam o fuso IANA explícito, independentemente do fuso do computador; datas armazenadas continuam em UTC.
+
+O log informa o nome da rotina, duração, linhas afetadas e se outra execução já detinha o lock (`skipped`). Em resumos, `affected` segue a contagem do MySQL para INSERT/UPDATE, não é quantidade de sensores. Erros não serializam mensagens SQL que possam conter dados privados. Uma falha não derruba o servidor; a agenda seguinte tenta novamente.
+
+### 14.3 Concorrência e encerramento
+
+`GET_LOCK(nome, 0)` impede duas instâncias de executar a mesma manutenção ao mesmo tempo. O nome inclui hash do banco, e resumo/expurgo compartilham a mesma trava. A aquisição não espera: a execução concorrente registra `skipped`. O lock pertence à conexão, então é liberado explicitamente no `finally`, antes de devolver a conexão ao pool. Se a liberação falhar, a conexão é destruída.
+
+`noOverlap` e o controle de tarefas ativas também evitam repetição dentro do processo. Ao receber Ctrl+C/SIGTERM, o backend impede novos disparos, pede ao expurgo que pare entre horas e à limpeza que pare entre lotes, e aguarda o trabalho atual antes de fechar o pool. O prazo de desligamento é 30 segundos; uma interrupção forçada deixa o InnoDB desfazer a transação incompleta.
+
+Esses locks coordenam as rotinas. Eles não transformam o hub SSE em um barramento entre servidores nem implementam assinatura MQTT compartilhada. A implantação permanece de uma instância; distribuição do serviço será tratada na etapa de implantação se necessária.
+
+### 14.4 Por que o expurgo precisa de uma transação por hora
+
+O resumo guarda contagem, média, mínimo e máximo de temperatura e umidade. Apenas conferir se existe uma linha de resumo seria insuficiente: uma leitura atrasada poderia ter chegado depois dela. O procedimento implementado é:
+
+1. Selecionar a próxima hora de um ambiente anterior ao limite.
+2. Bloquear a empresa e a faixa de leituras, na mesma ordem utilizada pela ingestão.
+3. Recalcular e gravar o resumo com `INSERT ... ON DUPLICATE KEY UPDATE`.
+4. Excluir as leituras dessa hora com comandos de no máximo 10.000 registros.
+5. Conferir se a quantidade removida coincide com o resumo e confirmar tudo junto.
+
+Se qualquer lote falhar, **todos os lotes daquela hora e o resumo são revertidos**. Isso evita resumir apenas o restante de uma hora parcialmente apagada na próxima tentativa. Horas já concluídas permanecem confirmadas. Reexecutar não duplica resumos nem remove o resumo histórico.
+
+O corte é arredondado para o começo da hora em UTC, preservando até uma hora adicional de dados brutos. Nunca são apagadas leituras mais novas que 90 dias. Leituras muito antigas não podem ser reinseridas pelo fluxo MQTT normal: a idade máxima configurável é 90 dias. Importações SQL manuais de dados já expurgados exigiriam um procedimento próprio de reconciliação, fora desta fase.
+
+`qtd_leituras` é SMALLINT UNSIGNED no schema confirmado: comporta até 65.535 leituras por ambiente/hora. A rotina falha preservando os dados quando esse limite é excedido; não trunca contagens para permitir a exclusão. A transação é limitada a uma hora, com lotes de até 10.000; não envolve os 90 dias inteiros.
+
+A FK de `alerta.leitura_id` usa `ON DELETE SET NULL`. Assim, o alerta preserva valor inicial, extremo, limite, severidade, reconhecimento e encerramento depois do expurgo. O job não encerra alertas e não reavalia limites.
+
+### 14.5 Série histórica e presença do dispositivo
+
+A série passa a informar `fonte: "leituras_brutas_e_resumos"`. Para cada hora, consulta leituras brutas se ainda existem; usa o resumo somente quando toda aquela hora foi expurgada. A consulta SQL faz essa escolha em uma mesma visão consistente e não soma as duas fontes. O limite de duração continua em 366 dias; histórico e CSV continuam com intervalos de até 31 dias e passam a depender da disponibilidade das leituras brutas após a retenção.
+
+Regra conservadora proposta ao proprietário e adotada nesta implementação: se o início for anterior ao corte de retenção, início e fim devem coincidir com horas completas UTC. Caso contrário, a API retorna 400/HORAS_COMPLETAS_OBRIGATORIAS, sem arredondar silenciosamente. Consultas recentes continuam aceitando minutos e segundos. Não é matematicamente possível recuperar a média de 10:30–11:00 a partir apenas do resumo de 10:00–11:00. A regra pode ser revista conforme a preferência do proprietário.
+
+O job de offline revalida o prazo no UPDATE, depois de obter a trava da empresa. Se uma mensagem renovar o contato antes disso, o dispositivo permanece online. Não modifica a última leitura, o contato, o indicador de manutenção ou os episódios. Depois do commit, emite invalidação SSE somente à empresa afetada. A próxima mensagem válida retoma o fluxo de presença implementado na Fase 4.
+
+### 14.6 Como testar e o que falta
+
+```powershell
+npm --prefix backend run lint
+npm --prefix backend run typecheck
+npm --prefix backend test
+$env:NODE_ENV='test'
+$env:DB_TARGET='local'
+npm --prefix backend run test:integration
+npm --prefix backend run test:mqtt
+Remove-Item Env:NODE_ENV
+Remove-Item Env:DB_TARGET
+npm --prefix backend run build
+```
+
+Os testes novos usam empresas próprias e datas sintéticas do ano 2000; seus cortes de exclusão não alcançam leituras e sessões reais da bancada. Cobrem idempotência, limites UTC, atualização atrasada, ausência de duplicidade na série, concorrência por GET_LOCK, prazo individual de offline, corrida com novo contato, rollback sem SSE, preservação de alerta, falha no segundo lote de um expurgo de 10.001 leituras, capacidade do schema, retenção de sessões e desligamento do agendador. A suíte recusa Aiven.
+
+Validação conjunta, ativação local e publicação GitHub ainda em andamento. A regra conservadora de horas completas está documentada; não houve resposta à preferência consultada durante a implementação. Próxima fase, após concluir e aceitar esta entrega: **Fase 7 — implantação e demonstração**. Frontend permanece posterior à conclusão do backend. O segundo repositório depende de URL e acesso.
+
+Referências técnicas consultadas: [node-cron — API](https://www.nodecron.com/api-reference.html) e [MySQL — locks nomeados](https://dev.mysql.com/doc/refman/8.0/en/locking-functions.html).
+
+
+### 14.7 Validação intermediária e ajuste de paginação
+
+Os 48 testes sem banco passaram, assim como os 9 testes MQTT executados com acesso aos brokers locais. Os oito testes novos de manutenção MySQL passaram dentro da suíte. Tentativas conjuntas também encontraram timeouts em testes antigos, reset HTTP e estouro do prazo de 3 segundos no teste de carga; essas tentativas não constituem aceite.
+
+A paginação passou a selecionar primeiro os IDs no índice e depois carregar os campos das 500 leituras da página. O teste de carga usa o cliente HTTP nativo do Node, timeout de 3 segundos e leitura completa do corpo, preservando a exigência original; CSV continua conferindo 100.001 linhas. A execução isolada passou, mas a repetição conjunta ainda teve instabilidade local. O CI em banco isolado será verificado antes da conclusão. Nenhum limite foi relaxado e nenhum contêiner de outros projetos foi parado.

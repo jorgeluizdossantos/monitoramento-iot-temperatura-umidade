@@ -17,6 +17,9 @@ import { createMysqlMonitoringRepository } from './modules/telemetria/mysql-moni
 import { createHistoryService } from './modules/telemetria/history.service';
 import { createMysqlHistoryRepository } from './modules/telemetria/mysql-history.repository';
 import { createStreamHub } from './modules/stream/stream';
+import { createMysqlMaintenanceRepository } from './modules/maintenance/mysql-maintenance.repository';
+import { createMaintenanceService } from './modules/maintenance/maintenance.service';
+import { startMaintenanceScheduler } from './modules/maintenance/scheduler';
 
 async function main() {
   const env = loadEnvironment();
@@ -31,6 +34,7 @@ async function main() {
   const monitoring = createMonitoringService(createMysqlMonitoringRepository(database));
   const history = createHistoryService(createMysqlHistoryRepository(database));
   const stream = createStreamHub();
+  const maintenance = env.JOBS_ENABLED ? startMaintenanceScheduler(createMaintenanceService(createMysqlMaintenanceRepository(database, stream.publish)), logger) : undefined;
   const consumer = env.mqtt.MQTT_ENABLED ? startMqttConsumer(env.mqtt, createTelemetryService(createMysqlTelemetryRepository(database, stream.publish), env.mqtt, logger), logger) : undefined;
   const server = createApp({ healthRepository, logger, auth: { service: authService, env }, cadastros, pending, monitoring, history, stream }).listen(env.PORT, () => {
     logger.info({ port: env.PORT, databaseTarget: env.DB_TARGET }, 'Backend STMA iniciado');
@@ -40,9 +44,9 @@ async function main() {
     if (stopping) return;
     stopping = true;
     stream.close();
-    const deadline = setTimeout(() => process.exit(1), 10000).unref();
+    const deadline = setTimeout(() => process.exit(1), 30000).unref();
     const httpClosed = new Promise<void>(resolve => server.close(() => resolve()));
-    void Promise.all([httpClosed, consumer?.stop()]).then(() => database.close()).then(() => clearTimeout(deadline)).catch(() => { process.exitCode = 1; });
+    void Promise.all([httpClosed, consumer?.stop(), maintenance?.stop()]).then(() => database.close()).then(() => clearTimeout(deadline)).catch(() => { process.exitCode = 1; });
   }
   server.on('error', () => { logger.error('Falha ao abrir porta HTTP'); process.exitCode = 1; stop(); });
   process.once('SIGINT', stop);

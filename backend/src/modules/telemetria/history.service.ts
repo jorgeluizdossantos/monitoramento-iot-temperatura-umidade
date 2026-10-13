@@ -4,6 +4,7 @@ import { companyId } from '../auth/auth.scope';
 import { parse, paramId } from '../cadastros/cadastro.validation';
 import { HttpError } from '../../shared/http-error';
 import type { HistoryRepository, Reading } from './history.repository';
+import { DAY, HOUR, RAW_RETENTION_DAYS, floorHour } from '../maintenance/maintenance.service';
 
 const timestamp = z.string().datetime({ offset: true }).transform(value => new Date(value));
 const periodSchema = z.object({ de: timestamp, ate: timestamp }).strict();
@@ -18,7 +19,7 @@ export function csvReading(row: Reading) {
   // Só campos numéricos vindos do schema e data ISO; nenhum texto de cadastro/fórmula.
   return `${row.medido_em.toISOString()},${row.temperatura_c},${row.umidade_pct},${row.dispositivo_id},${row.id}\r\n`;
 }
-export function createHistoryService(repository: HistoryRepository) {
+export function createHistoryService(repository: HistoryRepository, clock = () => new Date()) {
   return {
     async history(id: string, query: unknown, actor: Principal) {
       const company = companyId(actor); const room = parse(paramId, id); const page = validatePeriod(parse(pageSchema, query), 31);
@@ -27,8 +28,12 @@ export function createHistoryService(repository: HistoryRepository) {
     },
     async series(id: string, query: unknown, actor: Principal) {
       const company = companyId(actor); const room = parse(paramId, id); const period = validatePeriod(parse(periodSchema, query), 366);
+      const retentionBoundary = floorHour(new Date(+clock() - RAW_RETENTION_DAYS * DAY));
+      if (period.de < retentionBoundary && (+period.de % HOUR !== 0 || +period.ate % HOUR !== 0)) {
+        throw new HttpError(400, 'HORAS_COMPLETAS_OBRIGATORIAS', 'Séries anteriores à retenção de 90 dias exigem início e fim em horas completas UTC; o resumo não permite recortar minutos.', ['de', 'ate']);
+      }
       await repository.assertRoom(room, company);
-      return { fonte: 'leituras_brutas', granularidade: 'hora', dados: await repository.series(room, company, period) };
+      return { fonte: 'leituras_brutas_e_resumos', granularidade: 'hora', dados: await repository.series(room, company, period) };
     },
     async export(id: string, query: unknown, actor: Principal) {
       const company = companyId(actor); const room = parse(paramId, id); const period = validatePeriod(parse(periodSchema, query), 31);
