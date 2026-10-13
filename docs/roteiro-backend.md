@@ -771,3 +771,11 @@ A modalidade e o endpoint local estão confirmados. Ainda falta localizar o .ino
 O sketch atual mqtt_esp32_aula_pub foi lido no caminho indicado pelo proprietário. Ele gera o ID a partir do MAC e publica o JSON esperado em /dados; o comando de LED usa /comando. Foi criada a cópia firmware/mqtt_esp32_stma, preservando pinos, mensagens e comportamento. Wi-Fi e host/porta foram separados em config.h ignorado pelo Git, com modelo público config.example.h. Host local observado: 192.168.0.102:1883 para a placa; backend no mesmo PC usa 127.0.0.1:1883.
 
 O original foi preservado. Sem compilador arduino-cli disponível no PATH, não foi confirmada compilação desta cópia. Faltam selecionar placa/COM, verificar e carregar pela Arduino IDE, conferir mensagens no HiveMQ local e validar adoção/persistência no banco escolhido. Fase 4 continua aberta. Instruções em firmware/mqtt_esp32_stma/README.md.
+
+### Compilação física — ESP32 Dev Module / COM13
+
+O proprietário confirmou ESP32 Dev Module, COM13, USB e mesma rede Wi-Fi. Autorizou MySQL local e hierarquia Laboratório STMA → Bancada → Testes → Bancada ESP32, com DHT11.
+
+Foi localizado o arduino-cli incluído na Arduino IDE. A compilação com esp32:esp32:esp32 e as bibliotecas Arduino locais foi aprovada: 902380 bytes de programa (68%) e 47328 bytes de RAM (14%). A tentativa de upload falhou ao abrir COM13, com acesso negado/porta ocupada ou indisponível; não houve confirmação de gravação. Solicitado fechar Monitor Serial/Plotter e outros clientes seriais antes de tentar novamente.
+
+Próximo passo: liberar COM13, repetir upload e validar mensagens reais no HiveMQ local; somente depois provisionar a hierarquia autorizada e confirmar a persistência. Nenhum cadastro demonstrativo ou leitura física foi criado nesta tentativa. Fase 4 permanece aberta.

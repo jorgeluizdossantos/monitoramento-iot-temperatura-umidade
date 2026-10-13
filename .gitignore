@@ -12,3 +12,4 @@ coverage/
 Thumbs.db
 .pio/
 backend/dist/
+backend/.local/
