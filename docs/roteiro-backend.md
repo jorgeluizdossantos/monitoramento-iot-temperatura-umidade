@@ -797,3 +797,27 @@ A credencial aleatória do administrador de demonstração admin.lab@stma.invali
 Evidências complementares: 75 testes locais e CI do código 4c668dc aprovados; firmware compilado (68% programa, 14% RAM). Esta validação física comprova fluxo local QoS 0 sem timestamp do produtor. Reentrega e deduplicação com timestamp foram comprovadas separadamente pelos testes QoS 1; TLS MQTT remoto não foi testado, pois o broker escolhido é local. Não houve teste de atuação física da porta nem comando remoto ao LED nesta sessão.
 
 Próximo passo: aceite do proprietário para iniciar a Fase 5 (leituras, painel e alertas). Fases 5–7 e frontend continuam não iniciados. Publicação em wxlv7h permanece dependente de URL e acesso ao segundo repositório.
+
+## 13. Fase 5 — em implementação
+
+### 13.1 Política de alertas
+
+alert-policy.ts contém funções puras, sem SQL, HTTP ou MQTT. Valores iguais aos limites são normais. Violação até a tolerância é atenção; acima dela é crítica. Tolerância nula equivale a zero. Limite nulo não impõe restrição daquele lado. A comparação em décimos evita imprecisão binária nos limites decimais do schema. O episódio conserva o pior valor e não reduz a maior severidade já atingida.
+
+A integração dessa política à ingestão ainda está pendente. Foram solicitadas decisões sobre leituras atrasadas e limites de consultas; nenhuma decisão pendente foi tratada como aprovação.
+
+### 13.2 Painel e reconhecimento
+
+monitoring.repository.ts define o contrato; monitoring.service.ts aplica validação e autorização; mysql-monitoring.repository.ts implementa SQL parametrizado; monitoring.routes.ts recebe HTTP. app.ts e main.ts compõem as dependências.
+
+- GET /api/v1/painel: usa vw_ambiente_estado e filtra a empresa da sessão e os ancestrais ativos. Não aceita empresa_id enviado pelo cliente.
+- GET /api/v1/alertas: pagina/tamanho, máximo 500; situacao aberto (padrão), encerrado ou todos. Mantém alertas históricos mesmo se o cadastro ficar inativo.
+- POST /api/v1/alertas/:id/reconhecer: operador/administrador, JSON vazio e mesma origem; leitor não escreve. Revalida empresa e perfil dentro da transação, trava o episódio, registra autor e horário e grava auditoria. Repetição preserva o primeiro reconhecimento. Reconhecer não fecha o alerta.
+
+IDs BIGINT de alertas são tratados como texto para não perder precisão. Uma empresa não consulta nem reconhece alertas alheios; o recurso alheio responde 404. Superadmin não ganha acesso implícito aos dados internos de uma empresa.
+
+### 13.3 O que falta
+
+Histórico, CSV, série por hora, integração transacional dos episódios, SSE autenticado após commit, teste de desempenho com 100.000 leituras e CI completo. A rotina que materializa leitura_hora permanece na Fase 6. O servidor em execução mantém a Fase 4 até a validação desta entrega.
+
+Validação desta primeira etapa: lint, TypeScript e build aprovados; 39 testes sem banco e 34 testes de integração MySQL aprovados. A Fase 5 permanece parcial e sem tag de conclusão.

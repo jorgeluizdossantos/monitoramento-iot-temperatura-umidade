@@ -12,6 +12,8 @@ import { createTelemetryService } from './modules/telemetria/telemetry.service';
 import { startMqttConsumer } from './modules/telemetria/mqtt-consumer';
 import { createMysqlPendingRepository } from './modules/telemetria/mysql-pending.repository';
 import { createPendingService } from './modules/telemetria/pending.service';
+import { createMonitoringService } from './modules/telemetria/monitoring.service';
+import { createMysqlMonitoringRepository } from './modules/telemetria/mysql-monitoring.repository';
 
 async function main() {
   const env = loadEnvironment();
@@ -23,8 +25,9 @@ async function main() {
   const authService = await createAuthService(createMysqlAuthRepository(database), env.SESSION_TTL_HOURS);
   const cadastros = createCadastroService(createMysqlCadastroRepository(database));
   const pending = createPendingService(createMysqlPendingRepository(database));
+  const monitoring = createMonitoringService(createMysqlMonitoringRepository(database));
   const consumer = env.mqtt.MQTT_ENABLED ? startMqttConsumer(env.mqtt, createTelemetryService(createMysqlTelemetryRepository(database), env.mqtt, logger), logger) : undefined;
-  const server = createApp({ healthRepository, logger, auth: { service: authService, env }, cadastros, pending }).listen(env.PORT, () => {
+  const server = createApp({ healthRepository, logger, auth: { service: authService, env }, cadastros, pending, monitoring }).listen(env.PORT, () => {
     logger.info({ port: env.PORT, databaseTarget: env.DB_TARGET }, 'Backend STMA iniciado');
   });
   let stopping = false;
