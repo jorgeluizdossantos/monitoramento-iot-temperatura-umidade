@@ -3,10 +3,10 @@
 Portfólio de Desenvolvimento de Sistemas do SENAI, voltado a projetos elétricos
 e automação industrial. Implementação gradual, com documentação didática.
 
-**Fases 1–5 concluídas; 94 testes e CI aprovados. ESP32 validado com HiveMQ Lab e MySQL local.** Node.js 22, Express, TypeScript
+**Fases 1–6 concluídas; 107 testes e CI aprovados. ESP32 validado com HiveMQ Lab e MySQL local.** Node.js 22, Express, TypeScript
 estrito e MySQL sem ORM. A API oferece autenticação e cadastros de empresas,
 unidades, setores, ambientes, usuários e dispositivos, com auditoria.
-Ingestão MQTT, adoção de dispositivos, histórico/CSV/série, episódios de alerta e SSE autenticado estão implementados. Fase 6 em validação: resumo horário, offline, expurgo e sessões. Frontend permanece posterior à conclusão do backend.
+Ingestão MQTT, adoção de dispositivos, histórico/CSV/série, episódios de alerta e SSE autenticado estão implementados. Fase 6 concluída: resumo horário, offline, expurgo e sessões. Frontend permanece posterior à conclusão do backend.
 
 ## Documentação vigente
 
@@ -139,3 +139,9 @@ GET /api/v1/painel e /alertas exigem sessão vinculada à empresa. Histórico e 
 Os testes de integração executam um arquivo por vez para isolar a carga de 100 mil leituras. Não execute esses testes no Aiven. A Fase 6 (rotinas) depende do aceite da Fase 5; não há frontend nesta entrega.
 
 Entrega da Fase 5: tag backend-fase-5; [CI aprovado](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38445259187).
+
+## Rotinas agendadas — Fase 6
+
+Confira o banco selecionado e configure JOBS_ENABLED=true em backend/.env; reinicie o backend. Resumos executam na inicialização e a cada hora, offline a cada minuto, expurgo às 03:00 e sessões às 03:30 (America/Bahia). Leituras brutas são retidas por pelo menos 90 dias; resumos e alertas são preservados. Séries anteriores à retenção exigem início e fim em horas completas UTC. Veja a seção 14 do roteiro para transações, locks, testes e operação.
+
+CI da entrega: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38451967878. Tag: backend-fase-6. Próxima fase, após aceite: implantação e demonstração; frontend ainda não iniciado.

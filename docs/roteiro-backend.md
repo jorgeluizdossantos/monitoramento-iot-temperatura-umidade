@@ -897,7 +897,7 @@ Na última observação da bancada, o dispositivo estava offline e o total perma
 
 Próximo passo após aceite: Fase 6. Não foram antecipados agendamentos, expurgo, frontend ou deploy de produção. A publicação em wxlv7h continua pendente de URL e acesso.
 
-## 14. Fase 6 — rotinas agendadas (em validação, 13/10/2026)
+## 14. Fase 6 — rotinas agendadas (concluída em 14/10/2026)
 
 ### 14.1 Objetivo e separação de responsabilidades
 
@@ -984,7 +984,7 @@ npm --prefix backend run build
 
 Os testes novos usam empresas próprias e datas sintéticas do ano 2000; seus cortes de exclusão não alcançam leituras e sessões reais da bancada. Cobrem idempotência, limites UTC, atualização atrasada, ausência de duplicidade na série, concorrência por GET_LOCK, prazo individual de offline, corrida com novo contato, rollback sem SSE, preservação de alerta, falha no segundo lote de um expurgo de 10.001 leituras, capacidade do schema, retenção de sessões e desligamento do agendador. A suíte recusa Aiven.
 
-Validação conjunta, ativação local e publicação GitHub ainda em andamento. A regra conservadora de horas completas está documentada; não houve resposta à preferência consultada durante a implementação. Próxima fase, após concluir e aceitar esta entrega: **Fase 7 — implantação e demonstração**. Frontend permanece posterior à conclusão do backend. O segundo repositório depende de URL e acesso.
+Validação conjunta no CI e ativação local concluídas; evidências finais na seção 14.8. A regra conservadora de horas completas está documentada; não houve resposta à preferência consultada durante a implementação. Próxima fase, após concluir e aceitar esta entrega: **Fase 7 — implantação e demonstração**. Frontend permanece posterior à conclusão do backend. O segundo repositório depende de URL e acesso.
 
 Referências técnicas consultadas: [node-cron — API](https://www.nodecron.com/api-reference.html) e [MySQL — locks nomeados](https://dev.mysql.com/doc/refman/8.0/en/locking-functions.html).
 
@@ -993,4 +993,16 @@ Referências técnicas consultadas: [node-cron — API](https://www.nodecron.com
 
 Os 48 testes sem banco passaram, assim como os 9 testes MQTT executados com acesso aos brokers locais. Os oito testes novos de manutenção MySQL passaram dentro da suíte. Tentativas conjuntas também encontraram timeouts em testes antigos, reset HTTP e estouro do prazo de 3 segundos no teste de carga; essas tentativas não constituem aceite.
 
-A paginação passou a selecionar primeiro os IDs no índice e depois carregar os campos das 500 leituras da página. O teste de carga usa o cliente HTTP nativo do Node, timeout de 3 segundos e leitura completa do corpo, preservando a exigência original; CSV continua conferindo 100.001 linhas. A execução isolada passou, mas a repetição conjunta ainda teve instabilidade local. O CI em banco isolado será verificado antes da conclusão. Nenhum limite foi relaxado e nenhum contêiner de outros projetos foi parado.
+A paginação passou a selecionar primeiro os IDs no índice e depois carregar os campos das 500 leituras da página. O teste de carga usa o cliente HTTP nativo do Node, timeout de 3 segundos e leitura completa do corpo, preservando a exigência original; CSV continua conferindo 100.001 linhas. A execução isolada passou, mas a repetição conjunta ainda teve instabilidade local. O CI em banco isolado foi aprovado, conforme seção 14.8. Nenhum limite foi relaxado e nenhum contêiner de outros projetos foi parado.
+
+### 14.8 Encerramento — 14/10/2026
+
+Fase 6 concluída. Commit de implementação: `e1b3468`. CI completo aprovado: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38451967878. Foram aprovados lint, TypeScript, build e **107 testes: 48 sem banco, 50 de integração MySQL e 9 MQTT**. A suíte inclui a exigência de desempenho das páginas inicial/final de 100.000 leituras e a conferência integral do CSV. As instabilidades locais anteriores permanecem registradas na seção 14.7; não foram omitidas nem contadas como sucesso.
+
+O backend foi compilado e iniciado na porta 3000 com `DB_TARGET=local`, `JOBS_ENABLED=true` e HiveMQ local. O resumo de inicialização concluiu em 878 ms, com seis linhas afetadas; o agendamento de offline também executou com sucesso, sem dispositivos a alterar. Conferência no MySQL: seis resumos por hora representando as 6.014 leituras existentes do ambiente 25; os dados brutos foram preservados. A última leitura observada é de 13/10/2026 às 19:07:32.823 UTC; esta checagem não representa uma nova validação física do ESP32.
+
+Verificação autenticada da versão ativada: login 200, painel 200 com um ambiente, alertas 200, histórico 200 com 1.452 leituras no intervalo consultado de 24 horas, série 200 com duas horas, CSV 200 com 1.453 linhas, SSE 200 com aviso inicial e logout 204. O intervalo consultado é móvel; seus totais diferem do total acumulado do banco.
+
+Expurgo e limpeza de sessões estão habilitados nos horários documentados. A execução destrutiva foi exercitada em fixtures próprias no CI/MySQL, sem antecipar a agenda diária sobre dados reais para produzir evidência. Nenhum schema, credencial ou dado do Aiven foi alterado nesta fase. `.env`, certificados, credenciais de laboratório e scripts privados de checagem não entram no Git.
+
+Tag de conclusão: `backend-fase-6`. Próxima etapa, após aceite: **Fase 7 — implantação e demonstração**. Antes de implementá-la, revisar seu plano e obter os dados de hospedagem/broker necessários. Frontend ainda não iniciado. A publicação no segundo repositório de wxlv7h continua dependendo da URL do repositório e do acesso de colaborador.
