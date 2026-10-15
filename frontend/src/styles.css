@@ -38,5 +38,35 @@ h2 { font-size: 20px; font-weight: 600; line-height: 28px; margin: 16px 0 10px; 
 .next-step { display: flex; align-items: center; gap: 8px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #dce9ff; font-size: 12px; color: #00507d; }
 .foundation-note { display: flex; gap: 10px; align-items: flex-start; color: #565e74; margin-top: 20px; font-size: 12px; line-height: 20px; }
 .foundation-note svg { flex-shrink: 0; }
+.user-menu { display: flex; gap: 16px; align-items: center; min-width: 0; }
+.user-menu strong { overflow-wrap: anywhere; }
+.user-menu span { display: block; font-size: 11px; margin-top: 3px; }
+.logout-button { display: flex; gap: 6px; align-items: center; min-height: 44px; color: #00507d; }
+.login-layout { display: grid; gap: 32px; max-width: 1000px; margin: 16px auto; align-items: center; }
+.login-story .eyebrow { margin: 20px 0 12px; }
+.login-story h1 { font-size: 30px; line-height: 38px; margin: 0 0 20px; }
+.login-story > p:not(.eyebrow) { max-width: 400px; font-size: 14px; line-height: 24px; color: #40474f; }
+.login-assurance { display: flex; align-items: center; gap: 12px; margin-top: 32px; font-size: 12px; color: #00507d; line-height: 20px; }
+.login-card { padding: 24px; min-width: 0; }
+.login-card-icon { color: #00507d; background: #eff4ff; display: inline-flex; padding: 12px; border-radius: 6px; }
+.login-card > p { font-size: 14px; color: #40474f; line-height: 22px; }
+.login-card form { margin-top: 28px; }
+.login-card label { display: block; font-size: 13px; font-weight: 600; margin: 20px 0 8px; }
+.login-card input { width: 100%; min-width: 0; min-height: 48px; background: #f8f9ff; border: 1px solid #707881; border-radius: 6px; padding: 12px; font-size: 16px; color: #0b1c30; }
+.login-card input[aria-invalid=true] { border-color: #ba1a1a; }
+.password-field { position: relative; }
+.password-field input { padding-right: 52px; }
+.password-field button { position: absolute; top: 2px; right: 3px; width: 44px; height: 44px; display: grid; place-items: center; color: #40474f; }
+.primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 12px; background: #00507d; color: white; padding: 12px 20px; min-height: 48px; border-radius: 6px; font-size: 14px; font-weight: 600; text-decoration: none; }
+.primary-button:hover { background: #0369a1; }
+.primary-button:disabled,.logout-button:disabled { opacity: .65; cursor: wait; }
+.login-card form > .primary-button { width: 100%; margin-top: 24px; }
+.field-error { font-size: 12px; margin-top: 6px; color: #93000a; }
+.form-error { background: #ffdad6; color: #93000a; padding: 12px; border-radius: 6px; font-size: 13px; line-height: 20px; margin-top: 16px; }
+.session-notice { background: #eff4ff; padding: 10px; border-radius: 4px; margin-top: 16px; }
+.login-card .login-help { font-size: 12px; line-height: 20px; border-top: 1px solid #dce9ff; margin-top: 24px; padding-top: 20px; }
+.session-screen { padding: 48px 24px; max-width: 680px; margin: 0 auto; }
+.session-screen p { margin: 16px 0; }
+@media(min-width: 1280px) { .login-layout { grid-template-columns: 1fr 1fr; gap: 48px; margin: 60px auto; } .login-story h1 { font-size: 36px; line-height: 44px; } .login-card { padding: 32px; } }
 footer { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; padding: 20px 16px; font-size: 11px; color: #565e74; border-top: 1px solid #dce9ff; }
 @media(min-width: 1024px) { .shell { display: grid; grid-template-columns: 264px minmax(0,1fr); min-height: 100dvh; } .mobile-bar { display: none; } .sidebar,.sidebar.is-open { display: flex; flex-direction: column; border-right: 1px solid #dce9ff; padding: 32px 16px; } .desktop-brand { display: flex; padding: 0 12px; margin-bottom: 52px; } .sidebar-footer { display: block; margin-top: auto; padding: 32px 12px 0; color: #565e74; font-size: 12px; line-height: 20px; } .version { font: 11px 'JetBrains Mono', monospace; } .workspace { min-height: 100dvh; } .topbar { background: white; padding: 22px 32px; } main { padding: 40px 32px; } h1 { font-size: 32px; line-height: 40px; } .empty-state { padding: 64px 32px; } footer { padding: 20px 32px; } }

@@ -124,3 +124,69 @@ desligados; não confundir com operação contínua de telemetria. Os arquivos `
 
 Próximo passo após aceite: Fase 2 — login real, restauração/expiração de sessão, guards,
 destino após login e menu por perfil. As fases de cadastro/painel/histórico não foram antecipadas.
+
+## 8. Fase 2 — login e perfis (15/10/2026)
+
+### Passo 1 — contrato e responsabilidade
+
+O formulário envia `POST /api/v1/auth/login` com `email` e `senha`. O backend valida
+credenciais e cria o cookie HttpOnly; JavaScript não lê esse cookie. `GET /auth/me`
+retorna o usuário e seu perfil; `POST /auth/logout` revoga a sessão. Não há token ou
+senha no localStorage. Zustand mantém somente os dados do usuário em memória.
+As autorizações definitivas continuam no backend; esconder um menu não protege uma API.
+
+### Passo 2 — formulário e apresentação
+
+Instalados Zustand, React Hook Form e resolvers Zod. O arquivo
+`frontend/src/features/auth/login.tsx` concentra o formulário, validação, envio,
+erros acessíveis e controle de visibilidade da senha. O esquema de login exige senha
+preenchida, sem reaplicar a política de criação a credenciais existentes. Cores,
+tipografia, bordas e superfícies seguem a referência web do Stitch. Recuperação de
+senha/OTP não foi implementada: não existe contrato correspondente no backend.
+
+### Passo 3 — ciclo da sessão
+
+`features/auth/auth.ts` concentra o estado e as operações da sessão. A aplicação
+consulta `/auth/me` ao abrir, ao recuperar foco/visibilidade e a cada 60 segundos
+quando visível. Respostas 401 também encerram a identidade local. Respostas antigas
+são ignoradas após mudança de identidade; a consulta periódica aguarda o login.
+Logout e troca de identidade limpam o cache TanStack Query, evitando exibir dados
+da conta anterior. Falha de rede apresenta nova tentativa, sem anunciar logout
+bem-sucedido. Falha no logout mantém o usuário e permite repetir a operação.
+
+### Passo 4 — navegação e perfis
+
+`session-boundary.tsx` verifica sessão e permissões antes de renderizar rotas.
+Ao exigir login, preserva caminho, consulta e fragmento; após autenticar, retorna
+somente a destinos internos permitidos pelo formato. Sem permissão, mostra acesso
+negado, inclusive para URL digitada diretamente.
+
+| Perfil | Navegação autorizada nesta etapa |
+| --- | --- |
+| Superadmin | Empresas e placas pendentes; sem painel de empresa implícito |
+| Administrador | Painel, alertas, ambientes e cadastros da empresa |
+| Operador/leitor | Painel, alertas e ambientes; sem menu de cadastros |
+
+A matriz de exibição está em `allowedRoles`, em `features/auth/auth.ts`. Regras de
+negócio definitivas permanecem documentadas em `docs/regras-de-negocio.md` e aplicadas
+nos serviços/repositórios do backend. As páginas de dados ainda são preparações das
+fases seguintes; autenticação concluída não significa painel ou cadastros concluídos.
+
+### Passo 5 — validação e reprodução
+
+Executar `npm test`, `npm run build` e `npm run test:e2e` na pasta frontend.
+No Windows com Edge, definir `$env:PLAYWRIGHT_CHANNEL='msedge'` antes do último comando.
+Os testes de navegador usam respostas controladas para cobrir os quatro perfis,
+expiração, falhas, destinos e responsividade. Não dependem de credenciais reais no CI.
+
+Verificação adicional executada contra API e MySQL locais: formulário real de login,
+retorno a `/alertas`, restauração após recarga, cookie HttpOnly, logout e `/auth/me`
+retornando 401. Credenciais lidas somente do arquivo privado já existente; nenhuma
+credencial foi incluída nos testes versionados. Capturas em 360/1440 px revisadas.
+
+### Pendências e próximo passo
+
+Aguardar aceite para Fase 3: listas/formulários dos cadastros, desativação e adoção de
+placas. Painel em tempo real é Fase 4; histórico/alertas são Fase 5. Deploy permanece
+na Fase 6 do frontend e depende das pendências da Fase 7 do backend. Não houve deploy
+público nem mudança no banco, firmware ou broker nesta etapa.

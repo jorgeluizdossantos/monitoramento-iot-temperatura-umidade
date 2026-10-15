@@ -5,8 +5,7 @@ Oct 12, 2026 · @Jorge Luiz dos Santos
 ## 1. Resumo
 
 **Acompanhamento — 14/10/2026:** o proprietário autorizou iniciar este plano com a Fase 7
-do backend ainda aberta. A Fase 1 do frontend foi concluída tecnicamente em 15/10/2026; login funcional e
-fases seguintes não foram antecipados. React 18/Vite/TypeScript substituem a reserva antiga
+do backend ainda aberta. Fases 1 e 2 implementadas em 15/10/2026; fases seguintes aguardam aceite. React 18/Vite/TypeScript substituem a reserva antiga
 de frontend sem framework. Registro didático: `docs/roteiro-frontend.md`.
 
 Correções de contrato conforme backend já aprovado: fila global/adoção exclusivas do
@@ -26,8 +25,16 @@ Evidências e comandos no roteiro. Tag da entrega: `frontend-fase-1`.
 Referência visual principal confirmada: pasta `02-projeto/02-prototipo-stitch/web`;
 adaptar os desenhos ao escopo funcional do plano, sem copiar recursos não previstos.
 
+Checklist da Fase 2 — autorizada em 15/10/2026:
+- [x] Login real com React Hook Form/Zod e mensagens acessíveis.
+- [x] Sessão em memória, restauração por `/auth/me` e logout no servidor.
+- [x] Guards e menus dos quatro perfis, acesso negado e preservação do destino.
+- [x] Doze testes unitários, treze testes Edge e build aprovados; imagens revisadas.
+- [x] Formulário validado com API/MySQL locais: login, recarga, cookie HttpOnly e logout.
+- [ ] Confirmar publicação e CI da Fase 2.
+
 Pendências da Fase 7 do backend permanecem no seu plano. Próxima fase do frontend,
-somente após aceite desta entrega: login, sessão e permissões.
+somente após aceite desta entrega: Fase 3 — cadastros e adoção de placas.
 
 O frontend é uma aplicação web responsiva (mobile-first) que consome a API REST do backend e mostra, em tempo real, a temperatura e a umidade de cada ambiente, com cadastros, histórico, gráficos e alertas conforme o perfil do usuário. O plano tem seis fases, do esqueleto até a implantação, e cada uma termina com um critério de aceite. Ele depende do plano do backend: as fases do frontend 3 a 5 só fecham quando as fases 3 a 5 do backend entregam as rotas correspondentes.
 

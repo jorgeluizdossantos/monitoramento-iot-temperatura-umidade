@@ -29,6 +29,6 @@ export default function Section() {
       <p>{section ? 'As funcionalidades serão disponibilizadas por etapas. Nenhuma leitura ou sessão está sendo simulada nesta tela.' : 'Confira o endereço ou volte para uma das seções disponíveis.'}</p>
       {section && <div className="next-step"><ArrowRight size={16} aria-hidden="true"/>{section.phase}</div>}
     </section>
-    <div className="foundation-note"><ShieldCheck size={19} aria-hidden="true"/><p>Estrutura inicial de navegação. O acesso por perfil será habilitado junto com a autenticação.</p></div>
+    <div className="foundation-note"><ShieldCheck size={19} aria-hidden="true"/><p>As funcionalidades desta seção serão disponibilizadas na etapa indicada.</p></div>
   </>;
 }
