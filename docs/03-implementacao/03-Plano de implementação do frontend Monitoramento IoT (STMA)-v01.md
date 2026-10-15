@@ -31,7 +31,7 @@ Checklist da Fase 2 — autorizada em 15/10/2026:
 - [x] Guards e menus dos quatro perfis, acesso negado e preservação do destino.
 - [x] Doze testes unitários, treze testes Edge e build aprovados; imagens revisadas.
 - [x] Formulário validado com API/MySQL locais: login, recarga, cookie HttpOnly e logout.
-- [ ] Confirmar publicação e CI da Fase 2.
+- [x] Publicação no commit `df6f5fa`; CI frontend `38768198616` aprovado (12 testes unitários, build e 13 testes Chromium). Tag: `frontend-fase-2`.
 
 Pendências da Fase 7 do backend permanecem no seu plano. Próxima fase do frontend,
 somente após aceite desta entrega: Fase 3 — cadastros e adoção de placas.

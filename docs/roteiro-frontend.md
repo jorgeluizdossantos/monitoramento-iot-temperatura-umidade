@@ -190,3 +190,13 @@ Aguardar aceite para Fase 3: listas/formulários dos cadastros, desativação e 
 placas. Painel em tempo real é Fase 4; histórico/alertas são Fase 5. Deploy permanece
 na Fase 6 do frontend e depende das pendências da Fase 7 do backend. Não houve deploy
 público nem mudança no banco, firmware ou broker nesta etapa.
+
+### Encerramento técnico da Fase 2
+
+Commit `df6f5fa`, tag `frontend-fase-2`. Doze testes unitários e build TypeScript/Vite
+aprovados localmente. Treze testes Edge aprovados; após o ajuste de concorrência,
+os doze testes unitários/build foram repetidos e o CI validou os treze fluxos Chromium.
+[CI frontend aprovado](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38768198616).
+Plano e README atualizados. Fase 3 aguarda aceite; pendências de hospedagem do backend
+continuam abertas. A versão está no repositório jorgeluizdossantos; a publicação no
+repositório wxlv7h continua dependente de URL e acesso ao repositório de destino.

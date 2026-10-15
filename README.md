@@ -6,7 +6,7 @@ e automação industrial. Implementação gradual, com documentação didática.
 **Fases 1–6 concluídas; 107 testes e CI aprovados. ESP32 validado com HiveMQ Lab e MySQL local.** Node.js 22, Express, TypeScript
 estrito e MySQL sem ORM. A API oferece autenticação e cadastros de empresas,
 unidades, setores, ambientes, usuários e dispositivos, com auditoria.
-Ingestão MQTT, adoção de dispositivos, histórico/CSV/série, episódios de alerta e SSE autenticado estão implementados. Fase 6 concluída: resumo horário, offline, expurgo e sessões. Frontend permanece posterior à conclusão do backend.
+Ingestão MQTT, adoção de dispositivos, histórico/CSV/série, episódios de alerta e SSE autenticado estão implementados. Fase 6 concluída: resumo horário, offline, expurgo e sessões. Frontend autorizado em paralelo às pendências da Fase 7; Fase 2 (login e perfis) implementada.
 
 ## Documentação vigente
 
@@ -116,14 +116,14 @@ cadastro público nem senha padrão.
 
 ## Histórico e continuidade
 
-**Sequência atual autorizada:** frontend iniciado pela Fase 1 enquanto a Fase 7 do backend
+**Sequência atual autorizada:** frontend com Fases 1 e 2 implementadas enquanto a Fase 7 do backend
 permanece aberta. Execute `npm --prefix frontend run dev` após instalar suas dependências;
 veja [roteiro do frontend](docs/roteiro-frontend.md) e [instruções locais](frontend/README.md).
-Não há login ou painel funcional no frontend desta primeira etapa.
+Login, sessão e permissões estão funcionais. Painel e cadastros ainda são telas de preparação.
 
 Fase 1 do frontend concluída tecnicamente em 15/10/2026, tag `frontend-fase-1`.
 [CI aprovado](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38765158159).
-Próxima etapa após aceite: login e perfis (Fase 2).
+Próxima etapa após aceite: cadastros e adoção de placas (Fase 3).
 
 **Situação atual (14/10/2026):** fases 1–6 concluídas; Fase 7 em andamento. Os registros de próximos passos abaixo descrevem entregas anteriores. Consulte o acompanhamento atualizado no plano e a seção 15 do [roteiro do backend](docs/roteiro-backend.md). As [regras de negócio](docs/regras-de-negocio.md) estão consolidadas com o mapa dos arquivos que as implementam. Deploy remoto, TLS físico e aceite final da Fase 7 continuam pendentes.
 
@@ -134,7 +134,7 @@ como histórico, com o banco `monitoramento_iot`. Para STMA use `compose.stma.ya
 Repositório: [jorgeluizdossantos/monitoramento-iot-temperatura-umidade](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade).
 A publicação em wxlv7h ainda depende da URL e do acesso de colaborador confirmados.
 Próxima etapa, após aceite: **Fase 4 — ingestão MQTT**.
-Frontend somente após terminar o backend, conforme orientação do proprietário.
+Orientação original superada pelo aceite de iniciar o frontend com a Fase 7 aberta.
 Licença [MIT](LICENSE).
 
 ## Ingestão MQTT — Fase 4
