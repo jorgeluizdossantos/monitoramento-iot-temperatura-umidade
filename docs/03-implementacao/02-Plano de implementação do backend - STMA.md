@@ -316,3 +316,28 @@ Encerramento: commit de código 3281f01, CI aprovado https://github.com/jorgelui
 Detalhamento didático: seção 14 do roteiro-backend.md. Agendamento diário às 03:00/03:30 America/Bahia; UTC no banco. O resumo horário recalcula 48 horas completas para reparar atrasos recentes e o expurgo recalcula a hora antes da exclusão. Fase 7 e frontend não iniciados.
 
 Encerramento da Fase 6: implementação e1b3468; evidências completas na seção 14.8 do roteiro-backend.md. Resumo inicial e agenda de offline executados localmente; expurgo e limpeza validados com fixtures. Próximo passo após aceite: Fase 7 — implantação e demonstração. Frontend não iniciado; segundo repositório ainda depende de URL/acesso.
+
+## Fase 7 — em andamento (14/10/2026)
+
+**Mudança de sequência autorizada:** o proprietário permitiu iniciar a Fase 1 do frontend
+antes do encerramento desta fase. Hospedagem, TLS físico, Aiven, regressão/CI e latência
+continuam pendentes; não foram dispensados. Ver `docs/roteiro-frontend.md`.
+
+Este registro substitui as indicações históricas de “Fase 7 não iniciada”. A fase foi autorizada pelo proprietário, mas ainda não está concluída.
+
+- [x] Implementar contas separadas para API, manutenção e demonstração; provisionadas no MySQL local.
+- [x] Testar permissões com usuários reais, incluindo ingestão e rotinas de manutenção (três testes aprovados).
+- [x] Implementar painel público somente de empresas `eh_demo=1`, com projeção restrita e limite de requisições.
+- [x] Criar seed executável de dados fictícios, aplicado localmente e verificado quanto à repetição sem duplicação.
+- [x] Consolidar regras em `docs/regras-de-negocio.md`, com referência aos arquivos responsáveis.
+- [x] Preparar Dockerfile e firmware separado para TLS, NTP, QoS 1 e intervalo de 30 segundos.
+- [x] Confirmar preferência por hospedagem estritamente gratuita e autorização para EMQX Serverless com Spend Limit = 0; preservar HiveMQ Lab como opção local.
+- [ ] Concluir regressão e CI da Fase 7; publicar alterações no GitHub.
+- [ ] Receber host/porta do EMQX e configurar credenciais/CA somente em arquivos privados.
+- [ ] Configurar, gravar e validar firmware físico na COM13 com TLS.
+- [ ] Definir e provisionar hospedagem gratuita do processo Node/Express; decisão de conta Oracle pendente.
+- [ ] Provisionar contas restritas e demonstração no Aiven e validar implantação pública.
+- [ ] Medir publicação até atualização da API/SSE em até cinco segundos; avaliação visual depende do frontend posterior.
+- [ ] Encerrar fase com evidências e tag, sem antecipar frontend.
+
+Próximos passos: concluir verificações locais enquanto o proprietário cria o EMQX; depois validar TLS com a placa e configurar o servidor remoto. Roteiro: seção 15 de `docs/roteiro-backend.md`.

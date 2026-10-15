@@ -1006,3 +1006,49 @@ Verificação autenticada da versão ativada: login 200, painel 200 com um ambie
 Expurgo e limpeza de sessões estão habilitados nos horários documentados. A execução destrutiva foi exercitada em fixtures próprias no CI/MySQL, sem antecipar a agenda diária sobre dados reais para produzir evidência. Nenhum schema, credencial ou dado do Aiven foi alterado nesta fase. `.env`, certificados, credenciais de laboratório e scripts privados de checagem não entram no Git.
 
 Tag de conclusão: `backend-fase-6`. Próxima etapa, após aceite: **Fase 7 — implantação e demonstração**. Antes de implementá-la, revisar seu plano e obter os dados de hospedagem/broker necessários. Frontend ainda não iniciado. A publicação no segundo repositório de wxlv7h continua dependendo da URL do repositório e do acesso de colaborador.
+
+## 15. Fase 7 — implantação e demonstração (em andamento)
+
+### 15.1 Responsabilidade de cada serviço
+
+Aiven armazena os dados MySQL. O broker recebe e distribui mensagens MQTT. O programa Node/Express executa a ingestão, as regras, as APIs, o SSE e as rotinas; portanto precisa de um servidor próprio em funcionamento. Vercel hospedará o frontend em etapa posterior. Railway era uma opção do plano, não uma dependência do código. O proprietário solicitou hospedagem estritamente gratuita; nenhum serviço pago foi contratado.
+
+O HiveMQ Lab atual está no Docker do computador: backend usa `127.0.0.1:1883`; ESP32 usa o IPv4 Wi-Fi do computador (observado nesta etapa: `192.168.0.100:1883`, sujeito a mudança por DHCP). Não se trata de endpoint Cloud. Em 14/10, o proprietário autorizou criar EMQX Serverless com Spend Limit = 0. A criação está a cargo do proprietário; conexão remota ainda não validada. Alterar `MQTT_URL`, usuário, senha e CA troca o fornecedor sem alterar regras de negócio.
+
+### 15.2 Separação de contas no MySQL
+
+`src/config/database-roles.ts` exige identidades distintas. `main.ts` abre pools separados: API, manutenção e demonstração. Quando jobs ou demo estão habilitados, a respectiva credencial é obrigatória; não há fallback para a conta da API.
+
+No `.env`, a API usa `DB_LOCAL_USER/PASSWORD`; as outras contas usam `DB_LOCAL_MAINTENANCE_USER/PASSWORD` e `DB_LOCAL_DEMO_USER/PASSWORD`. Para Aiven, substitua o prefixo por `DB_AIVEN_`. Host, porta, banco e validação de certificado são compartilhados pelo destino selecionado em `DB_TARGET`. A CA do Aiven pode vir de arquivo ou de `DB_AIVEN_CA_PEM` em um gerenciador privado de variáveis.
+
+As permissões estão em `src/db/runtime-grants.ts`. A API não apaga leituras nem altera schema. Manutenção pode resumir, marcar offline e expurgar leituras/sessões. Demo apenas consulta a projeção necessária. Alguns locks `SELECT ... FOR UPDATE` exigiram `UPDATE(id)` em tabelas específicas; esse privilégio de coluna foi incluído e testado, sem conceder atualização geral à manutenção.
+
+O provisionamento usa credenciais administrativas somente em `.env.provision`, com `DB_PROVISION_TARGET`, `DB_PROVISION_USER` e `DB_PROVISION_PASSWORD`. Após preencher credenciais privadas de runtime no `.env`, execute no diretório backend:
+
+```powershell
+npm run db:provision:runtime -- api
+npm run db:provision:runtime -- maintenance
+npm run db:provision:runtime -- demo
+```
+
+O comando recusa sobrescrever usuários existentes. DDL de contas não é transacional: em falha parcial, conferir o usuário antes de repetir. As três contas locais foram criadas nesta etapa; Aiven ainda não recebeu essas alterações. `.env.test`, ignorado pelo Git, preserva a conta local apropriada para criar/remover fixtures; só é carregado com `NODE_ENV=test`.
+
+### 15.3 Demonstração pública sem expor a bancada real
+
+`GET /api/v1/demo/painel` é habilitado por `DEMO_ENABLED=true`, usa conta de leitura e consulta somente empresas `eh_demo=1`. Retorna nomes da hierarquia e estado/valores; não retorna usuários, credenciais ou identificador físico. Rejeita filtros e não oferece escrita. Usa `no-store` e limite de 60 requisições por minuto/IP.
+
+O seed executável é `backend/seeds/stma_seed_demo.sql`, chamado por `npm run db:seed:demo -- --target=local`. Cria uma empresa explicitamente fictícia, dispositivo `stma-demo-simulado-001` offline e leitura simulada. Foi aplicado localmente e repetido sem duplicação. O arquivo de referência preexistente em `docs/03-implementacao/stma_seed_demo.sql` foi preservado; não executar ambos. A bancada física não foi convertida em empresa pública.
+
+### 15.4 Firmware e regras de negócio
+
+A cópia `firmware/mqtt_esp32_stma_tls` prepara TLS com CA, relógio UTC por NTP, publicação QoS 1 e leituras a cada 30 segundos. Seu README explica configuração e limitações. A configuração real e a gravação na COM13 dependem do endpoint/credenciais/CA do broker. Compilação isolada não comprova conexão física. O firmware anterior foi preservado.
+
+As regras estão consolidadas em [regras-de-negocio.md](regras-de-negocio.md). No código, ficam distribuídas entre serviços de aplicação, funções de domínio, repositórios transacionais e restrições/view MySQL; o documento identifica esses pontos. Não se concentrou toda a lógica em um único arquivo de código.
+
+### 15.5 Evidências e pendências
+
+Verificações intermediárias: 51 testes sem banco aprovados; teste da projeção pública aprovado; três testes de permissões com MySQL real aprovados. Uma execução conjunta da integração apresentou timeout no teste preexistente de paginação de 100 mil leituras; o limite de três segundos não foi relaxado. O aceite da regressão/CI da Fase 7 permanece pendente.
+
+Preparados Dockerfile com usuário não privilegiado e contexto de build que exclui arquivos privados. Ainda falta validar imagem, ativar a versão completa, testar TLS físico, provisionar contas restritas no Aiven, hospedar o Node e medir latência. Nenhum deploy remoto ou conclusão da fase é declarado por estes preparativos. Frontend permanece posterior ao backend.
+
+Atualização da verificação local: lint, typecheck, os 51 testes sem banco e build aprovados. O firmware novo compilou para `esp32:esp32:esp32`, com ArduinoMqttClient 0.1.8: 1.025.097 bytes de programa (78%) e 49.484 bytes de RAM (15%). A compilação usou configurações de exemplo; não houve gravação na placa nem conexão TLS nesta verificação.

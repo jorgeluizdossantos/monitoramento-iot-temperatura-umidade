@@ -116,6 +116,13 @@ cadastro público nem senha padrão.
 
 ## Histórico e continuidade
 
+**Sequência atual autorizada:** frontend iniciado pela Fase 1 enquanto a Fase 7 do backend
+permanece aberta. Execute `npm --prefix frontend run dev` após instalar suas dependências;
+veja [roteiro do frontend](docs/roteiro-frontend.md) e [instruções locais](frontend/README.md).
+Não há login ou painel funcional no frontend desta primeira etapa.
+
+**Situação atual (14/10/2026):** fases 1–6 concluídas; Fase 7 em andamento. Os registros de próximos passos abaixo descrevem entregas anteriores. Consulte o acompanhamento atualizado no plano e a seção 15 do [roteiro do backend](docs/roteiro-backend.md). As [regras de negócio](docs/regras-de-negocio.md) estão consolidadas com o mapa dos arquivos que as implementam. Deploy remoto, TLS físico e aceite final da Fase 7 continuam pendentes.
+
 O setup inicial (`compose.yaml`, scripts da raiz e `docs/fase-0.md`) permanece
 como histórico, com o banco `monitoramento_iot`. Para STMA use `compose.stma.yaml`,
 `backend/.env` e os comandos acima; não misture os schemas ou seeds.

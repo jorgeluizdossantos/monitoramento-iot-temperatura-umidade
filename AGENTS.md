@@ -1,5 +1,12 @@
 # Acompanhamento solicitado pelo proprietário
 
+- Atualização autorizada em 14/10/2026: iniciar o frontend gradualmente enquanto a Fase 7
+  do backend permanece aberta. Seguir o plano `docs/03-implementacao/03-Plano de implementação do frontend Monitoramento IoT (STMA)-v01.md`.
+  React 18/Vite/TypeScript/Tailwind substituem a reserva antiga de HTML puro.
+  Registrar cada etapa em `docs/roteiro-frontend.md`. Não antecipar fases do frontend.
+  Referência visual principal: `docs/02-projeto/02-prototipo-stitch/web`.
+  Adaptar as telas desenhadas ao plano vigente; protótipos não ampliam o escopo funcional.
+
 - Desde 12/10/2026, seguir `docs/03-implementacao/02-Plano de implementação do backend - STMA.md`.
   A instrução atual manda implementar o backend antes do frontend, sem ORM
   (mysql2 por repositórios; Prisma futuro), com MySQL local/Aiven configurável.

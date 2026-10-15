@@ -1,0 +1,42 @@
+@import "tailwindcss";
+@theme { --font-sans: Inter, sans-serif; --color-primary: #00507d; --color-surface: #f8f9ff; }
+:root { font-family: Inter, sans-serif; color: #0b1c30; background: #f8f9ff; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid #0369a1; outline-offset: 4px; }
+.skip { position: fixed; top: -100px; left: 16px; padding: 12px; background: white; z-index: 10; }
+.skip:focus { top: 12px; }
+.mobile-bar { display: flex; align-items: center; justify-content: space-between; background: white; padding: 16px; border-bottom: 1px solid #c0c7d1; }
+.mobile-bar button { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 6px; color: #00507d; background: #eff4ff; }
+.brand { display: flex; gap: 12px; align-items: center; color: #00507d; }
+.brand strong { font-size: 24px; letter-spacing: -.04em; }
+.brand span:not(.brand-mark) { display: block; font-size: 10px; letter-spacing: .14em; font-weight: 600; }
+.brand-mark { display: grid; place-items: center; width: 42px; height: 42px; background: #00507d; color: white; border-radius: 8px; }
+.desktop-brand { display: none; }
+.sidebar { display: none; background: white; padding: 24px 16px; }
+.sidebar.is-open { display: block; border-bottom: 1px solid #c0c7d1; }
+.nav-label,.eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .1em; color: #565e74; }
+.nav-label { padding: 0 12px 16px; }
+nav { display: grid; gap: 6px; }
+nav a { display: flex; gap: 12px; align-items: center; padding: 13px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; text-decoration: none; color: #40474f; }
+nav a:hover { background: #f8f9ff; }
+nav a.active { background: #00507d; color: #ffffff; }
+.sidebar-footer { display: none; }
+.workspace { min-width: 0; display: flex; flex-direction: column; min-height: calc(100dvh - 77px); }
+.topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 16px; font-size: 12px; color: #40474f; border-bottom: 1px solid #dce9ff; }
+.badge { display: inline-block; padding: 6px 10px; background: #eff4ff; color: #00507d; font-size: 11px; font-weight: 600; border-radius: 4px; }
+main { width: 100%; max-width: 1600px; margin: 0 auto; padding: 32px 16px; flex: 1; }
+h1 { font-size: 26px; line-height: 34px; font-weight: 700; margin: 10px 0; letter-spacing: -.035em; }
+.intro { font-size: 14px; line-height: 22px; color: #40474f; max-width: 640px; margin: 0 0 28px; }
+.surface { background: white; border: 1px solid #dce9ff; border-radius: 8px; }
+.empty-state { display: flex; align-items: center; flex-direction: column; text-align: center; padding: 40px 20px; }
+.instrument { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 16px; color: #00507d; background: #eff4ff; margin-bottom: 24px; }
+h2 { font-size: 20px; font-weight: 600; line-height: 28px; margin: 16px 0 10px; }
+.empty-state p { max-width: 460px; font-size: 14px; line-height: 24px; color: #40474f; }
+.next-step { display: flex; align-items: center; gap: 8px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #dce9ff; font-size: 12px; color: #00507d; }
+.foundation-note { display: flex; gap: 10px; align-items: flex-start; color: #565e74; margin-top: 20px; font-size: 12px; line-height: 20px; }
+.foundation-note svg { flex-shrink: 0; }
+footer { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; padding: 20px 16px; font-size: 11px; color: #565e74; border-top: 1px solid #dce9ff; }
+@media(min-width: 1024px) { .shell { display: grid; grid-template-columns: 264px minmax(0,1fr); min-height: 100dvh; } .mobile-bar { display: none; } .sidebar,.sidebar.is-open { display: flex; flex-direction: column; border-right: 1px solid #dce9ff; padding: 32px 16px; } .desktop-brand { display: flex; padding: 0 12px; margin-bottom: 52px; } .sidebar-footer { display: block; margin-top: auto; padding: 32px 12px 0; color: #565e74; font-size: 12px; line-height: 20px; } .version { font: 11px 'JetBrains Mono', monospace; } .workspace { min-height: 100dvh; } .topbar { background: white; padding: 22px 32px; } main { padding: 40px 32px; } h1 { font-size: 32px; line-height: 40px; } .empty-state { padding: 64px 32px; } footer { padding: 20px 32px; } }
