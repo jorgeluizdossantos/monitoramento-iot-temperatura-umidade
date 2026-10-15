@@ -5,7 +5,7 @@ Oct 12, 2026 · @Jorge Luiz dos Santos
 ## 1. Resumo
 
 **Acompanhamento — 14/10/2026:** o proprietário autorizou iniciar este plano com a Fase 7
-do backend ainda aberta. A Fase 1 do frontend está em implementação; login funcional e
+do backend ainda aberta. A Fase 1 do frontend foi concluída tecnicamente em 15/10/2026; login funcional e
 fases seguintes não foram antecipados. React 18/Vite/TypeScript substituem a reserva antiga
 de frontend sem framework. Registro didático: `docs/roteiro-frontend.md`.
 
@@ -20,7 +20,11 @@ Checklist da Fase 1:
 - [x] Configurar proxy de desenvolvimento na mesma origem e pipeline frontend.
 - [x] Conferir backend local: login, painel, alertas, histórico, série, CSV, SSE e logout.
 - [x] Validar build, quatro testes de contrato e quatro testes de navegador (360/768/1440 px); imagens revisadas, sem transbordamento.
-- [ ] Publicar etapa no GitHub e confirmar CI antes do aceite.
+- [x] Publicar etapa no GitHub e confirmar CI antes do aceite: commit `768c18b`, execução frontend `38765158159` aprovada e backend `38765158163` aprovado.
+
+Evidências e comandos no roteiro. Tag da entrega: `frontend-fase-1`.
+Referência visual principal confirmada: pasta `02-projeto/02-prototipo-stitch/web`;
+adaptar os desenhos ao escopo funcional do plano, sem copiar recursos não previstos.
 
 Pendências da Fase 7 do backend permanecem no seu plano. Próxima fase do frontend,
 somente após aceite desta entrega: login, sessão e permissões.

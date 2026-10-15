@@ -110,3 +110,17 @@ A tentativa inicial encontrou API encerrada (proxy 500/ECONNREFUSED); após rein
 instância de validação, o fluxo completo passou. Nenhuma credencial foi registrada no relatório.
 O código parcial da Fase 7 do backend permanece fora do commit desta etapa; sua documentação
 descreve o estado local e as pendências, sem declarar publicação remota dessa fase.
+
+## 7. Encerramento técnico da Fase 1 — 15/10/2026
+
+Implementação publicada no commit `768c18b`. [CI do frontend aprovado](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38765158159):
+instalação por lockfile, quatro testes de cliente HTTP, TypeScript/build e quatro testes Chromium.
+[CI do backend aprovado](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38765158163)
+para o código já publicado; isso não valida nem encerra o código local parcial da Fase 7.
+Tag: `frontend-fase-1`. Esta entrega não faz deploy público.
+
+Prévia local: http://127.0.0.1:5173. A instância HTTP usada na validação está com MQTT e jobs
+desligados; não confundir com operação contínua de telemetria. Os arquivos `.env` foram preservados.
+
+Próximo passo após aceite: Fase 2 — login real, restauração/expiração de sessão, guards,
+destino após login e menu por perfil. As fases de cadastro/painel/histórico não foram antecipadas.
