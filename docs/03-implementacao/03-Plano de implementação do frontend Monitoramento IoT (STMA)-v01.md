@@ -44,7 +44,7 @@ Checklist da Fase 3 — 16/10/2026:
 - [x] Endpoint restrito de destinos; sem ampliar acesso à telemetria.
 - [x] 15 testes frontend, 23 testes Edge, 15 testes de integração MySQL e build aprovados.
 - [x] Revisão visual e formulário conectado à API local validados; roteiro atualizado.
-- [ ] Confirmar publicação e CI desta fase.
+- [x] Publicado no commit `b4b0162`; CI frontend `38901359475` e backend `38901359464` aprovados. Tag: `frontend-fase-3`.
 O frontend é uma aplicação web responsiva (mobile-first) que consome a API REST do backend e mostra, em tempo real, a temperatura e a umidade de cada ambiente, com cadastros, histórico, gráficos e alertas conforme o perfil do usuário. O plano tem seis fases, do esqueleto até a implantação, e cada uma termina com um critério de aceite. Ele depende do plano do backend: as fases do frontend 3 a 5 só fecham quando as fases 3 a 5 do backend entregam as rotas correspondentes.
 
 ### 1.1 Stack proposta

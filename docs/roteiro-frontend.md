@@ -297,3 +297,15 @@ Após aceite, Fase 4: painel por ambiente, navegação hierárquica, SSE e recon
 Histórico/gráficos/alertas funcionais continuam para Fase 5. Hospedagem e demonstração
 permanecem vinculadas à Fase 6 do frontend e às pendências da Fase 7 do backend.
 Publicação no segundo repositório (wxlv7h) ainda depende de URL e acesso.
+
+### Encerramento técnico da Fase 3
+
+Implementação publicada no commit `b4b0162`; tag `frontend-fase-3`.
+[CI frontend aprovado](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38901359475):
+instalação por lockfile, testes unitários, TypeScript/build e 23 fluxos Chromium.
+[CI backend aprovado](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38901359464):
+validação do código publicado, incluindo a nova consulta de destinos e os testes
+existentes de ingestão/adoção. Isso não encerra nem publica o trabalho local parcial
+da Fase 7. Prévia local em http://127.0.0.1:5173; instância HTTP de validação com
+MQTT/jobs desligados por variáveis temporárias. Arquivos `.env` preservados.
+Próximo passo após aceite: Fase 4 do frontend.
