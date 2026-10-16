@@ -6,6 +6,15 @@ import type { PendingRepository } from './pending.service';
 
 export function createMysqlPendingRepository(db: Database): PendingRepository {
   return {
+    destinations: (companyId, page) => db.withConnection(async c => {
+      // Consulta restrita ao comissionamento: não retorna leituras nem usuários.
+      const from = `FROM ambiente a JOIN setor s ON s.id=a.setor_id AND s.empresa_id=a.empresa_id
+        JOIN unidade u ON u.id=s.unidade_id AND u.empresa_id=s.empresa_id JOIN empresa e ON e.id=a.empresa_id
+        WHERE e.id=? AND e.ativo=1 AND u.ativo=1 AND s.ativo=1 AND a.ativo=1`;
+      const [[count]] = await c.execute<RowDataPacket[]>(`SELECT COUNT(*) AS total ${from}`, [companyId]);
+      const [rows] = await c.query<RowDataPacket[]>(`SELECT a.id,a.nome,s.nome AS setor_nome,u.nome AS unidade_nome,e.nome AS empresa_nome ${from} ORDER BY a.id LIMIT ? OFFSET ?`, [companyId, page.tamanho, (page.pagina - 1) * page.tamanho]);
+      return { dados: rows, total: Number(count.total), pagina: page.pagina, tamanho: page.tamanho };
+    }),
     list: page => db.withConnection(async c => {
       const [[count]] = await c.execute<RowDataPacket[]>('SELECT COUNT(*) AS total FROM dispositivo_pendente WHERE situacao=?', [page.situacao]);
       const [rows] = await c.query<RowDataPacket[]>('SELECT id,device_id,primeiro_contato_em,ultimo_contato_em,qtd_mensagens,ultimo_payload,situacao FROM dispositivo_pendente WHERE situacao=? ORDER BY id LIMIT ? OFFSET ?', [page.situacao, page.tamanho, (page.pagina - 1) * page.tamanho]);

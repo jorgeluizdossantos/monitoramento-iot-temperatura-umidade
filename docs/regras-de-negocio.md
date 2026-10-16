@@ -131,3 +131,19 @@ Testes de referência: `auth*`, `cadastros*`, `telemetry*`, `mqtt*`, `alert-poli
 Fases 1–6 concluídas; Fase 7 em implementação. Hospedagem do processo Node, broker remoto TLS, eventual atualização do firmware e medição publicada → API/SSE em até 5 segundos ainda dependem da preparação e validação correspondentes. O frontend não foi iniciado; o critério visual de atualização de tela só poderá ser comprovado com ele. Nesta fase, a evidência do backend deve medir publicação → persistência → consulta do painel/aviso SSE.
 
 Pendências funcionais explicitadas: configuração do intervalo não é enviada à placa; firmware anterior é QoS 0 e sem NTP; não há fila durável de leituras no ESP32; não há distribuição SSE entre instâncias. Não prometer entrega exatamente uma vez: QoS 1 pode reenviar e a aplicação deduplica quando dispõe de timestamp válido.
+
+## Complemento da Fase 3 do frontend — 16/10/2026
+
+A seleção de destino para adoção é consultada em
+`GET /api/v1/dispositivos-pendentes/destinos`, com empresa e paginação explícitas.
+Somente superadmin pode consultar. Empresa, unidade, setor e ambiente devem estar
+ativos; o resultado limita-se aos nomes da hierarquia e ID do ambiente, sem dados
+de telemetria ou usuários. A transação de adoção volta a validar esses vínculos.
+Implementação: `pending.service.ts`, `pending.routes.ts` e
+`mysql-pending.repository.ts`, em `backend/src/modules/telemetria`.
+
+No frontend, `features/cadastros/model.ts` valida entradas e constrói o payload;
+`cadastro-form.tsx` e `pending-page.tsx` conduzem os fluxos. Essas validações auxiliam
+o usuário, mas não substituem as regras dos serviços/repositórios do backend.
+Desativar mantém histórico; reativar depende da hierarquia ativa. Nenhuma exclusão
+física foi acrescentada às interfaces.

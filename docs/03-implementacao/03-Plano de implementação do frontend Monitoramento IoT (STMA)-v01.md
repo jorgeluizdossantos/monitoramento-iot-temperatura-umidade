@@ -5,7 +5,7 @@ Oct 12, 2026 · @Jorge Luiz dos Santos
 ## 1. Resumo
 
 **Acompanhamento — 14/10/2026:** o proprietário autorizou iniciar este plano com a Fase 7
-do backend ainda aberta. Fases 1 e 2 implementadas em 15/10/2026; fases seguintes aguardam aceite. React 18/Vite/TypeScript substituem a reserva antiga
+do backend ainda aberta. Fases 1 e 2 implementadas em 15/10/2026 e Fase 3 em 16/10/2026; fases seguintes aguardam aceite. React 18/Vite/TypeScript substituem a reserva antiga
 de frontend sem framework. Registro didático: `docs/roteiro-frontend.md`.
 
 Correções de contrato conforme backend já aprovado: fila global/adoção exclusivas do
@@ -34,8 +34,17 @@ Checklist da Fase 2 — autorizada em 15/10/2026:
 - [x] Publicação no commit `df6f5fa`; CI frontend `38768198616` aprovado (12 testes unitários, build e 13 testes Chromium). Tag: `frontend-fase-2`.
 
 Pendências da Fase 7 do backend permanecem no seu plano. Próxima fase do frontend,
-somente após aceite desta entrega: Fase 3 — cadastros e adoção de placas.
+somente após aceite desta entrega: Fase 4 — painel em tempo real.
 
+Checklist da Fase 3 — 16/10/2026:
+- [x] Listas e formulários das seis entidades, com paginação e filtro de inativos.
+- [x] Criação, edição, desativação com confirmação e reativação.
+- [x] Erros do backend nos campos, faixas e senha opcional na edição.
+- [x] Fila de placas, payload e adoção exclusiva do superadmin com destino hierárquico.
+- [x] Endpoint restrito de destinos; sem ampliar acesso à telemetria.
+- [x] 15 testes frontend, 23 testes Edge, 15 testes de integração MySQL e build aprovados.
+- [x] Revisão visual e formulário conectado à API local validados; roteiro atualizado.
+- [ ] Confirmar publicação e CI desta fase.
 O frontend é uma aplicação web responsiva (mobile-first) que consome a API REST do backend e mostra, em tempo real, a temperatura e a umidade de cada ambiente, com cadastros, histórico, gráficos e alertas conforme o perfil do usuário. O plano tem seis fases, do esqueleto até a implantação, e cada uma termina com um critério de aceite. Ele depende do plano do backend: as fases do frontend 3 a 5 só fecham quando as fases 3 a 5 do backend entregam as rotas correspondentes.
 
 ### 1.1 Stack proposta
@@ -103,7 +112,7 @@ O painel é a tela inicial depois do login; os cadastros ficam atrás de um menu
 | Histórico | `/ambientes/:id/historico` | leitor | Filtro de período, tabela paginada, gráfico e botão de exportar CSV | RF011, RF012, RF016 |
 | Alertas | `/alertas` | leitor; operador reconhece | Alertas abertos e encerrados, com severidade, valor extremo e duração | RF013 |
 | Cadastros | `/cadastros/:entidade` | administrador (empresas: superadmin) | Lista, criação, edição e desativação de empresas, unidades, setores, ambientes, dispositivos e usuários | RF002 a RF007, RF015 |
-| Placas pendentes | `/cadastros/pendentes` | administrador | IDs que publicaram e ainda não têm cadastro, com último payload e ação de adotar | RF007 |
+| Placas pendentes | `/cadastros/pendentes` | superadmin | IDs que publicaram e ainda não têm cadastro, com último payload e ação de adotar | RF007 |
 | Demonstração | `/demo` | público | O painel da empresa de demonstração, somente leitura | RF017 |
 
 ### 3.2 Como o estado do ambiente aparece
@@ -112,9 +121,9 @@ O backend devolve `normal`, `atencao`, `critico` ou `sem_dados`, além de `onlin
 
 ### 3.3 Fluxo de cadastrar uma placa nova
 
-1. O administrador liga o ESP32 e abre **Placas pendentes**; o `device_id` aparece com a hora do primeiro contato.
+1. Após ligar o ESP32, o superadmin abre **Placas pendentes**; o `device_id` aparece com a hora do primeiro contato.
 2. Ele confere o último payload, para ter certeza de que é a placa certa.
-3. Escolhe o ambiente numa lista hierárquica (unidade, setor, ambiente) e informa nome, sensor e intervalo de leitura.
+3. Escolhe empresa e ambiente numa lista hierárquica (unidade, setor, ambiente), informa nome opcional e sensor. Intervalo e timeout são ajustados pelo administrador em Dispositivos após adoção.
 4. A tela chama `POST /dispositivos-pendentes/:id/adotar`; a partir daí as leituras passam a ser gravadas e o cartão aparece no painel.
 
 ## 4. Fases de implementação

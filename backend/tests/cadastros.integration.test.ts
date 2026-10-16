@@ -1,3 +1,5 @@
+import { createPendingService } from '../src/modules/telemetria/pending.service';
+import { createMysqlPendingRepository } from '../src/modules/telemetria/mysql-pending.repository';
 import { randomUUID } from 'node:crypto';
 import { beforeAll, afterAll, expect, it } from 'vitest';
 import request from 'supertest';
@@ -44,7 +46,7 @@ beforeAll(async () => {
   const [insert] = await sql("INSERT INTO usuario (nome,email,senha_hash,perfil) VALUES (?,?,?,'superadmin')", [`Fixture ${suffix}`, email('root'), hash]);
   rootId = (insert as ResultSetHeader).insertId;
   repository = createMysqlCadastroRepository(db);
-  app = createApp({ logger: createLogger('silent'), healthRepository: createMysqlHealthRepository(db), auth: { service: await createAuthService(createMysqlAuthRepository(db), 8), env: { ...env, AUTH_IP_LIMIT: 1000, AUTH_EMAIL_LIMIT: 100 } }, cadastros: createCadastroService(repository) });
+  app = createApp({ logger: createLogger('silent'), healthRepository: createMysqlHealthRepository(db), auth: { service: await createAuthService(createMysqlAuthRepository(db), 8), env: { ...env, AUTH_IP_LIMIT: 1000, AUTH_EMAIL_LIMIT: 100 } }, cadastros: createCadastroService(repository), pending: createPendingService(createMysqlPendingRepository(db)) });
   root = await login(email('root'));
   for (const label of ['a', 'b']) {
     const company = await create('/empresas', { nome: `${label}-${suffix}`, administrador: { nome: `Admin ${label}`, email: email(label), senha: password } }, root);
@@ -219,4 +221,18 @@ it('todas as seis entidades geraram auditoria com antes/depois e ator correto', 
   expect(new Set((rows as RowDataPacket[]).map(row => row.entidade))).toEqual(new Set(['empresa', 'unidade', 'setor', 'ambiente', 'usuario', 'dispositivo']));
   expect((rows as RowDataPacket[]).filter(row => row.acao === 'criar').every(row => row.antes === null)).toBe(true);
   expect((rows as RowDataPacket[]).filter(row => row.acao === 'desativar').every(row => row.antes && row.depois && row.usuario_id)).toBe(true);
+});
+
+it('destinos de adoção exigem superadmin e filtram empresa e hierarquia ativa', async () => {
+  const path = `/dispositivos-pendentes/destinos?empresa_id=${companies[0]}&tamanho=1`;
+  expect((await send('get', path, adminA)).status).toBe(403);
+  expect((await send('get', '/dispositivos-pendentes/destinos', root)).status).toBe(400);
+  const response = await send('get', path, root);
+  expect(response.status).toBe(200);
+  expect(response.body.dados).toEqual([expect.objectContaining({id: roomA, unidade_nome:'Unidade A', setor_nome:'Setor A'})]);
+  expect(response.body.dados[0]).not.toHaveProperty('temperatura');
+  expect(response.body.dados.some((r: {id:number})=>r.id===roomB)).toBe(false);
+  await sql('UPDATE unidade SET ativo=0 WHERE id=?', [unitA]);
+  try { expect((await send('get', path, root)).body.total).toBe(0); }
+  finally { await sql('UPDATE unidade SET ativo=1 WHERE id=?', [unitA]); }
 });

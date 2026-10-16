@@ -42,7 +42,7 @@ test('superadmin recebe empresas e pendentes, sem painel empresarial', async ({ 
   await setup(page, 'superadmin');
   await page.goto('/entrar'); await enter(page);
   await expect(page).toHaveURL(/cadastros\/empresas$/);
-  await expect(page.getByRole('link', { name: 'Placas pendentes' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Navegação principal' }).getByRole('link', { name: 'Placas pendentes' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Painel geral' })).toHaveCount(0);
   await page.goto('/painel');
   await expect(page.getByRole('heading', { name: 'Acesso não permitido' })).toBeVisible();

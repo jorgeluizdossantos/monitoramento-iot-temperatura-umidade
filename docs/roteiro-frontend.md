@@ -200,3 +200,100 @@ os doze testes unitários/build foram repetidos e o CI validou os treze fluxos C
 Plano e README atualizados. Fase 3 aguarda aceite; pendências de hospedagem do backend
 continuam abertas. A versão está no repositório jorgeluizdossantos; a publicação no
 repositório wxlv7h continua dependente de URL e acesso ao repositório de destino.
+
+## 9. Fase 3 — cadastros e adoção (16/10/2026)
+
+### Etapa 1 — conferir contratos antes de desenhar as telas
+
+Foram consultados os validadores, serviços e rotas do backend e a tela web
+`cadastros_e_comissionamento_iot` do Stitch. O visual utiliza as mesmas superfícies
+claras, azul, abas e cartões de comissionamento. Controles sem API, como ignorar
+placa e abrir auditoria, não foram apresentados como funcionalidades prontas.
+
+A empresa da operação vem da sessão do administrador. Somente o superadmin cria
+empresas e seu administrador inicial, consulta a fila global e adota placas.
+Ele não ganha acesso aos painéis ou aos usuários das empresas.
+
+### Etapa 2 — modelar os formulários e os dados enviados
+
+A pasta `frontend/src/features/cadastros` reúne a implementação:
+
+| Arquivo | Responsabilidade |
+| --- | --- |
+| `model.ts` | Entidades, campos, esquemas Zod, valores iniciais e conversão para JSON |
+| `cadastros-page.tsx` | Abas, lista paginada, carregar detalhe, editar e alterar situação |
+| `cadastro-form.tsx` | Formulário, validação, erros de campo e envio da mutação |
+| `reference-select.tsx` | Seletores paginados dos vínculos e destinos de adoção |
+| `pending-page.tsx` | Payload, contatos da placa, escolha do destino e adoção |
+| `confirmation.tsx` | Confirmação modal, foco e bloqueio durante o envio |
+
+Os formulários de cadastro usam campos controlados e validação Zod explícita;
+o login mantém React Hook Form. A configuração comum evita repetir as regras de
+serialização nos seis formulários. Entradas numéricas viram números, campos opcionais
+vazios viram `null` e senha vazia na edição é omitida. Edição envia somente campos
+alterados; reenvio desnecessário de e-mail revogaria sessões no backend.
+
+Os limites são validados no conjunto final do ambiente, inclusive quando apenas o
+mínimo muda. Cada campo aceita o intervalo e a precisão previstos no backend.
+A empresa é criada com seu primeiro administrador em uma transação já existente.
+Erro 400 com `campos` é mostrado junto ao campo correspondente; erros gerais e
+conflitos preservam o formulário para correção. A API continua sendo a autoridade.
+
+### Etapa 3 — listas e exclusão lógica
+
+A lista solicita 20 registros por página. Há filtro para incluir inativos e botão
+de atualização. Seletores carregam 50 opções por vez e oferecem mais páginas;
+a edição também busca o vínculo atual, inclusive se ele estiver inativo.
+
+`POST /:entidade` cria; `GET /:entidade/:id` abre o detalhe; `PATCH` edita.
+`DELETE` é desativação lógica, não remoção física. Uma confirmação é exigida tanto
+para desativar quanto para reativar. O servidor mantém proteção do último
+administrador e das hierarquias. Após mutações, o cache de cadastros é invalidado.
+Após alterar usuários, a sessão é reconsultada para refletir mudanças de perfil.
+
+### Etapa 4 — adoção com destino identificado
+
+A API existente aceitava `ambiente_id`, mas não oferecia ao superadmin a hierarquia
+para selecionar. Foi acrescentado:
+
+`GET /api/v1/dispositivos-pendentes/destinos?empresa_id=ID&pagina=1&tamanho=50`
+
+Retorna `dados`, `total`, `pagina`, `tamanho`. Cada destino contém `id`, `nome`,
+`empresa_nome`, `unidade_nome` e `setor_nome`. Apenas superadmin; somente hierarquia
+inteiramente ativa. A consulta não retorna usuários ou telemetria. O SQL usa
+parâmetros e paginação. Não houve migração do schema.
+
+Na interface: selecionar placa → conferir payload e contatos → escolher empresa →
+escolher unidade/setor/ambiente na opção hierárquica → informar sensor e nome opcional →
+confirmar. A chamada existente `POST /dispositivos-pendentes/:id/adotar` mantém sua
+transação e verifica novamente o destino. Adoção não transfere leituras antigas da
+fila. Intervalo e timeout são ajustados pelo administrador em Dispositivos depois;
+o contrato de adoção não aceita esses campos e o formulário não promete enviá-los.
+Atualização da fila nesta fase é manual; SSE pertence à fase seguinte.
+
+### Etapa 5 — evidências de validação
+
+- 15 testes unitários do frontend aprovados: sessão, cliente HTTP e payloads/formulários.
+- 23 testes Edge aprovados: criação/edição/desativação das seis entidades, cancelamento,
+  erros de campo, adoção com conflito e nova tentativa, permissões e responsividade.
+- Build TypeScript/Vite aprovado; lint, typecheck e build do backend aprovados.
+- 15 testes de integração dos cadastros aprovados no MySQL local, incluindo o novo
+  endpoint de destinos, restrição ao superadmin, empresa e hierarquia inativa.
+- Capturas de tela em 360 e 1440 px revisadas. Tabela vira cartões no celular.
+- Formulário real com API/MySQL local: criação, edição e desativação de uma unidade
+  identificada como `Validação frontend F3 ...`. O registro ficou inativo para
+  preservar a auditoria. Credenciais permaneceram em arquivo privado.
+
+Para repetir: `npm test`, `npm run build`, `npm run test:e2e` no frontend.
+No backend, `NODE_ENV=test` e `DB_TARGET=local`, executar
+`npx vitest run tests/cadastros.integration.test.ts --maxWorkers=1`.
+Nunca direcionar testes de integração ao Aiven. Os testes de navegador versionados
+usam respostas controladas; a conferência adicional com API real foi executada
+localmente, sem credenciais versionadas. ESP32/COM13 não foi necessário nesta fase.
+
+### Próxima etapa e pendências
+
+Após aceite, Fase 4: painel por ambiente, navegação hierárquica, SSE e reconexão.
+Histórico/gráficos/alertas funcionais continuam para Fase 5. Hospedagem e demonstração
+permanecem vinculadas à Fase 6 do frontend e às pendências da Fase 7 do backend.
+Publicação no segundo repositório (wxlv7h) ainda depende de URL e acesso.

@@ -9,6 +9,7 @@ export const pendingPageSchema = pageSchema.omit({ incluir_inativos: true }).ext
 export type PendingPage = z.output<typeof pendingPageSchema>;
 export type Adoption = z.output<typeof adoptionSchema>;
 export interface PendingRepository {
+  destinations(companyId: number, page: PendingPage): Promise<{ dados: Fields[]; total: number; pagina: number; tamanho: number }>;
   list(page: PendingPage): Promise<{ dados: Fields[]; total: number; pagina: number; tamanho: number }>;
   adopt(id: number, data: Adoption, context: WriteContext): Promise<Cadastro>;
 }
@@ -17,6 +18,11 @@ function authorize(actor: Principal) {
 }
 export function createPendingService(repository: PendingRepository) {
   return {
+    async destinations(query: unknown, actor: Principal) {
+      authorize(actor);
+      const { empresa_id, ...page } = parse(pendingPageSchema.extend({ empresa_id: z.coerce.number().int().positive().max(4294967295) }), query);
+      return repository.destinations(empresa_id, page);
+    },
     async list(query: unknown, actor: Principal) { authorize(actor); return repository.list(parse(pendingPageSchema, query)); },
     async adopt(id: number, body: unknown, context: WriteContext) { authorize(context.actor); return repository.adopt(id, parse(adoptionSchema, body), context); },
   };
