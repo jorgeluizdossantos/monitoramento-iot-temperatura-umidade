@@ -392,3 +392,17 @@ frontend, sem a variável `PLAYWRIGHT_CHANNEL=msedge` nessa execução.
 Próxima etapa após aceite: Fase 5 — histórico, gráficos e alertas. Hospedagem do
 backend/Fase 7 e publicação no segundo repositório continuam pendentes conforme seus
 registros. O fechamento remoto desta fase depende da confirmação do CI abaixo.
+
+### Encerramento técnico da Fase 4 — 17/10/2026
+
+Commit `b114315`, tag `frontend-fase-4`.
+[CI frontend aprovado](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/39025838662):
+22 testes unitários, build e 31 testes Chromium.
+[CI backend aprovado](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/39025838676)
+para o código publicado. Esta entrega não publica nem encerra as alterações locais
+parciais da Fase 7 do backend. Validações locais adicionais: 31 Edge, 8 WebKit e
+prova integrada de 332 ms com reconexão, conforme descrito acima.
+
+Plano, roteiro e documento de regras de negócio atualizados. Fase 5 aguarda aceite:
+histórico paginado, gráficos, série por hora, alertas e exportação CSV. Não houve
+deploy público nesta etapa; pendências de hospedagem e segundo repositório permanecem.

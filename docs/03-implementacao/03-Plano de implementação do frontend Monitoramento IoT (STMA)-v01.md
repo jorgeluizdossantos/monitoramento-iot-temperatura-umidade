@@ -5,7 +5,7 @@ Oct 12, 2026 · @Jorge Luiz dos Santos
 ## 1. Resumo
 
 **Acompanhamento — 14/10/2026:** o proprietário autorizou iniciar este plano com a Fase 7
-do backend ainda aberta. Fases 1 e 2 implementadas em 15/10/2026 e Fase 3 em 16/10/2026; fases seguintes aguardam aceite. React 18/Vite/TypeScript substituem a reserva antiga
+do backend ainda aberta. Fases 1 e 2 implementadas em 15/10/2026 e Fase 3 em 16/10/2026 e Fase 4 em 17/10/2026; fases seguintes aguardam aceite. React 18/Vite/TypeScript substituem a reserva antiga
 de frontend sem framework. Registro didático: `docs/roteiro-frontend.md`.
 
 Correções de contrato conforme backend já aprovado: fila global/adoção exclusivas do
@@ -45,14 +45,14 @@ Checklist da Fase 3 — 16/10/2026:
 - [x] 15 testes frontend, 23 testes Edge, 15 testes de integração MySQL e build aprovados.
 - [x] Revisão visual e formulário conectado à API local validados; roteiro atualizado.
 - [x] Publicado no commit `b4b0162`; CI frontend `38901359475` e backend `38901359464` aprovados. Tag: `frontend-fase-3`.
-Checklist da Fase 4 — validação local concluída (17/10/2026):
+Checklist da Fase 4 — concluída tecnicamente (17/10/2026):
 - [x] Cartões reais por ambiente, filtros hierárquicos e detalhe atual.
 - [x] Contrato validado, estados e horário/valores formatados; leitura offline não parece atual.
 - [x] SSE, agrupamento de avisos, fallback de 30 s e recriação da conexão após retorno da rede.
 - [x] 22 testes unitários e build aprovados.
 - [x] 31 testes Edge e 8 WebKit aprovados; revisão visual em 360/1440 px.
 - [x] MQTT → MySQL → SSE → cartão em 332 ms, duas leituras persistidas e reconexão confirmada localmente.
-- [ ] Publicar, confirmar CI e registrar encerramento no roteiro.
+- [x] Publicado no commit `b114315`; CI frontend `39025838662` e backend `39025838676` aprovados. Tag: `frontend-fase-4`.
 O frontend é uma aplicação web responsiva (mobile-first) que consome a API REST do backend e mostra, em tempo real, a temperatura e a umidade de cada ambiente, com cadastros, histórico, gráficos e alertas conforme o perfil do usuário. O plano tem seis fases, do esqueleto até a implantação, e cada uma termina com um critério de aceite. Ele depende do plano do backend: as fases do frontend 3 a 5 só fecham quando as fases 3 a 5 do backend entregam as rotas correspondentes.
 
 ### 1.1 Stack proposta
