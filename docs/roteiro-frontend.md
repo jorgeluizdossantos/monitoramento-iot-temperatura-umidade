@@ -509,3 +509,17 @@ Validação complementar: **seis testes WebKit aprovados** (36,6 s), incluindo C
 perfis e responsividade. Após ajuste do intervalo inicial para as últimas 24 horas
 até o minuto atual, os 27 testes unitários passaram novamente. Datas no eixo são
 ancoradas na hora real da agregação, inclusive quando o período começa no meio da hora.
+
+### Encerramento técnico da Fase 5 — 17/10/2026
+
+Implementação publicada no commit `8c4bedf`, tag `frontend-fase-5`.
+[CI frontend aprovado](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/39045798482):
+instalação, 27 testes unitários, build e 37 testes Chromium.
+[CI backend aprovado](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/39045798469):
+lint, tipos, testes, migração, integração MySQL, MQTT e build.
+As alterações locais parciais da Fase 7 do backend não fazem parte dessa publicação.
+
+Fase 5 concluída tecnicamente. Falta **uma fase do frontend**, a Fase 6, que aguarda
+aceite: demonstração, acessibilidade, testes finais e implantação. O deploy completo
+continua condicionado às pendências de hospedagem do backend. Plano, roteiros e
+regras de negócio estão atualizados; não houve implantação pública nesta etapa.

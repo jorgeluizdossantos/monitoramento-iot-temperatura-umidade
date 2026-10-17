@@ -62,7 +62,7 @@ Checklist da Fase 5 — autorizada e implementada em 17/10/2026:
 - [x] 27 testes unitários, 37 Edge, seis WebKit, cinco integrações MySQL e builds aprovados.
 - [x] Prova real de 100 mil leituras: 20 linhas na tela, primeira página em 551 ms, CSV com 100.001 linhas e reconhecimento persistido.
 - [x] Plano, roteiro didático e regras de negócio atualizados.
-- [ ] Publicação e confirmação do CI (registrar no fechamento abaixo).
+- [x] Publicado no commit `8c4bedf`; CI frontend `39045798482` e backend `39045798469` aprovados. Tag: `frontend-fase-5`.
 
 **Falta uma fase após o aceite da Fase 5:** Fase 6 — demonstração, acessibilidade,
 testes finais nos navegadores, README de implantação e deploy. A implantação depende
