@@ -61,3 +61,11 @@ it('não consulta sessão enquanto o login está pendente', async () => {
   await pending;
   expect(useAuth.getState().user).toEqual(user);
 });
+
+it('preserva sessão conhecida durante falha de rede e revoga quando a API retorna 401', async () => {
+ useAuth.setState({user,status:'authenticated'});
+ vi.stubGlobal('fetch',vi.fn().mockRejectedValue(new TypeError('offline')));
+ await refreshSession();expect(useAuth.getState().user).toEqual(user);
+ vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response('{}',{status:401})));
+ await refreshSession();expect(useAuth.getState().user).toBeNull();
+});

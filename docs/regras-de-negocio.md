@@ -147,3 +147,18 @@ No frontend, `features/cadastros/model.ts` valida entradas e constrói o payload
 o usuário, mas não substituem as regras dos serviços/repositórios do backend.
 Desativar mantém histórico; reativar depende da hierarquia ativa. Nenhuma exclusão
 física foi acrescentada às interfaces.
+
+## Apresentação do painel — Fase 4 do frontend (17/10/2026)
+
+A view do backend classifica cada dispositivo. A interface agrupa dispositivos por
+ambiente e exibe a maior severidade entre os que estão online, fora de manutenção e
+com leitura. Se não houver leitura nessas condições, mostra “Sem dados atuais”.
+Isso é um resumo de apresentação, não altera classificação, limites ou episódios
+persistidos. Dispositivos offline/manutenção mostram a data da última leitura;
+valores antigos não são destacados como medição atual.
+
+O indicador SSE descreve a conexão do navegador ao backend, não a saúde do broker.
+Reconsulta após aviso SSE usa o escopo da sessão. Sem SSE, consulta a cada 30 s;
+após retorno da rede, recria a conexão sem manter duas simultâneas. Falha de rede
+não equivale a logout; HTTP 401 invalida a sessão. Implementação em
+`frontend/src/features/painel`, com estado de sessão em `features/auth/auth.ts`.

@@ -3,6 +3,8 @@ const principal = (perfil = 'leitor') => ({ id: 1, empresa_id: perfil === 'super
 const unauthorized = { erro: { codigo: 'NAO_AUTENTICADO', mensagem: 'Sessão ausente, inválida ou expirada.', campos: [] } };
 async function setup(page: Page, profile = 'leitor', authenticated = false) {
   let active = authenticated;
+  await page.route('**/api/v1/painel', r => r.fulfill({json:{dados:[]}}));
+  await page.route('**/api/v1/stream', r => r.fulfill({status:503,body:''}));
   await page.route('**/api/v1/auth/me', route => route.fulfill({ status: active ? 200 : 401, json: active ? { usuario: principal(profile) } : unauthorized }));
   await page.route('**/api/v1/auth/login', async route => { active = true; await route.fulfill({ json: { usuario: principal(profile) } }); });
   await page.route('**/api/v1/auth/logout', async route => { active = false; await route.fulfill({ status: 204 }); });
@@ -69,6 +71,8 @@ test('validação, senha visível e erro de credenciais acessível', async ({ pa
   await expect(page.getByRole('alert')).toHaveText('E-mail ou senha inválidos.');
 });
 test('falha na sessão mostra tentativa novamente, sem presumir logout', async ({ page }) => {
+  await page.route('**/api/v1/painel', r => r.fulfill({json:{dados:[]}}));
+  await page.route('**/api/v1/stream', r => r.fulfill({status:503,body:''}));
   await page.route('**/api/v1/auth/me', route => route.fulfill({ status: 503, json: {} }));
   await page.goto('/painel');
   await expect(page.getByRole('heading', { name: 'Não foi possível verificar o acesso' })).toBeVisible();

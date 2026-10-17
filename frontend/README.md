@@ -1,7 +1,7 @@
-# Frontend STMA — Fase 3
+# Frontend STMA — Fase 4
 
 React 18, Vite, TypeScript estrito e Tailwind. Layout Telemetry Slate, menu responsivo,
-login real, sessão HttpOnly, rotas protegidas e menus por perfil. Cadastros das seis entidades e adoção de placas funcionais. Painel em tempo real na Fase 4.
+login real, sessão HttpOnly, rotas protegidas e menus por perfil. Cadastros das seis entidades e adoção de placas funcionais. Painel por ambiente, detalhe atual, filtros e SSE funcionais; histórico/gráficos/alertas na Fase 5.
 
 ```powershell
 cd frontend

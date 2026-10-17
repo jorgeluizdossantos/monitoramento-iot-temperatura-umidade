@@ -34,6 +34,10 @@ export function refreshSession(): Promise<void> {
     } catch (error) {
       if (current !== revision) return;
       if (error instanceof ApiError && error.status === 401) forgetSession();
+      else if (useAuth.getState().user && error instanceof ApiError && (error.status === 0 || error.status >= 500)) {
+        // Preserva a identidade conhecida durante indisponibilidade; a API segue autorizando cada operação.
+        useAuth.setState({ error: error.message });
+      }
       else { clearIdentity(); useAuth.setState({ status: 'error', user: null, error: error instanceof Error ? error.message : 'Não foi possível verificar a sessão.' }); }
     } finally { refreshing = undefined; }
   })();

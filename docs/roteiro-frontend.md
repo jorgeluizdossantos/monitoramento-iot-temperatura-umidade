@@ -309,3 +309,86 @@ existentes de ingestão/adoção. Isso não encerra nem publica o trabalho local
 da Fase 7. Prévia local em http://127.0.0.1:5173; instância HTTP de validação com
 MQTT/jobs desligados por variáveis temporárias. Arquivos `.env` preservados.
 Próximo passo após aceite: Fase 4 do frontend.
+
+## 10. Fase 4 — painel em tempo real (em validação, 17/10/2026)
+
+### Implementação
+
+`frontend/src/features/painel/model.ts` valida o contrato de `/api/v1/painel`,
+normaliza DECIMAL do MySQL e mantém valores ausentes como `null`. A classificação
+por placa vem do backend. A interface agrupa placas por ambiente; o resumo considera
+a maior severidade entre placas online, fora de manutenção e com leitura. Sem uma
+placa nessas condições, exibe “Sem dados atuais”. Não inventa uma medição agregada.
+Placas offline/manutenção exibem a data da última leitura, sem apresentar o valor
+antigo como atual. Datas usam America/Bahia e números usam pt-BR.
+
+`panel-page.tsx` apresenta cartões, filtros de unidade/setor/estado, totais do recorte,
+carregamento, vazio, erro e detalhe atual do ambiente. Filtros ficam na URL e a troca
+de unidade limpa o setor. O visual segue o painel web do Stitch. Gráficos, histórico,
+porta e episódios de alerta não foram simulados; o que pertence à Fase 5 segue pendente.
+
+`realtime.ts` administra um EventSource por tela de monitoramento. O SSE existente
+transmite `event: atualizar` com aviso de reconsulta, não o ID do ambiente. Por isso
+consultamos `/painel` novamente e utilizamos compartilhamento estrutural do TanStack
+Query e cartões memoizados para reaproveitar os que não mudaram. Avisos são agrupados
+por 150 ms; avisos durante uma consulta geram nova consulta ao terminar, sem fila
+ilimitada. A consulta usa a empresa da sessão, nunca um ID enviado como filtro à API.
+
+Falha SSE ativa consulta a cada 30 segundos. Reconexões transitórias são do navegador;
+um stream encerrado (`CLOSED`) é recriado após três segundos. Ao recuperar a rede,
+a conexão anterior é fechada antes de abrir outra. Sair do painel encerra EventSource,
+timers e listeners. HTTP 401 continua encerrando a sessão. Uma identidade já conhecida
+é preservada durante erro de rede/503 na revalidação, para manter a tela e seus avisos;
+isso não concede autorização: cada operação continua sendo validada pela API.
+
+### Validação e ocorrências
+
+22 testes unitários e build aprovados em 17/10. O teste de encerramento foi ajustado
+para aguardar a navegação completar (carregamento lazy mantém a tela anterior até lá).
+A prova integrada encontrou encerramento do SSE ao cair a rede; foi acrescentada e
+testada a recriação controlada. Uma segunda instância Vite concorrendo pelo cache
+causou timeouts de inicialização. O roteiro executável passou a usar o build estático,
+com API e frontend na mesma origem, sem disputar o servidor de desenvolvimento.
+
+Roteiro executável: `scripts/verify-frontend-realtime.cjs`. Usa MySQL local, Mosquitto
+local 18884, uma empresa/usuário/placa de teste com UUID e sessão temporária. Publica
+via MQTT, verifica persistência, atualização no navegador e retorno após queda de rede.
+O bloco `finally` remove somente as fixtures criadas por essa execução. Não usa senhas
+de usuários nem ESP32 físico. Executar após os builds de backend e frontend, com Edge
+instalado e banco/broker locais ativos. Resultados finais e CI serão registrados após
+confirmação; esta seção ainda não declara a fase encerrada.
+
+### Evidências finais locais — 17/10/2026
+
+- Regressão completa: **31 testes Edge aprovados** (35,3 s), com dois workers.
+- Compatibilidade antecipada: **8 testes WebKit aprovados** (45,7 s), incluindo
+  360/768/1440 px, filtros, atualização e fallback. WebKit no Windows não substitui
+  a revisão em iPhone físico prevista para o acabamento.
+- Capturas Edge em 360 e 1440 px revisadas, sem transbordamento horizontal.
+- Prova real local: **MQTT → MySQL → SSE → cartão em 332 ms**, duas leituras persistidas,
+  retorno após queda de rede confirmado. Broker Mosquitto, publicador simulado e build
+  distribuível da interface; não é medição de latência da hospedagem pública ou ESP32.
+- O Docker estava fechado na retomada; MySQL e broker foram iniciados com os arquivos
+  Compose existentes. Não houve troca de credenciais ou migração de schema.
+
+Reprodução da prova integrada, a partir da raiz do projeto:
+
+```powershell
+docker compose --env-file backend/.env -f compose.stma.yaml up -d --wait
+docker compose -f compose.mqtt.yaml up -d --wait broker
+npm run build --prefix backend
+npm run build --prefix frontend
+node scripts/verify-frontend-realtime.cjs
+```
+
+O script reserva a porta 5174 temporariamente e encerra seu servidor ao terminar.
+A conexão e as consultas do frontend permanecem na mesma origem; o script usa uma
+sessão temporária da fixture para concentrar a prova na telemetria, pois o login
+já é coberto pelos testes próprios. Nenhuma credencial é enviada ao broker no navegador.
+Para WebKit: `npx playwright install webkit` e
+`npx playwright test tests/e2e/painel.spec.ts --browser=webkit --workers=1` dentro de
+frontend, sem a variável `PLAYWRIGHT_CHANNEL=msedge` nessa execução.
+
+Próxima etapa após aceite: Fase 5 — histórico, gráficos e alertas. Hospedagem do
+backend/Fase 7 e publicação no segundo repositório continuam pendentes conforme seus
+registros. O fechamento remoto desta fase depende da confirmação do CI abaixo.

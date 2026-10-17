@@ -34,7 +34,7 @@ Checklist da Fase 2 — autorizada em 15/10/2026:
 - [x] Publicação no commit `df6f5fa`; CI frontend `38768198616` aprovado (12 testes unitários, build e 13 testes Chromium). Tag: `frontend-fase-2`.
 
 Pendências da Fase 7 do backend permanecem no seu plano. Próxima fase do frontend,
-somente após aceite desta entrega: Fase 4 — painel em tempo real.
+somente após aceite desta entrega: Fase 5 — histórico, gráficos e alertas.
 
 Checklist da Fase 3 — 16/10/2026:
 - [x] Listas e formulários das seis entidades, com paginação e filtro de inativos.
@@ -45,6 +45,14 @@ Checklist da Fase 3 — 16/10/2026:
 - [x] 15 testes frontend, 23 testes Edge, 15 testes de integração MySQL e build aprovados.
 - [x] Revisão visual e formulário conectado à API local validados; roteiro atualizado.
 - [x] Publicado no commit `b4b0162`; CI frontend `38901359475` e backend `38901359464` aprovados. Tag: `frontend-fase-3`.
+Checklist da Fase 4 — validação local concluída (17/10/2026):
+- [x] Cartões reais por ambiente, filtros hierárquicos e detalhe atual.
+- [x] Contrato validado, estados e horário/valores formatados; leitura offline não parece atual.
+- [x] SSE, agrupamento de avisos, fallback de 30 s e recriação da conexão após retorno da rede.
+- [x] 22 testes unitários e build aprovados.
+- [x] 31 testes Edge e 8 WebKit aprovados; revisão visual em 360/1440 px.
+- [x] MQTT → MySQL → SSE → cartão em 332 ms, duas leituras persistidas e reconexão confirmada localmente.
+- [ ] Publicar, confirmar CI e registrar encerramento no roteiro.
 O frontend é uma aplicação web responsiva (mobile-first) que consome a API REST do backend e mostra, em tempo real, a temperatura e a umidade de cada ambiente, com cadastros, histórico, gráficos e alertas conforme o perfil do usuário. O plano tem seis fases, do esqueleto até a implantação, e cada uma termina com um critério de aceite. Ele depende do plano do backend: as fases do frontend 3 a 5 só fecham quando as fases 3 a 5 do backend entregam as rotas correspondentes.
 
 ### 1.1 Stack proposta
@@ -153,7 +161,7 @@ O frontend anda um passo atrás do backend. Enquanto uma rota não existe, a fas
 
 - Rotas carregadas sob demanda (`lazy`), para o login e o painel não baixarem o código dos cadastros.
 - O histórico nunca carrega todas as leituras: a tabela pagina no servidor e o gráfico de períodos longos usa a série por hora, com no máximo algumas centenas de pontos.
-- Um único `EventSource` por aba; as mensagens atualizam o cache do TanStack Query só do ambiente afetado, sem recarregar a lista inteira.
+- Um único `EventSource` por aba; o contrato atual envia aviso por empresa; a aplicação reconsulta o painel e reaproveita os cartões sem alterações por compartilhamento estrutural e memoização.
 - Quando o stream cai, a tela volta a consultar `GET /painel` a cada 30 s até a reconexão.
 
 ### 5.3 Testes

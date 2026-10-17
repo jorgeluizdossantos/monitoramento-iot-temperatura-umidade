@@ -10,7 +10,7 @@ export class ApiError extends Error {
 }
 
 // O schema valida o JSON em execução; um cast TypeScript não verificaria o contrato.
-export async function request<T>(path: string, schema: z.ZodType<T>, init: RequestInit = {}): Promise<T> {
+export async function request<T>(path: string, schema: z.ZodType<T, z.ZodTypeDef, unknown>, init: RequestInit = {}): Promise<T> {
   if (!path.startsWith('/') || path.startsWith('//')) throw new Error('Caminho relativo da API obrigatório.');
   const headers = new Headers(init.headers);
   if (!headers.has('Accept')) headers.set('Accept', 'application/json');

@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
+  await page.route('**/api/v1/painel', r => r.fulfill({json:{dados:[]}}));
+  await page.route('**/api/v1/stream', r => r.fulfill({status:503,body:''}));
   await page.route('**/api/v1/auth/me', route => route.fulfill({ json: { usuario: { id: 1, empresa_id: 1, nome: 'Administrador de teste', email: 'admin@example.com', perfil: 'administrador' } } }));
 });
 for (const width of [360, 768, 1440]) {
