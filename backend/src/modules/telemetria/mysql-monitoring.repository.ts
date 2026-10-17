@@ -17,9 +17,10 @@ export function createMysqlMonitoringRepository(db: Database): MonitoringReposit
     }),
     alerts: (company, page) => db.withConnection(async c => {
       const status = page.situacao === 'todos' ? '' : page.situacao === 'aberto' ? ' AND al.encerrado_em IS NULL' : ' AND al.encerrado_em IS NOT NULL';
-      const from = `FROM alerta al JOIN ambiente a ON a.id=al.ambiente_id WHERE a.empresa_id=?${status}`;
-      const [[count]] = await c.execute<RowDataPacket[]>(`SELECT COUNT(*) total ${from}`, [company]);
-      const [rows] = await c.query<RowDataPacket[]>(`SELECT al.* ${from} ORDER BY al.ocorrido_em DESC,al.id DESC LIMIT ? OFFSET ?`, [company, page.tamanho, (page.pagina - 1) * page.tamanho]);
+      const from = `FROM alerta al JOIN ambiente a ON a.id=al.ambiente_id WHERE a.empresa_id=?${status}${page.ambiente_id ? ' AND al.ambiente_id=?' : ''}`;
+      const params = page.ambiente_id ? [company, page.ambiente_id] : [company];
+      const [[count]] = await c.execute<RowDataPacket[]>(`SELECT COUNT(*) total ${from}`, params);
+      const [rows] = await c.query<RowDataPacket[]>(`SELECT al.*,a.nome AS ambiente ${from} ORDER BY al.ocorrido_em DESC,al.id DESC LIMIT ? OFFSET ?`, [...params, page.tamanho, (page.pagina - 1) * page.tamanho]);
       return { dados: rows, total: Number(count.total) };
     }),
     acknowledge: (id, company, context) => db.withConnection(async c => {

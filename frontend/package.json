@@ -23,7 +23,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.81.0",
-    "react-router-dom": "^6.30.1",
+    "react-router-dom": "^7.18.4",
+    "recharts": "^3.10.1",
     "zod": "^3.25.76",
     "zustand": "^5.0.14"
   },
@@ -37,6 +38,6 @@
     "tailwindcss": "^4.1.0",
     "typescript": "^5.9.3",
     "vite": "^7.1.0",
-    "vitest": "^3.2.0"
+    "vitest": "^5.0.5"
   }
 }

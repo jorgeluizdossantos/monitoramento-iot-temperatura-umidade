@@ -406,3 +406,106 @@ prova integrada de 332 ms com reconexão, conforme descrito acima.
 Plano, roteiro e documento de regras de negócio atualizados. Fase 5 aguarda aceite:
 histórico paginado, gráficos, série por hora, alertas e exportação CSV. Não houve
 deploy público nesta etapa; pendências de hospedagem e segundo repositório permanecem.
+
+## 11. Fase 5 — histórico, gráficos, CSV e alertas (17/10/2026)
+
+### Objetivo e sequência de construção
+
+A fase foi autorizada após as quatro anteriores. Restavam duas fases; esta entrega
+implementa a quinta, mantendo a sexta para novo aceite. As referências visuais são
+as telas de detalhes do ambiente e central de alertas do STITCH/web. O plano define
+as funcionalidades: não foram copiados diagnósticos de broker, silenciamento,
+assinaturas ou pareceres que aparecem apenas como ilustração no protótipo.
+
+1. Conferimos os contratos existentes em `history.routes.ts`, `history.service.ts`,
+   `mysql-history.repository.ts` e `monitoring.*`. O backend continua responsável
+   por autenticação, escopo empresarial, limites e persistência.
+2. Criamos `frontend/src/features/ambiente/model.ts`: Zod valida respostas;
+   DECIMAL vira número finito; BIGINT permanece texto. Datas digitadas em Bahia
+   são convertidas para UTC com offset explícito, independentemente do computador.
+3. `history-page.tsx` consulta 20 leituras por página no servidor. A chave do cache
+   inclui usuário, ambiente, período e página. Trocar o período volta à página 1.
+   A tabela nunca busca todas as leituras para depois paginar no navegador.
+4. `trend.tsx` utiliza Recharts, carregado sob demanda. A API fornece agregações por
+   hora; períodos longos são agrupados em até 240 intervalos no gráfico. A média é
+   ponderada pela quantidade de leituras, e os mínimos/máximos são preservados.
+   Intervalos sem observações ficam vazios. A tabela expansível mostra a série
+   original por hora, 20 pontos por página, como alternativa textual ao gráfico.
+5. `period-form.tsx` permite até 31 dias para leituras/CSV e 366 para série. O início
+   é inclusivo e o fim exclusivo. Antes de 90 dias, resumos exigem horas completas.
+   As faixas destacadas são as configurações atuais, sem alegar limites históricos.
+6. `downloadCsv` compartilha erros e tratamento de HTTP 401 com o cliente JSON.
+   A transferência pode ser cancelada e é abortada ao sair da tela. O arquivo só
+   é oferecido depois do corpo completo; resposta JSON ou fluxo interrompido não
+   é tratado como CSV válido. O servidor transmite lotes; o navegador reúne o
+   arquivo em Blob. Isso consome memória proporcional ao arquivo, mas não cria
+   componentes/objetos por leitura. Cargas maiores que a validada devem ser
+   medidas antes de ampliar limites ou escolher um download direto para disco.
+7. `features/alertas/alerts-page.tsx` lista abertos/encerrados/todos, com paginação,
+   severidade, valor inicial/extremo, limite, duração e reconhecimento. Atualiza
+   a cada 30 s quando ativa. O operador/administrador confirma a ciência; leitor
+   não recebe o botão. A autoridade final é o backend. Reconhecer não encerra.
+8. O detalhe do ambiente incorpora gráfico e alertas próprios. Acrescentamos o
+   parâmetro opcional `ambiente_id` a `GET /api/v1/alertas` e o nome do ambiente na
+   listagem. A consulta SQL mantém `empresa_id` da sessão; não aceita empresa do
+   cliente. O filtro ocorre antes da paginação, evitando omitir alertas por filtrar
+   uma página global no navegador. Sem mudança de schema ou migração de banco.
+9. Atualizamos as rotas e adaptamos testes de autenticação que antes encontravam
+   páginas de preparação. Histórico/alertas usam tabelas/cartões responsivos.
+
+### Como experimentar
+
+Com backend local em execução e frontend iniciado com `npm run dev`, entre como
+leitor, operador ou administrador de uma empresa. Abra Painel → Detalhes do ambiente
+→ Histórico e exportação CSV. Escolha início/fim e clique Aplicar período. Confira
+as unidades °C e %, expanda a tabela da série e navegue pelas páginas de leituras.
+O modo Série por hora habilita períodos longos; CSV fica desabilitado acima de
+31 dias. Na Central de alertas, troque a situação. Como operador, reconheça um
+alerta e observe a data de reconhecimento, sem mudança automática para encerrado.
+
+### Verificações reproduzíveis
+
+```powershell
+npm --prefix frontend test
+npm --prefix frontend run build
+npm --prefix backend run build
+# MySQL local ativo, sem necessidade de broker ou ESP32 nesta prova:
+node scripts/verify-frontend-history.cjs
+# No diretório frontend:
+$env:PLAYWRIGHT_CHANNEL='msedge'
+npm run test:e2e -- --workers=2
+# Opcional, WebKit instalado; não equivale a um iPhone físico:
+$env:PLAYWRIGHT_CHANNEL=''
+npx playwright test tests/e2e/history.spec.ts --browser=webkit --workers=1
+```
+
+O roteiro `scripts/verify-frontend-history.cjs` cria empresa, usuário, sessão,
+hierarquia, dispositivo, alerta e 100 mil leituras com identificador de fixture.
+Serve o build e a API na mesma origem, porta 5174, valida paginação, gráfico,
+CSV completo e reconhecimento gravado. O `finally` remove apenas essas fixtures.
+Não imprime credenciais e não modifica dados da empresa usada pelo aluno.
+
+Resultados locais iniciais: 27 testes unitários frontend; build frontend/backend;
+37 testes Edge; cinco testes de integração MySQL do módulo de monitoramento.
+Prova real: 100.000 leituras, 20 linhas renderizadas, primeira página em **551 ms**,
+CSV com **100.001 linhas** e reconhecimento persistido sem encerrar episódio.
+A medição é local, não uma promessa de latência de hospedagem pública.
+Capturas de histórico/alertas em 360 e 1440 px foram revisadas.
+
+A instalação do Recharts revelou avisos em dependências anteriores. React Router
+foi atualizado para 7.18.4 e Vitest para 5.0.5; `npm install` terminou com zero
+vulnerabilidades reportadas. A regressão de login, cadastros e painel passou com
+as versões novas. Não foi usado `npm audit fix --force`.
+
+### Pendências e próxima fase
+
+O resultado final do WebKit e da publicação/CI será registrado no fechamento desta
+seção. A Fase 6 permanece sem início: demonstração pública, revisão final de
+acessibilidade, navegadores completos, documentação de implantação e deploy.
+A Fase 7 do backend continua parcial; hospedagem Node.js, configuração remota
+segura e segundo repositório permanecem nas pendências já documentadas.
+
+Validação complementar: **seis testes WebKit aprovados** (36,6 s), incluindo CSV,
+perfis e responsividade. Após ajuste do intervalo inicial para as últimas 24 horas
+até o minuto atual, os 27 testes unitários passaram novamente. Datas no eixo são
+ancoradas na hora real da agregação, inclusive quando o período começa no meio da hora.

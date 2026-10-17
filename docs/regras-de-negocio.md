@@ -162,3 +162,24 @@ Reconsulta após aviso SSE usa o escopo da sessão. Sem SSE, consulta a cada 30 
 após retorno da rede, recria a conexão sem manter duas simultâneas. Falha de rede
 não equivale a logout; HTTP 401 invalida a sessão. Implementação em
 `frontend/src/features/painel`, com estado de sessão em `features/auth/auth.ts`.
+
+## Complemento da Fase 5 do frontend — 17/10/2026
+
+Histórico e CSV consultam intervalos [início, fim) de no máximo 31 dias; série por
+hora até 366 dias. Datas de entrada/exibição: America/Bahia; API e CSV: UTC.
+Resumo antigo exige horas completas. A validação de negócio autoritativa continua
+em `backend/src/modules/telemetria/history.service.ts`; o frontend auxilia em
+`features/ambiente/model.ts` e não substitui a validação no servidor.
+
+A tabela de leituras usa paginação do servidor. O gráfico reúne dispositivos do
+ambiente e utiliza médias ponderadas, mínimos e máximos, com até 240 intervalos;
+a tabela alternativa preserva pontos originais da série. Faixas ideais mostradas
+são as atuais, sem reclassificar episódios passados. Lacunas não viram zeros.
+
+Alertas permanecem isolados por empresa. O filtro opcional `ambiente_id` atua no
+SQL antes da paginação e não substitui o escopo da sessão. Somente operador e
+administrador reconhecem, com confirmação na interface e auditoria no backend.
+Reconhecer registra ciência; encerramento depende das regras de episódio.
+Durações de alertas abertos correspondem à última consulta, explicitada na tela.
+Fontes: `monitoring.service.ts`, `mysql-monitoring.repository.ts` e frontend
+`features/alertas/alerts-page.tsx`. Não há regra de encerramento no frontend.

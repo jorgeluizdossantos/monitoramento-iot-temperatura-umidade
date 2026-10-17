@@ -5,7 +5,7 @@ Oct 12, 2026 · @Jorge Luiz dos Santos
 ## 1. Resumo
 
 **Acompanhamento — 14/10/2026:** o proprietário autorizou iniciar este plano com a Fase 7
-do backend ainda aberta. Fases 1 e 2 implementadas em 15/10/2026 e Fase 3 em 16/10/2026 e Fase 4 em 17/10/2026; fases seguintes aguardam aceite. React 18/Vite/TypeScript substituem a reserva antiga
+do backend ainda aberta. Fases 1 e 2 implementadas em 15/10/2026, Fase 3 em 16/10/2026 e Fases 4 e 5 em 17/10/2026; Fase 6 aguarda aceite. React 18/Vite/TypeScript substituem a reserva antiga
 de frontend sem framework. Registro didático: `docs/roteiro-frontend.md`.
 
 Correções de contrato conforme backend já aprovado: fila global/adoção exclusivas do
@@ -34,7 +34,7 @@ Checklist da Fase 2 — autorizada em 15/10/2026:
 - [x] Publicação no commit `df6f5fa`; CI frontend `38768198616` aprovado (12 testes unitários, build e 13 testes Chromium). Tag: `frontend-fase-2`.
 
 Pendências da Fase 7 do backend permanecem no seu plano. Próxima fase do frontend,
-somente após aceite desta entrega: Fase 5 — histórico, gráficos e alertas.
+somente após aceite desta entrega: Fase 6 — acabamento, demonstração e implantação.
 
 Checklist da Fase 3 — 16/10/2026:
 - [x] Listas e formulários das seis entidades, com paginação e filtro de inativos.
@@ -53,6 +53,21 @@ Checklist da Fase 4 — concluída tecnicamente (17/10/2026):
 - [x] 31 testes Edge e 8 WebKit aprovados; revisão visual em 360/1440 px.
 - [x] MQTT → MySQL → SSE → cartão em 332 ms, duas leituras persistidas e reconexão confirmada localmente.
 - [x] Publicado no commit `b114315`; CI frontend `39025838662` e backend `39025838676` aprovados. Tag: `frontend-fase-4`.
+Checklist da Fase 5 — autorizada e implementada em 17/10/2026:
+- [x] Histórico paginado no servidor, filtros de período e datas Bahia→UTC.
+- [x] Gráficos Recharts com faixa ideal atual e série por hora; até 240 intervalos, extremos preservados e tabela textual.
+- [x] CSV completo de até 31 dias; série de até 366 dias; cancelamento e erros tratados.
+- [x] Alertas por situação, duração, severidade e reconhecimento por operador/administrador.
+- [x] Alertas do ambiente com filtro SQL por ambiente e empresa da sessão.
+- [x] 27 testes unitários, 37 Edge, seis WebKit, cinco integrações MySQL e builds aprovados.
+- [x] Prova real de 100 mil leituras: 20 linhas na tela, primeira página em 551 ms, CSV com 100.001 linhas e reconhecimento persistido.
+- [x] Plano, roteiro didático e regras de negócio atualizados.
+- [ ] Publicação e confirmação do CI (registrar no fechamento abaixo).
+
+**Falta uma fase após o aceite da Fase 5:** Fase 6 — demonstração, acessibilidade,
+testes finais nos navegadores, README de implantação e deploy. A implantação depende
+da resolução das pendências da Fase 7 do backend; não foi antecipada nesta entrega.
+
 O frontend é uma aplicação web responsiva (mobile-first) que consome a API REST do backend e mostra, em tempo real, a temperatura e a umidade de cada ambiente, com cadastros, histórico, gráficos e alertas conforme o perfil do usuário. O plano tem seis fases, do esqueleto até a implantação, e cada uma termina com um critério de aceite. Ele depende do plano do backend: as fases do frontend 3 a 5 só fecham quando as fases 3 a 5 do backend entregam as rotas correspondentes.
 
 ### 1.1 Stack proposta
@@ -102,7 +117,7 @@ tests/
 
 - **Dados do servidor** (cadastros, histórico, alertas) vivem no cache do TanStack Query, com uma chave por consulta, por exemplo `['leituras', ambienteId, de, ate, pagina]`. Depois de uma escrita, a chave afetada é invalidada.
 - **Estado local** (usuário logado, filtros do histórico, tema) fica no Zustand. A empresa não é enviada nas requisições: o backend a lê da sessão.
-- **Tempo real:** um hook `useStream` abre o `EventSource`, e cada evento de leitura ou de alerta atualiza no cache só o ambiente citado. O hook expoe o estado da conexão (conectado, reconectando, caído) para o indicador do RNF005.
+- **Tempo real:** `connectPanel` abre um único `EventSource`; cada aviso solicita reconsulta do painel no escopo da empresa. Não há ID de ambiente no evento atual. Cartões sem alterações reaproveitam referências do cache. Alertas consultam a cada 30 s enquanto ativos, sem abrir outra conexão SSE.
 - **Validação:** os mesmos esquemas Zod validam o formulário e as respostas da API, de modo que um campo que o backend renomeie quebre num teste e não em produção.
 - **Erros:** o cliente HTTP converte o formato de erro do backend em um objeto único; 401 leva ao login, 403 e 404 à tela de acesso negado, 400 preenche os erros dos campos.
 
@@ -192,7 +207,9 @@ O frontend vai para a Vercel a partir do GitHub, com uma implantação de pré-v
 
 ### 6.3 Próximos passos
 
-- [ ] Aprovar a troca de HTML puro por React (seção 1.2) ou indicar que o portfólio exige JavaScript puro.
-- [ ] Combinar com o backend o contrato do `GET /painel` e do `GET /stream` (campos e formato dos eventos) antes da fase 4.
-- [ ] Criar o repositório, o projeto Vite e o CI (fase 1).
-- [ ] Definir a identidade visual mínima: cores dos quatro estados, tipografia e logotipo.
+- [x] Aprovar React: autorizado pelo proprietário em 14/10/2026.
+- [x] Conferir contratos de painel e stream: implementados e validados nas fases 1 e 4.
+- [x] Criar repositório, projeto Vite e CI: Fase 1 concluída.
+- [x] Aplicar identidade visual STITCH/web, adaptada ao plano.
+- [ ] Obter aceite da Fase 5 e iniciar a Fase 6.
+- [ ] Resolver hospedagem e configuração remota do backend antes do deploy completo.

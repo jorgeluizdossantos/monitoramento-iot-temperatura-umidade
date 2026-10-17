@@ -3,6 +3,9 @@ const principal = (perfil = 'leitor') => ({ id: 1, empresa_id: perfil === 'super
 const unauthorized = { erro: { codigo: 'NAO_AUTENTICADO', mensagem: 'Sessão ausente, inválida ou expirada.', campos: [] } };
 async function setup(page: Page, profile = 'leitor', authenticated = false) {
   let active = authenticated;
+  await page.route('**/api/v1/alertas?*', r => r.fulfill({json:{dados:[],total:0,pagina:1,tamanho:20}}));
+  await page.route('**/api/v1/ambientes/*/leituras?*', r => r.fulfill({json:{dados:[],total:0,pagina:1,tamanho:20}}));
+  await page.route('**/api/v1/ambientes/*/serie?*', r => r.fulfill({json:{dados:[],fonte:'leituras_brutas_e_resumos',granularidade:'hora'}}));
   await page.route('**/api/v1/painel', r => r.fulfill({json:{dados:[]}}));
   await page.route('**/api/v1/stream', r => r.fulfill({status:503,body:''}));
   await page.route('**/api/v1/auth/me', route => route.fulfill({ status: active ? 200 : 401, json: active ? { usuario: principal(profile) } : unauthorized }));
@@ -23,7 +26,7 @@ test('leitor entra, preserva destino, restaura sessão e sai', async ({ page }) 
   await expect(page).toHaveURL(/ambientes\/25\/historico\?periodo=dia$/);
   await expect(page.getByRole('link', { name: 'Cadastros', exact: true })).toHaveCount(0);
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Histórico do ambiente');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Histórico · Ambiente 25');
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
   await expect(page).toHaveURL(/entrar$/);
   expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);

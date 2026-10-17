@@ -6,7 +6,7 @@ e automação industrial. Implementação gradual, com documentação didática.
 **Fases 1–6 concluídas; 107 testes e CI aprovados. ESP32 validado com HiveMQ Lab e MySQL local.** Node.js 22, Express, TypeScript
 estrito e MySQL sem ORM. A API oferece autenticação e cadastros de empresas,
 unidades, setores, ambientes, usuários e dispositivos, com auditoria.
-Ingestão MQTT, adoção de dispositivos, histórico/CSV/série, episódios de alerta e SSE autenticado estão implementados. Fase 6 concluída: resumo horário, offline, expurgo e sessões. Frontend autorizado em paralelo às pendências da Fase 7; Fase 4 (painel em tempo real) implementada.
+Ingestão MQTT, adoção de dispositivos, histórico/CSV/série, episódios de alerta e SSE autenticado estão implementados. Fase 6 concluída: resumo horário, offline, expurgo e sessões. Frontend autorizado em paralelo às pendências da Fase 7; Fase 5 (histórico, gráficos, CSV e alertas) implementada. Resta a Fase 6 do frontend: acabamento, demonstração e implantação, após aceite.
 
 ## Documentação vigente
 
@@ -141,7 +141,7 @@ Licença [MIT](LICENSE).
 
 Consulte [o roteiro HiveMQ](docs/roteiro-hivemq-fase4.md) e a seção 12 do roteiro do backend. MQTT permanece desabilitado por padrão; configure o arquivo backend/.env antes de habilitá-lo. O comando mqtt:check verifica conexão e assinatura; mqtt:publish permite uma publicação controlada. O teste ponta a ponta usa dois brokers locais de compose.mqtt.yaml e MySQL local.
 
-Firmware gravado na COM13 e apontado ao HiveMQ local; dispositivo adotado e leituras físicas persistidas. Consulte o encerramento da Fase 4 no roteiro. Próximo passo, após aceite: Fase 6. Fases 6–7 e frontend não iniciados.
+Firmware gravado na COM13 e apontado ao HiveMQ local; dispositivo adotado e leituras físicas persistidas. Consulte o encerramento da Fase 4 no roteiro. Situação atual: backend até a Fase 6 concluído, Fase 7 parcial; frontend até a Fase 5 implementado.
 
 ## Leituras, painel e alertas — Fase 5
 

@@ -6,7 +6,7 @@ import { parse } from '../cadastros/cadastro.validation';
 import { HttpError } from '../../shared/http-error';
 import type { MonitoringRepository } from './monitoring.repository';
 
-const alertPage = z.object({ pagina: z.coerce.number().int().min(1).max(1000000).default(1), tamanho: z.coerce.number().int().min(1).max(500).default(20), situacao: z.enum(['aberto', 'encerrado', 'todos']).default('aberto') }).strict();
+const alertPage = z.object({ pagina: z.coerce.number().int().min(1).max(1000000).default(1), tamanho: z.coerce.number().int().min(1).max(500).default(20), situacao: z.enum(['aberto', 'encerrado', 'todos']).default('aberto'), ambiente_id: z.coerce.number().int().positive().max(4294967295).optional() }).strict();
 // IDs de alerta são BIGINT: mantê-los como texto evita arredondamento em JavaScript.
 const alertId = z.string().regex(/^[1-9][0-9]{0,19}$/).refine(value => BigInt(value) <= 18446744073709551615n);
 export function createMonitoringService(repository: MonitoringRepository) {

@@ -140,3 +140,7 @@ fieldset { border:0; padding:0; margin:0; min-width:0; }
 .room-card footer {display:block;padding:14px 20px;background:#eff4ff}
 .room-card footer a {color:#00507d;font-size:12px;font-weight:600}
 .phase-note {font-size:13px;color:#565e74}
+.period-help{flex-basis:100%;font-size:12px;line-height:1.6;margin:0;color:#565e74}
+.trend{margin:24px 0;min-width:0}.trend h3{font-size:15px}.trend p,.alerts-section>p{font-size:13px;line-height:1.7}.chart{width:100%;height:280px;min-width:0;font-size:10px}.trend details{margin-top:24px}.trend summary{cursor:pointer;color:#00507d;padding:12px 0;font-weight:600}
+.alert-list{display:grid;gap:18px}.alert-card{padding:24px;border-left:4px solid #825500;min-width:0;overflow-wrap:anywhere}.alert-critico{border-left-color:#b42318}.alert-card header{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}.alert-card small,.alert-card p{font-size:12px;line-height:1.7}.alert-card h3 a{color:#00507d}.alert-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;background:#eff4ff;padding:16px;border-radius:5px}.alert-metrics span{display:block;font-size:11px}.alert-metrics strong{display:block;font-family:'JetBrains Mono',monospace;font-size:20px;margin-top:8px}.ack-confirm{padding:16px;background:#eff4ff}.ack-confirm button{margin:4px}.alerts-section{margin:32px 0}
+@media(max-width:639px){.alert-card{padding:16px}.alert-metrics{grid-template-columns:1fr}.chart{height:240px}}

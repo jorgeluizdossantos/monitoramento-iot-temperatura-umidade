@@ -1,7 +1,14 @@
-# Frontend STMA — Fase 4
+# Frontend STMA — Fase 5
 
 React 18, Vite, TypeScript estrito e Tailwind. Layout Telemetry Slate, menu responsivo,
-login real, sessão HttpOnly, rotas protegidas e menus por perfil. Cadastros das seis entidades e adoção de placas funcionais. Painel por ambiente, detalhe atual, filtros e SSE funcionais; histórico/gráficos/alertas na Fase 5.
+login real, sessão HttpOnly, rotas protegidas e menus por perfil. Cadastros das seis entidades e adoção de placas funcionais. Painel, SSE, histórico paginado, gráficos Recharts com faixa ideal, CSV e alertas com reconhecimento implementados.
+
+Histórico/CSV: até 31 dias; série: até 366 dias. Datas na tela em America/Bahia;
+CSV em UTC. Leitores consultam; operadores/administradores reconhecem alertas.
+Prova integrada com 100 mil leituras: após compilar frontend/backend, execute
+`node scripts/verify-frontend-history.cjs` na raiz com MySQL local ativo e Edge instalado.
+O teste cria e remove sua própria empresa temporária; não exige ESP32.
+Fase 6 (demonstração, acabamento e deploy) aguarda autorização.
 
 ```powershell
 cd frontend

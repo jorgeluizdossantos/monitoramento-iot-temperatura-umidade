@@ -1,7 +1,16 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { request } from '../src/shared/api/client';
+import { downloadCsv, onUnauthorized, request } from '../src/shared/api/client';
 afterEach(() => vi.unstubAllGlobals());
+it('CSV valida tipo e compartilha tratamento de sessão expirada', async () => {
+  const expired = vi.fn(), dispose = onUnauthorized(expired);
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(new Response('data,temperatura\n', { headers: { 'Content-Type': 'text/csv' } })).mockResolvedValueOnce(new Response('{}', { headers: { 'Content-Type': 'application/json' } })).mockResolvedValueOnce(new Response('{}', { status: 401 })));
+  const signal = new AbortController().signal;
+  expect(await (await downloadCsv('/csv', signal)).text()).toContain('temperatura');
+  await expect(downloadCsv('/csv', signal)).rejects.toMatchObject({ code: 'CONTRATO_INVALIDO' });
+  await expect(downloadCsv('/csv', signal)).rejects.toMatchObject({ status: 401 });
+  expect(expired).toHaveBeenCalledOnce(); dispose();
+});
 it('valida contrato e usa cookie sem token no armazenamento do navegador', async () => {
   const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ valor: 12 })));
   vi.stubGlobal('fetch', fetch);

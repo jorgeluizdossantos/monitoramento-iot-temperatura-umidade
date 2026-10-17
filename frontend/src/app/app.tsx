@@ -5,6 +5,8 @@ import { allowedRoles, homeFor, signOut, useAuth } from '../features/auth/auth';
 import { Guard, SessionBoundary } from '../features/auth/session-boundary';
 const Section = lazy(() => import('./section'));
 const Panel = lazy(() => import('../features/painel/panel-page'));
+const History = lazy(() => import('../features/ambiente/history-page'));
+const Alerts = lazy(() => import('../features/alertas/alerts-page'));
 const Cadastros = lazy(() => import('../features/cadastros/cadastros-page'));
 const Login = lazy(() => import('../features/auth/login'));
 const links = [
@@ -56,7 +58,7 @@ function Shell() {
         <Route path="/" element={<Navigate to={user ? homeFor(user) : '/entrar'} replace/>}/>
         <Route path="/entrar" element={<Login/>}/>
         <Route path="/demo" element={<Section/>}/>
-        {['/painel', '/alertas', '/ambientes/:id', '/ambientes/:id/historico', '/cadastros', '/cadastros/:entidade'].map(path => <Route key={path} path={path} element={<Guard>{path.startsWith('/cadastros') ? <Cadastros/> : path === '/painel' || path === '/ambientes/:id' ? <Panel/> : <Section/>}</Guard>}/>)}
+        {['/painel', '/alertas', '/ambientes/:id', '/ambientes/:id/historico', '/cadastros', '/cadastros/:entidade'].map(path => <Route key={path} path={path} element={<Guard>{path.startsWith('/cadastros') ? <Cadastros/> : path === '/alertas' ? <Alerts/> : path.endsWith('/historico') ? <History/> : <Panel/>}</Guard>}/>)}
         <Route path="*" element={<Section/>}/>
       </Routes></Suspense></main>
       <footer>STMA <span>Monitoramento remoto de temperatura e umidade</span></footer>

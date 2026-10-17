@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, memo, useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -32,6 +32,7 @@ const icons = {
   critico: AlertTriangle,
   sem_dados: CircleHelp,
 };
+const RoomAnalysis = lazy(() => import('../ambiente/room-analysis'));
 const connectionLabels: Record<Connection, string> = {
   connecting: "Conectando ao tempo real…",
   live: "Tempo real conectado",
@@ -236,12 +237,7 @@ export default function Panel() {
           ))}
         </div>
       )}
-      {id && (
-        <p className="phase-note">
-          Histórico, gráficos e episódios de alerta serão disponibilizados na
-          Fase 5.
-        </p>
-      )}
+      {id && selected[0] && <Suspense fallback={<p role="status">Carregando análise…</p>}><RoomAnalysis key={id} row={selected[0][0]}/></Suspense>}
     </>
   );
 }

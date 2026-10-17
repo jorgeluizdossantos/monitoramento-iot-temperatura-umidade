@@ -811,7 +811,7 @@ O proprietário confirmou os limites de 31 dias para histórico/CSV e 366 dias p
 monitoring.repository.ts define o contrato; monitoring.service.ts aplica validação e autorização; mysql-monitoring.repository.ts implementa SQL parametrizado; monitoring.routes.ts recebe HTTP. app.ts e main.ts compõem as dependências.
 
 - GET /api/v1/painel: usa vw_ambiente_estado e filtra a empresa da sessão e os ancestrais ativos. Não aceita empresa_id enviado pelo cliente.
-- GET /api/v1/alertas: pagina/tamanho, máximo 500; situacao aberto (padrão), encerrado ou todos. Mantém alertas históricos mesmo se o cadastro ficar inativo.
+- GET /api/v1/alertas: pagina/tamanho, máximo 500; situacao aberto (padrão), encerrado ou todos. Mantém alertas históricos mesmo se o cadastro ficar inativo. Complemento da Fase 5 do frontend (17/10/2026): filtro opcional ambiente_id, aplicado no SQL junto à empresa da sessão, e campo ambiente com o nome na listagem. Cinco testes de integração MySQL aprovados, incluindo isolamento entre empresas com esse filtro; sem alteração de schema.
 - POST /api/v1/alertas/:id/reconhecer: operador/administrador, JSON vazio e mesma origem; leitor não escreve. Revalida empresa e perfil dentro da transação, trava o episódio, registra autor e horário e grava auditoria. Repetição preserva o primeiro reconhecimento. Reconhecer não fecha o alerta.
 
 IDs BIGINT de alertas são tratados como texto para não perder precisão. Uma empresa não consulta nem reconhece alertas alheios; o recurso alheio responde 404. Superadmin não ganha acesso implícito aos dados internos de uma empresa.

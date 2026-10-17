@@ -38,6 +38,8 @@ const initial = ["normal", "atencao", "critico", "sem_dados"].map(
   }),
 );
 async function setup(page: Page) {
+  await page.route('**/api/v1/alertas?*', r => r.fulfill({json:{dados:[],total:0,pagina:1,tamanho:20}}));
+  await page.route('**/api/v1/ambientes/*/serie?*', r => r.fulfill({json:{dados:[],fonte:'leituras_brutas_e_resumos',granularidade:'hora'}}));
   await page.addInitScript(() => {
     window.__sseActive = 0;
     window.__sseMax = 0;

@@ -65,6 +65,9 @@ it('painel autentica, isola empresa e aplica a classificação da view',async()=
  try{expect((await request(server).get('/api/v1/painel').agent(requestAgent).set('Cookie',cookie(tokens.reader))).body.dados).toEqual([]);}finally{await sql('UPDATE setor SET ativo=1 WHERE id=?',[sector]);}
 });
 it('alertas são paginados e leitor não reconhece; outra empresa recebe 404',async()=>{
+ const filtered=await request(server).get('/api/v1/alertas').query({ambiente_id:room}).agent(requestAgent).set('Cookie',cookie(tokens.reader));expect(filtered.body.total).toBe(1);expect(filtered.body.dados[0].ambiente).toBe('Sala');
+ expect((await request(server).get('/api/v1/alertas').query({ambiente_id:room}).agent(requestAgent).set('Cookie',cookie(tokens.foreign))).body.total).toBe(0);
+ expect((await request(server).get('/api/v1/alertas?ambiente_id=-1').agent(requestAgent).set('Cookie',cookie(tokens.reader))).status).toBe(400);
  const own=await request(server).get('/api/v1/alertas').agent(requestAgent).set('Cookie',cookie(tokens.reader));expect(own.body.total).toBe(1);
  expect((await request(server).get('/api/v1/alertas').agent(requestAgent).set('Cookie',cookie(tokens.foreign))).body.total).toBe(0);
  expect((await request(server).post(`/api/v1/alertas/${alert}/reconhecer`).agent(requestAgent).set('Cookie',cookie(tokens.reader)).send({})).status).toBe(403);
