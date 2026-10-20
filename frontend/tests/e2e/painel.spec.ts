@@ -180,6 +180,7 @@ test("estados, filtros e detalhe encerram conexão ao sair", async ({
   await page.getByRole("link", { name: "Detalhes do ambiente" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Sala 3");
   expect(await page.evaluate(() => window.__sseMax)).toBe(1);
+  if ((page.viewportSize()?.width ?? 1280) < 1024) await page.getByRole("button", { name: "Abrir menu" }).click();
   await page.getByRole("link", { name: "Central de alertas" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Central de alertas",

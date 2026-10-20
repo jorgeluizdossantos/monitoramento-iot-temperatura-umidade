@@ -137,7 +137,7 @@ como histórico, com o banco `monitoramento_iot`. Para STMA use `compose.stma.ya
 
 Repositório: [jorgeluizdossantos/monitoramento-iot-temperatura-umidade](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade).
 A publicação em wxlv7h ainda depende da URL e do acesso de colaborador confirmados.
-Próxima etapa, após aceite: **Fase 4 — ingestão MQTT**.
+As seções abaixo registram as entregas já realizadas; veja o estado atual no início deste README.
 Orientação original superada pelo aceite de iniciar o frontend com a Fase 7 aberta.
 Licença [MIT](LICENSE).
 
@@ -145,18 +145,18 @@ Licença [MIT](LICENSE).
 
 Consulte [o roteiro HiveMQ](docs/roteiro-hivemq-fase4.md) e a seção 12 do roteiro do backend. MQTT permanece desabilitado por padrão; configure o arquivo backend/.env antes de habilitá-lo. O comando mqtt:check verifica conexão e assinatura; mqtt:publish permite uma publicação controlada. O teste ponta a ponta usa dois brokers locais de compose.mqtt.yaml e MySQL local.
 
-Firmware gravado na COM13 e apontado ao HiveMQ local; dispositivo adotado e leituras físicas persistidas. Consulte o encerramento da Fase 4 no roteiro. Situação atual: backend até a Fase 6 concluído, Fase 7 parcial; frontend até a Fase 5 implementado.
+A Fase 4 validou firmware na COM13 e HiveMQ local. O MVP atual usa firmware v2, HiveMQ público e MySQL Aiven; consulte o guia de bancada. Backend até Fase 6 concluído, Fase 7 parcial; frontend Fase 6 em andamento.
 
 ## Leituras, painel e alertas — Fase 5
 
 GET /api/v1/painel e /alertas exigem sessão vinculada à empresa. Histórico e CSV em /ambientes/:id/leituras e /ambientes/:id/leituras.csv aceitam de/ate com fuso até 31 dias; /ambientes/:id/serie aceita até 366 dias e calcula por hora das leituras brutas. POST /alertas/:id/reconhecer exige operador ou administrador. GET /stream envia avisos para reconsulta somente à empresa autenticada, após commit da ingestão. Consulte a seção 13 do roteiro para exemplos e limites.
 
-Os testes de integração executam um arquivo por vez para isolar a carga de 100 mil leituras. Não execute esses testes no Aiven. A Fase 6 (rotinas) depende do aceite da Fase 5; não há frontend nesta entrega.
+Os testes de integração executam um arquivo por vez para isolar a carga de 100 mil leituras. Não execute esses testes no Aiven. As rotinas da Fase 6 estão implementadas; a interface está descrita no README do frontend.
 
 Entrega da Fase 5: tag backend-fase-5; [CI aprovado](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38445259187).
 
 ## Rotinas agendadas — Fase 6
 
-Confira o banco selecionado e configure JOBS_ENABLED=true em backend/.env; reinicie o backend. Resumos executam na inicialização e a cada hora, offline a cada minuto, expurgo às 03:00 e sessões às 03:30 (America/Bahia). Leituras brutas são retidas por pelo menos 90 dias; resumos e alertas são preservados. Séries anteriores à retenção exigem início e fim em horas completas UTC. Veja a seção 14 do roteiro para transações, locks, testes e operação.
+Confira o banco e a conta limitada de manutenção, depois configure JOBS_ENABLED=true no perfil correspondente e reinicie o backend. Resumos executam na inicialização e a cada hora, offline a cada minuto, expurgo às 03:00 e sessões às 03:30 (America/Bahia). Leituras brutas são retidas por pelo menos 90 dias; resumos e alertas são preservados. Séries anteriores à retenção exigem início e fim em horas completas UTC. Veja a seção 14 do roteiro para transações, locks, testes e operação.
 
-CI da entrega: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38451967878. Tag: backend-fase-6. Próxima fase, após aceite: implantação e demonstração; frontend ainda não iniciado.
+CI da entrega: https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/38451967878. Tag: backend-fase-6. A Fase 7 do backend permanece parcial; o frontend evolui conforme seu plano próprio.

@@ -6,6 +6,7 @@ async function setup(page: Page, profile = 'leitor', authenticated = false) {
   await page.route('**/api/v1/alertas?*', r => r.fulfill({json:{dados:[],total:0,pagina:1,tamanho:20}}));
   await page.route('**/api/v1/ambientes/*/leituras?*', r => r.fulfill({json:{dados:[],total:0,pagina:1,tamanho:20}}));
   await page.route('**/api/v1/ambientes/*/serie?*', r => r.fulfill({json:{dados:[],fonte:'leituras_brutas_e_resumos',granularidade:'hora'}}));
+  await page.route('**/api/v1/empresas?*', r => r.fulfill({json:{dados:[],total:0,pagina:1,tamanho:20}}));
   await page.route('**/api/v1/painel', r => r.fulfill({json:{dados:[]}}));
   await page.route('**/api/v1/stream', r => r.fulfill({status:503,body:''}));
   await page.route('**/api/v1/auth/me', route => route.fulfill({ status: active ? 200 : 401, json: active ? { usuario: principal(profile) } : unauthorized }));
@@ -39,6 +40,7 @@ test('leitor não abre cadastro por endereço direto', async ({ page }) => {
 test('administrador vê cadastros mas não adota placas', async ({ page }) => {
   await setup(page, 'administrador', true);
   await page.goto('/painel');
+  if ((page.viewportSize()?.width ?? 1280) < 1024) await page.getByRole('button', { name: 'Abrir menu' }).click();
   await expect(page.getByRole('link', { name: 'Cadastros', exact: true })).toBeVisible();
   await page.goto('/cadastros/pendentes');
   await expect(page.getByRole('heading', { name: 'Acesso não permitido' })).toBeVisible();
@@ -47,6 +49,7 @@ test('superadmin recebe empresas e pendentes, sem painel empresarial', async ({ 
   await setup(page, 'superadmin');
   await page.goto('/entrar'); await enter(page);
   await expect(page).toHaveURL(/cadastros\/empresas$/);
+  if ((page.viewportSize()?.width ?? 1280) < 1024) await page.getByRole('button', { name: 'Abrir menu' }).click();
   await expect(page.getByRole('navigation', { name: 'Navegação principal' }).getByRole('link', { name: 'Placas pendentes' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Painel geral' })).toHaveCount(0);
   await page.goto('/painel');
@@ -74,6 +77,7 @@ test('validação, senha visível e erro de credenciais acessível', async ({ pa
   await expect(page.getByRole('alert')).toHaveText('E-mail ou senha inválidos.');
 });
 test('falha na sessão mostra tentativa novamente, sem presumir logout', async ({ page }) => {
+  await page.route('**/api/v1/empresas?*', r => r.fulfill({json:{dados:[],total:0,pagina:1,tamanho:20}}));
   await page.route('**/api/v1/painel', r => r.fulfill({json:{dados:[]}}));
   await page.route('**/api/v1/stream', r => r.fulfill({status:503,body:''}));
   await page.route('**/api/v1/auth/me', route => route.fulfill({ status: 503, json: {} }));

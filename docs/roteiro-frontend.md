@@ -661,3 +661,40 @@ verificação TLS continuou ativa. Firefox Playwright instalado, mas o executáv
 não iniciou (`spawn UNKNOWN`) inclusive fora do sandbox. Firefox será validado no
 CI Linux. WebKit mobile é emulação automatizada; não comprova Safari em iPhone real.
 Resultados finais da matriz e CI serão registrados no fechamento.
+
+### Validações locais encerradas — 20/10/2026
+
+45 cenários da Fase 6 aprovados: 15 em Chrome, 15 em Edge e 15 em WebKit mobile,
+incluindo os 12 exames axe por navegador (seis telas × dois temas). Capturas de
+demonstração e formulário móvel no tema escuro revisadas sem transbordamento.
+A preferência de cor permaneceu após recarga; link de pular conteúdo foi ativado
+por teclado. No perfil móvel, o teste usa foco assistido e ativação Enter (a política
+de Tab do WebKit móvel difere do desktop); no desktop verifica a ordem natural Tab.
+Isso não substitui a checagem de Safari/iPhone físico, que permanece pendente.
+
+Uma execução anterior teve expectativas de contagem exata de GET incompatíveis
+com o ciclo StrictMode; o teste passou a exigir uma nova consulta após atualizar,
+preservando a garantia de somente GET e ausência de consulta de sessão. Também houve
+timeouts locais e uma tentativa ampla interrompida durante aquecimento; não foram
+contados como aprovação. A análise axe pode levar até 60 s incluindo captura e
+processamento; esse prazo não altera os limites de desempenho da API/histórico.
+
+Login, cartão da bancada Aiven, tema escuro/claro e logout aprovados na versão atual,
+sem comandos físicos. O Node local foi reiniciado: consulta Aiven antes/depois
+registrou 1.323 → 1.336 leituras e placa online com medição nova às 11:26:12 UTC
+(08:26:12 em America/Bahia), 29,8 °C e 66% de umidade. A contagem é uma fotografia,
+não uma promessa de disponibilidade contínua. Os dados reais permanecem no Aiven.
+
+Código publicado no commit `4664832`. Backend CI 39415190014 aprovado; frontend
+CI 39415190021 executa a regressão integral em Chromium, Firefox e WebKit mobile.
+O resultado definitivo e eventuais correções serão registrados abaixo.
+
+### Ajuste da matriz completa
+
+Primeiro CI frontend 39415190021: 162/165 cenários aprovados, incluindo a Fase 6
+nos três motores e Firefox Linux. As três falhas eram testes anteriores que
+procuravam links do menu mobile fechado (perfis administrador/superadmin e saída
+do detalhe para alertas). Testes passaram a abrir o menu conforme a largura antes
+de inspecionar/navegar; regras de acesso, proteção de rotas e verificação SSE foram
+preservadas. Foi acrescentada a resposta de empresas que faltava ao mock de login.
+O resultado dessa execução não foi contado como aprovação integral.
