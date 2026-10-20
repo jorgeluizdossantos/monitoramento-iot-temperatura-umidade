@@ -141,3 +141,8 @@ Referências oficiais: [Vite na Vercel](https://vercel.com/docs/frameworks/front
 [acessibilidade com axe](https://playwright.dev/docs/accessibility-testing).
 
 Roteiro didático: [roteiro-frontend](../docs/roteiro-frontend.md).
+
+A execução técnica da Fase 6 foi validada: 29 testes unitários e 165 cenários em
+Chromium, Firefox e WebKit mobile, com axe nos dois temas. CI de referência:
+[39415983518](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/39415983518).
+O aceite completo continua dependente de Safari/iPhone físico e implantação remota.

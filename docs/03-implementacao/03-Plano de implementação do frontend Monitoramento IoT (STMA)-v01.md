@@ -243,11 +243,11 @@ integrado depende das pendências da Fase 7 do backend.
 - [x] Preservado o painel real com ingestão do broker público e persistência Aiven.
 - [x] Temas claro/escuro, preferência local, foco visível, redução de movimento e retorno da página 404.
 - [x] Tratamento de falha de renderização sem expor erros internos.
-- [x] Testes axe nas seis telas principais e nos dois temas; correções em validação.
+- [x] Testes axe nas seis telas principais e nos dois temas, aprovados nos três motores.
 - [x] README para instalação por terceiro e roteiro detalhado de configuração Vercel.
 - [x] Gerador de rewrites HTTPS que preserva API antes do fallback SPA.
 - [x] Provas locais com API/MySQL reais: demonstração; histórico 100 mil + CSV e reconhecimento.
-- [ ] Encerrar matriz de navegadores e CI e registrar evidências finais.
+- [x] Matriz e CI encerrados: 29 unitários + 165 cenários nos três motores, CI 39415983518 aprovado.
 - [ ] Validar manualmente em Safari/iPhone real (WebKit mobile automatizado não é o aparelho).
 - [ ] Obter origem HTTPS pública do backend, criar projeto Vercel e validar deploy completo.
 
@@ -262,3 +262,17 @@ público/produção do backend, gerar `vercel.json` com sua URL real, importar o
 repositório na Vercel (Root Directory `frontend`) e validar login, perfis, SSE,
 CSV e leitura física pelo domínio HTTPS. Nenhuma publicação remota é declarada
 concluída por um build ou arquivo de configuração de exemplo.
+
+### Fechamento técnico — 20/10/2026
+
+Implementação `4664832`, ajuste de fluxos mobile `598033e`. CI frontend aprovado:
+https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/39415983518
+(29 unitários e 165 testes de navegador). Backend CI 39415983669 também aprovado.
+Os 165 correspondem a 55 cenários em Chromium, Firefox e WebKit mobile; análise
+axe incluída. Chrome e Edge locais e WebKit mobile: 45 cenários específicos aprovados.
+
+**A Fase 6 permanece parcialmente concluída.** Faltam a checagem manual em iPhone,
+a ativação da demo no ambiente de destino com conta de leitura/dados fictícios e
+a publicação integrada Vercel com origem HTTPS pública do Node. A bancada real
+no Aiven continua funcional pelo backend local. Não há novas fases de código
+previstas; faltam esses itens de aceite e implantação.

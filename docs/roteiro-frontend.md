@@ -698,3 +698,27 @@ do detalhe para alertas). Testes passaram a abrir o menu conforme a largura ante
 de inspecionar/navegar; regras de acesso, proteção de rotas e verificação SSE foram
 preservadas. Foi acrescentada a resposta de empresas que faltava ao mock de login.
 O resultado dessa execução não foi contado como aprovação integral.
+
+### Encerramento técnico da execução — 20/10/2026
+
+CI frontend aprovado na versão `598033e`:
+https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/39415983518.
+Foram 29 testes unitários + 165 cenários (55 × Chromium/Firefox/WebKit mobile),
+com os exames axe dos dois temas incluídos. Firefox foi validado no Linux do CI.
+Build e instalação limpa `npm ci` aprovados. Backend CI 39415983669 aprovado com
+122 testes. A primeira tentativa de CI com três falhas mobile está registrada;
+o ajuste não alterou regras de autorização nem os limites de SSE/histórico.
+
+Tentativas dirigidas no WebKit Windows também tiveram timeout ao carregar sessão
+e uma seleção rápida de filtro antes da atualização da URL. Elas não foram
+contadas como sucesso nem usadas para relaxar limites. O aceite automatizado da
+versão publicada é a matriz integral aprovada no CI, além dos 45 cenários locais
+de Fase 6 aprovados. As duas verificações ponta a ponta com MySQL local real e a
+validação do painel Aiven permanecem evidências adicionais, não mocks de produção.
+
+Parte técnica entregue e versionada. Permanecem pendentes: Safari/iPhone físico,
+habilitação da demo no ambiente de destino com conta de leitura e dados fictícios,
+URL HTTPS pública do backend, criação/publicação do projeto Vercel e aceite remoto
+integrado. Logo, a Fase 6 **não foi marcada como integralmente concluída**. A Fase 7
+do backend continua aberta e o fluxo real broker público → Node local → Aiven foi
+preservado. Nenhum serviço pago foi contratado e nenhuma credencial foi publicada.

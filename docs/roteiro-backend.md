@@ -1180,3 +1180,8 @@ O Node local estava sem responder durante a conferência e foi reiniciado com
 `dev:mvp`; assinaturas MQTT e rotinas Aiven voltaram a executar. Ainda é necessário
 manter esse processo ligado. A hospedagem contínua e o perfil MQTT/HTTPS de produção
 continuam pós-MVP. A configuração Vercel do frontend depende da URL pública da API.
+
+CI da entrega técnica de Fase 6 do frontend aprovado em 20/10/2026: frontend
+39415983518 (29 unitários + 165 navegadores), backend 39415983669 (122 testes).
+Validação real do frontend com login Aiven, cartão da placa e temas/logout também
+passou, sem acionamento físico nesta fase. Implantação remota continua pendente.
