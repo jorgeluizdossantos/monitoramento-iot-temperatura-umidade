@@ -28,6 +28,8 @@ jobs:
       DB_LOCAL_NAME: stma_db
       DB_LOCAL_USER: stma
       DB_LOCAL_PASSWORD: ci-only-password
+      TEST_DB_ADMIN_USER: root
+      TEST_DB_ADMIN_PASSWORD: ci-only-root
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

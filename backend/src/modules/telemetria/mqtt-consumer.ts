@@ -20,7 +20,7 @@ export function startMqttConsumer(config: MqttEnvironment, consume: (message: In
   const client = mqtt.connect(config.MQTT_URL, mqttOptions(config));
   let subscribed = false; let stopping = false;
   let processing: Promise<unknown> = Promise.resolve();
-  const topics = ['dados', 'status', 'porta'].map(suffix => `${config.MQTT_TOPIC_PREFIX}/+/${suffix}`);
+  const topics = (config.MQTT_DEVICE_IDS.length ? config.MQTT_DEVICE_IDS : ['+']).flatMap(id => ['dados', 'status', 'porta', 'controle'].map(suffix => `${config.MQTT_TOPIC_PREFIX}/${id}/${suffix}`));
   client.on('connect', () => {
     client.subscribe(topics, { qos: 1 }, (error, granted) => {
       subscribed = !error && !!granted && granted.length === topics.length && granted.every(item => item.qos === 1);
@@ -41,6 +41,18 @@ export function startMqttConsumer(config: MqttEnvironment, consume: (message: In
     });
   };
   return {
+    async publishCommand(deviceId: string, payload: string) {
+      if (!client.connected || !subscribed || stopping) throw new Error('Broker indisponível');
+      await new Promise<void>((resolve, reject) => {
+        // A conexão também processa ingestão transacional; acomoda a latência do MySQL remoto.
+        const timer = setTimeout(() => reject(new Error('Tempo esgotado')), 10000);
+        timer.unref();
+        client.publish(`${config.MQTT_TOPIC_PREFIX}/${deviceId}/acionar`, payload, { qos: 1, retain: false }, error => {
+          clearTimeout(timer);
+          if (error) reject(error); else resolve();
+        });
+      });
+    },
     status: () => ({ connected: client.connected, subscribed }),
     async ready(timeout = 15000) {
       const deadline = Date.now() + timeout;

@@ -1,6 +1,13 @@
 import { expect, it } from 'vitest';
 import { parseMqttEnvironment } from '../src/config/mqtt';
 import { mqttOptions } from '../src/modules/telemetria/mqtt-consumer';
+it('MVP usa WSS e lista explícita sem relaxar produção', () => {
+  const input = { MQTT_ENABLED: 'true', MQTT_URL: 'wss://broker.hivemq.com:8884/mqtt', MQTT_DEVICE_IDS: 'esp32-001,esp32-002' };
+  expect(parseMqttEnvironment(input, false).MQTT_DEVICE_IDS).toEqual(['esp32-001', 'esp32-002']);
+  expect(() => parseMqttEnvironment(input, true)).toThrow('autenticação');
+  expect(() => parseMqttEnvironment({ ...input, MQTT_URL: 'ws://broker.hivemq.com:8000/mqtt' }, false)).toThrow();
+  expect(() => parseMqttEnvironment({ ...input, MQTT_DEVICE_IDS: '+' }, false)).toThrow();
+});
 
 it('MQTT é opcional e aceita TCP somente no desenvolvimento local', () => {
   expect(parseMqttEnvironment({}, true).MQTT_ENABLED).toBe(false);

@@ -1052,3 +1052,100 @@ Verificações intermediárias: 51 testes sem banco aprovados; teste da projeç�
 Preparados Dockerfile com usuário não privilegiado e contexto de build que exclui arquivos privados. Ainda falta validar imagem, ativar a versão completa, testar TLS físico, provisionar contas restritas no Aiven, hospedar o Node e medir latência. Nenhum deploy remoto ou conclusão da fase é declarado por estes preparativos. Frontend permanece posterior ao backend.
 
 Atualização da verificação local: lint, typecheck, os 51 testes sem banco e build aprovados. O firmware novo compilou para `esp32:esp32:esp32`, com ArduinoMqttClient 0.1.8: 1.025.097 bytes de programa (78%) e 49.484 bytes de RAM (15%). A compilação usou configurações de exemplo; não houve gravação na placa nem conexão TLS nesta verificação.
+
+## 16. Complemento autorizado — MVP público com persistência no Aiven (19/10/2026)
+
+### 16.1 Análise e escolha
+
+A página de teste usa MQTT.js/WSS diretamente no navegador, com tópicos globais
+e comandos de LED/limite. O firmware original não entregava JSON completo com
+identificador/tempo e porta por dispositivo para o contrato do banco. Mantivemos
+os originais e criamos `firmware/mqtt_esp32_limite_stma_v2`. O guia
+[mvp-bancada-aiven.md](mvp-bancada-aiven.md) reúne comandos e configuração.
+
+Adotado: ESP32 → HiveMQ público → Node local → Aiven → REST/SSE → React. O broker
+é o mesmo da página; o caminho de persistência mantém a arquitetura e o isolamento
+por empresa. O frontend não passa a falar MQTT diretamente. Produção fica para
+pós-MVP; a pendência de hospedagem do backend não foi resolvida.
+
+### 16.2 Contrato e banco
+
+`/dados` fornece JSON validado com id, temperatura, umidade e timestamp UTC quando
+NTP disponível. `/porta` gera evento apenas quando muda; `/status` trata presença;
+`/controle` atualiza estado confirmado de LED, limite e UUID. Tópicos globais de
+compatibilidade não geram leituras duplicadas no banco.
+
+A migração `002_device_control.sql` adiciona quatro colunas a `dispositivo` sem
+apagar dados nem alterar o número de tabelas. Foi aplicada nos dois bancos. Um
+banco novo recebe 001+002; banco existente usa `migrate:control`, com privilégios
+de migração. A adoção de Prisma futura segue viável pelos contratos de repositório.
+
+Com autorização explícita, criados no Aiven Laboratório STMA, Bancada, Testes,
+Bancada ESP32, dispositivo e três perfis operacionais. A conta de manutenção é
+separada e limitada às rotinas; os segredos estão no perfil privado `.env.mvp`.
+Não redefinimos o superadmin remoto. A API Aiven ainda usa a credencial existente;
+sua restrição final integra as pendências de produção.
+
+### 16.3 Código e configuração
+
+`STMA_ENV_FILE` permite sobrepor `.env` com `.env.mvp`; o launcher `dev:mvp` prepara
+o perfil e as CAs do sistema. `mqtt.ts` aceita WSS e allowlist. O broker pode ser
+trocado por configuração mantendo tópico/payload; não há SDK exclusivo HiveMQ nas
+regras. `control.service.ts` contém as regras do comando; `control.routes.ts` faz
+HTTP/perfis/CSRF; `mysql-control.repository.ts` consulta/audita; `mqtt-consumer.ts`
+publica. Transações e SSE pós-commit permanecem no repositório de telemetria.
+
+O comando traz UUID e expira em 15 s. API devolve 202 após PUBACK, sem afirmar
+execução física. Firmware devolve UUID; frontend só confirma após lê-lo no banco.
+Leitor não escreve; administrador/operador exigem empresa correta, estado recente,
+dispositivo ativo, online e fora de manutenção. Controle manual exige automático
+desligado. Solicitação fica auditada mesmo se a entrega não for confirmada.
+
+### 16.4 Validação e ajustes de bancada
+
+Corrigido MAC zerado: `WiFi.macAddress()` antes da conexão retornava zeros no core
+instalado; `esp_read_mac` lê o MAC de hardware. Compilação ESP32 core 3.3.12:
+941.933 bytes de programa (71%) e 48.516 bytes de RAM (14%). Gravação na COM13
+verificada por hash; leitura serial confirmou `esp32-a8032a1e7214` e horário UTC.
+
+Primeira consulta física ao Aiven confirmou nove leituras, um evento de porta,
+LED e estado online. A ingestão a cada 5 s acumulou mensagens devido às consultas
+transacionais remotas; intervalo configurável ajustado para 15 s. Isso não altera
+as regras de alertas. O sensor continua sem buffer offline e publica QoS 0.
+
+Encontrada e corrigida interferência das novas rotas no login: middleware agora
+alcança somente `/dispositivos/:id/controle`. Teste de integração verifica que o
+login e `/auth/me` continuam acessíveis conforme seus próprios contratos.
+
+Lint, build e 56 testes sem banco aprovados na árvore local (inclui preparativos
+de demo preexistentes). Uma execução conjunta da integração teve 55 aprovações e
+timeout no benchmark de 100 mil leituras. Reexecução isolada aprovou os seis testes
+de monitoramento: páginas em 129/119 ms e CSV completo com 100.001 linhas. Limite
+de 3 s preservado; não contabilizar a tentativa conjunta como aprovação completa.
+
+### 16.5 Pendências e próximos passos
+
+Concluir evidência de comandos físicos, regressão e versionamento desta adaptação.
+Depois, seguir Fase 6 do frontend mediante aceite; Fase 7 do backend permanece
+aberta para hospedagem, broker privado/TLS/ACL e validação remota. Os preparativos
+anteriores da seção 15 e os perfis existentes foram preservados.
+
+### 16.6 Fechamento funcional da bancada
+
+Login Aiven e painel reais aprovados; comando manual e automático em 28 °C
+confirmados pelo ESP32, com restauração do estado anterior. Nova consulta:
+86 leituras, um evento de porta, placa online, LED apagado e limite nulo.
+Cadastro sincronizado para intervalo de 15 segundos, com auditoria. O timeout
+PUBACK passou a 10 s para acomodar a latência das transações da conexão consumidora.
+
+A regressão conjunta agora aprovou 56 testes de integração, incluindo o benchmark
+inalterado de 100 mil leituras. Os 56 testes sem banco e nove MQTT anteriores
+passaram; um décimo teste MQTT foi acrescentado para comando não retido e UUID
+confirmado persistido. O código de suporte de pools separados/demo previamente
+preparado foi preservado, com demo desabilitada no perfil MVP. Publicar esses
+preparativos não significa declarar implantação de produção concluída.
+
+O original do usuário foi preservado. Código novo em
+`firmware/mqtt_esp32_limite_stma_v2`; pacote local para download em
+`firmware/mqtt_esp32_limite_stma_v2.zip`, contendo somente `.ino`, exemplo de
+configuração e README. O `config.h` privado nunca entra nesse pacote nem no Git.

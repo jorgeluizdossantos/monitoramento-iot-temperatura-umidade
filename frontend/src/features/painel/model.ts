@@ -22,6 +22,8 @@ export const readingSchema = z.object({
   ultima_leitura_em: z.string().datetime({ offset: true }).nullable(),
   temperatura_c: decimal,
   umidade_pct: decimal,
+  porta_aberta: z.union([z.boolean(), z.literal(0), z.literal(1)]).nullable().optional().transform(v => v == null ? null : v === true || v === 1),
+  porta_alterada_em: z.string().datetime({ offset: true }).nullable().optional().default(null),
   estado: z.enum(["normal", "atencao", "critico", "sem_dados"]),
   temp_min_ideal: decimal,
   temp_max_ideal: decimal,

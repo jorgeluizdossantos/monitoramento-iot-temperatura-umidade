@@ -23,7 +23,8 @@ async function migrate() {
     const sql = fs.readFileSync(path.join(backendRoot, 'migrations/001_stma_schema.sql'), 'utf8')
       .replace(/CREATE DATABASE IF NOT EXISTS stma_db[\s\S]*?;\s*USE stma_db;/, '');
     await connection.query(sql);
-    console.log('Migração 001 aplicada: schema STMA. Nenhum seed de demonstração foi inserido.');
+    await connection.query(fs.readFileSync(path.join(backendRoot, 'migrations/002_device_control.sql'), 'utf8'));
+    console.log('Migrações 001 e 002 aplicadas: schema STMA e estado de controle. Nenhum seed foi inserido.');
   } finally { await connection.end(); }
 }
 

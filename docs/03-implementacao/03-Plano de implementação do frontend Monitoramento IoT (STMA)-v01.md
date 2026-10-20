@@ -2,6 +2,25 @@
 
 Oct 12, 2026 · @Jorge Luiz dos Santos
 
+## Adaptação autorizada do MVP — 19/10/2026
+
+Fases 1–5 implementadas; a **Fase 6 continua pendente**. O complemento abaixo
+conecta as telas existentes à bancada real e não representa implantação Vercel.
+
+- [x] Painel/detalhe mostram o último estado da porta, com indicação de dado antigo.
+- [x] Controle de LED e limite separado das faixas ideais, no detalhe do ambiente.
+- [x] Administrador/operador comandam; leitor apenas consulta. Backend autoriza cada operação.
+- [x] Aguardar UUID confirmado pelo ESP32; mostrar falha/timeout sem sucesso presumido.
+- [x] Bloquear comando sem estado recente e manual enquanto automático ativo.
+- [x] Build e 27 testes unitários; dez cenários de painel/controle no Edge aprovados.
+- [ ] Concluir regressão completa, prova física pela interface e publicação desta adaptação.
+- [ ] Fase 6: acabamento, demonstração e implantação Vercel, conforme plano.
+
+Guia de execução: [MVP de bancada](../mvp-bancada-aiven.md). Registros:
+[roteiro-frontend](../roteiro-frontend.md). **A hospedagem do backend permanece
+pendente**: a interface usa o Node local, que persiste no Aiven. Não conecta
+diretamente ao MySQL nem expõe credenciais MQTT.
+
 ## 1. Resumo
 
 **Acompanhamento — 14/10/2026:** o proprietário autorizou iniciar este plano com a Fase 7

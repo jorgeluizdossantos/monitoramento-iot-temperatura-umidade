@@ -2,6 +2,7 @@ node_modules/
 .env
 .env.*
 !.env.example
+!.env.mvp.example
 config.h
 *.pem
 *.key
@@ -16,3 +17,4 @@ backend/.local/
 frontend/dist/
 frontend/test-results/
 frontend/playwright-report/
+firmware/*.zip

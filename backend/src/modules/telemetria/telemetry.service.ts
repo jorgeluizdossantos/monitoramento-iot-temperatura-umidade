@@ -9,6 +9,7 @@ const identity = { id: deviceIdSchema.optional(), dispositivo: deviceIdSchema.op
 const dataSchema = z.object({ ...identity, temperatura: z.number().finite().min(-50).max(100), umidade: z.number().finite().min(0).max(100), timestamp: z.string().max(40).optional() }).strict();
 const statusSchema = z.object({ ...identity, status: z.enum(['online', 'offline']) }).strict();
 const doorSchema = z.object({ ...identity, aberta: z.boolean() }).strict();
+const controlSchema = z.object({ id: deviceIdSchema, led: z.boolean(), limite: z.number().finite().min(0).max(50).nullable(), comando_id: z.string().uuid().nullable() }).strict();
 export class InvalidMessage extends Error {}
 function identityMatches(data: { id?: string; dispositivo?: string }, deviceId: string, required: boolean) {
   if ((required && !data.id && !data.dispositivo) || (data.id && data.id !== deviceId) || (data.dispositivo && data.dispositivo !== deviceId)) throw new InvalidMessage('device_id divergente');
@@ -18,8 +19,16 @@ export function normalizeMessage(incoming: IncomingMessage, config: MqttEnvironm
   if (segments.length !== 3 || segments[0] !== config.MQTT_TOPIC_PREFIX || !deviceIdSchema.safeParse(segments[1]).success) throw new InvalidMessage('tópico inválido');
   if (!incoming.payload.length || incoming.payload.length > 32768) throw new InvalidMessage('tamanho inválido');
   const deviceId = segments[1]; const kind = segments[2]; const text = incoming.payload.toString('utf8').trim();
+  if (config.MQTT_DEVICE_IDS.length && !config.MQTT_DEVICE_IDS.includes(deviceId)) throw new InvalidMessage('dispositivo fora da lista configurada');
   const base = { deviceId, receivedAt: incoming.receivedAt, retained: incoming.retained };
   const json = () => { try { return JSON.parse(text) as unknown; } catch { throw new InvalidMessage('JSON inválido'); } };
+  if (kind === 'controle') {
+    if (incoming.retained) throw new InvalidMessage('controle retido');
+    const parsed = controlSchema.safeParse(json());
+    if (!parsed.success) throw new InvalidMessage('controle inválido');
+    identityMatches(parsed.data, deviceId, true);
+    return { ...base, kind, led: parsed.data.led, limit: parsed.data.limite, commandId: parsed.data.comando_id };
+  }
   if (kind === 'dados') {
     if (incoming.retained) throw new InvalidMessage('telemetria retida');
     const parsed = dataSchema.safeParse(json());

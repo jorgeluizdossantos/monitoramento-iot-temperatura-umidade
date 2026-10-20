@@ -183,3 +183,35 @@ Reconhecer registra ciência; encerramento depende das regras de episódio.
 Durações de alertas abertos correspondem à última consulta, explicitada na tela.
 Fontes: `monitoring.service.ts`, `mysql-monitoring.repository.ts` e frontend
 `features/alertas/alerts-page.tsx`. Não há regra de encerramento no frontend.
+
+## Complemento do MVP: porta, LED e limite — 19/10/2026
+
+- Telemetria de temperatura/umidade entra somente pelo JSON `/dados` por placa.
+  Tópicos escalares/globais da página antiga não geram leituras adicionais.
+- Allowlist `MQTT_DEVICE_IDS` restringe quais IDs este backend consome/comanda.
+  No broker público isso não autentica a origem; terceiros podem forjar o ID.
+- Estado `/controle` exige id correspondente ao tópico, booleano LED, limite
+  nulo ou 0–50 °C e UUID de comando ou nulo; mensagem retida é recusada.
+- O último estado de porta exibido vem de `evento_porta`; sem novo contato não
+  afirmar que um estado antigo ainda descreve a situação física atual.
+- Administrador e operador da empresa podem comandar. Leitor consulta.
+  Superadmin mantém as funções globais previstas, sem assumir empresa implicitamente.
+- Comando exige placa ativa, hierarquia ativa, online, fora de manutenção e estado
+  recebido nos últimos 30 segundos. Outra empresa recebe 404 sem revelar o cadastro.
+- Limite automático do LED é independente das faixas ideais do ambiente. Valores
+  aceitos na API: nulo (desativar) ou 0–50 °C com uma casa decimal. Histerese 0,5 °C:
+  acende em temperatura >= limite, apaga abaixo de limite − 0,5 °C.
+- Manual exige automático desativado. Desativar automático mantém o último estado
+  do LED; o usuário pode então comandá-lo. Reboot perde limite/estado do firmware.
+- Comando recebe UUID e validade de 15 s; MQTT publica QoS 1 sem retain. O firmware
+  exige NTP e recusa expirados. UUID repetido imediatamente não reaplica o comando.
+- Auditoria registra **solicitação**, não prova de execução. HTTP 202 confirma
+  aceitação pelo broker. Confirmação física depende do UUID recebido em `/controle`
+  e persistido. Erro/timeout não garante que o dispositivo não executou.
+- A bancada usa amostragem configurável de 15 s para respeitar a latência remota;
+  publicações do firmware são QoS 0 e não há recuperação garantida de perdas.
+
+Fontes de implementação: `backend/src/modules/telemetria/control.service.ts`,
+`control.routes.ts`, `mysql-control.repository.ts`, `telemetry.service.ts`,
+`mysql-telemetry.repository.ts` e `firmware/mqtt_esp32_limite_stma_v2`.
+Interface: `frontend/src/features/ambiente/device-control.tsx`.

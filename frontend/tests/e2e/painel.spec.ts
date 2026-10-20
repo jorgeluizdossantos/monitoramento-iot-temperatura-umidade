@@ -38,6 +38,7 @@ const initial = ["normal", "atencao", "critico", "sem_dados"].map(
   }),
 );
 async function setup(page: Page) {
+  await page.route('**/api/v1/dispositivos/*/controle', r => r.fulfill({json:{dados:{led:false,limite:null,recebido_em:new Date().toISOString(),comando_id:null}}}));
   await page.route('**/api/v1/alertas?*', r => r.fulfill({json:{dados:[],total:0,pagina:1,tamanho:20}}));
   await page.route('**/api/v1/ambientes/*/serie?*', r => r.fulfill({json:{dados:[],fonte:'leituras_brutas_e_resumos',granularidade:'hora'}}));
   await page.addInitScript(() => {
@@ -117,6 +118,48 @@ async function setup(page: Page) {
     count: () => requests,
   };
 }
+test('operador aguarda confirmação física; automático bloqueia comando manual', async ({ page }) => {
+  await setup(page);
+  await page.route('**/api/v1/auth/me', r => r.fulfill({json:{usuario:{id:1,empresa_id:1,nome:'Operador',email:'operador@example.test',perfil:'operador'}}}));
+  const commandId = 'cc5bd922-12b0-4114-90ae-de0a1d128cb4';
+  let confirmed = false;
+  await page.route('**/api/v1/dispositivos/1/controle', r => {
+    if (r.request().method() === 'POST') {
+      expect(r.request().postDataJSON()).toEqual({tipo:'limite',valor:28});
+      return r.fulfill({status:202,json:{comando_id:commandId}});
+    }
+    return r.fulfill({json:{dados:{led:confirmed,limite:confirmed?28:null,recebido_em:new Date().toISOString(),comando_id:confirmed?commandId:null}}});
+  });
+  await page.goto('/painel');
+  await page.getByRole('article', {name:'Ambiente Sala 1'}).getByRole('link', {name:'Detalhes do ambiente'}).click();
+  await page.getByRole('button', {name:'Aplicar limite do LED'}).click();
+  await expect(page.getByText('Enviado ao broker. Aguardando confirmação do ESP32…')).toBeVisible();
+  await expect(page.getByRole('button', {name:'Aplicar limite do LED'})).toBeDisabled();
+  confirmed = true;
+  await expect(page.getByText('Comando confirmado pelo ESP32.')).toBeVisible({timeout:10000});
+  await expect(page.getByRole('button', {name:'Apagar LED'})).toBeDisabled();
+  await expect(page.getByRole('button', {name:'Desativar automático'})).toBeEnabled();
+});
+test('leitor consulta controle sem ações e operador não comanda estado antigo', async ({ page }) => {
+  await setup(page);
+  await page.goto('/painel');
+  await page.getByRole('article', {name:'Ambiente Sala 1'}).getByRole('link', {name:'Detalhes do ambiente'}).click();
+  await expect(page.getByRole('heading', {name:/LED e controle automático/})).toBeVisible();
+  await expect(page.getByRole('button', {name:'Acender LED'})).toHaveCount(0);
+  await page.route('**/api/v1/auth/me', r => r.fulfill({json:{usuario:{id:1,empresa_id:1,nome:'Operador',email:'operador@example.test',perfil:'operador'}}}));
+  await page.route('**/api/v1/dispositivos/1/controle', r => r.fulfill({json:{dados:{led:false,limite:null,recebido_em:'2020-01-01T00:00:00Z',comando_id:null}}}));
+  await page.reload();
+  await expect(page.getByRole('button', {name:'Acender LED'})).toBeDisabled();
+  await expect(page.getByRole('button', {name:'Aplicar limite do LED'})).toBeDisabled();
+});
+test('primeira hora de telemetria aparece como ponto no gráfico', async ({ page }) => {
+  await setup(page);
+  const hour = new Date(); hour.setUTCMinutes(0,0,0);
+  await page.route('**/api/v1/ambientes/1/serie?*', r => r.fulfill({json:{fonte:'leituras_brutas_e_resumos',granularidade:'hora',dados:[{hora_ref:hour.toISOString(),qtd_leituras:4,temp_media:29,temp_min:28,temp_max:30,umid_media:60,umid_min:59,umid_max:61}]}}));
+  await page.goto('/painel');
+  await page.getByRole('article', {name:'Ambiente Sala 1'}).getByRole('link', {name:'Detalhes do ambiente'}).click();
+  await expect(page.locator('.recharts-line-dot').first()).toBeVisible();
+});
 test("estados, filtros e detalhe encerram conexão ao sair", async ({
   page,
 }) => {

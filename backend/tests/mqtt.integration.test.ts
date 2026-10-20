@@ -171,3 +171,17 @@ it('broker real abre e fecha episódio; commit notifica apenas a empresa do disp
   });
   expect(committedCompanies.slice(previous)).toEqual([company, company]);
 });
+it('publica comando não retido e persiste o UUID confirmado pelo dispositivo', async () => {
+  const commandId=randomUUID(); const commandTopic=topic(deviceId,'acionar');
+  await secondPublisher.subscribeAsync(commandTopic,{qos:1});
+  const received=new Promise<{payload:string;retained:boolean}>(resolve=>{
+    const handler=(name:string,payload:Buffer,packet:{retain?:boolean})=>{if(name!==commandTopic)return;secondPublisher.off('message',handler);resolve({payload:payload.toString(),retained:!!packet.retain});};
+    secondPublisher.on('message',handler);
+  });
+  const payload=`${commandId}|${Math.floor(Date.now()/1000)+15}|led|L`;
+  await consumer.publishCommand(deviceId,payload);
+  expect(await received).toEqual({payload,retained:false});
+  await secondPublisher.publishAsync(topic(deviceId,'controle'),JSON.stringify({id:deviceId,led:true,limite:null,comando_id:commandId}),{qos:1,retain:false});
+  await until(async()=>{const [[row]]=await db.withConnection(c=>c.execute<RowDataPacket[]>('SELECT led_aceso,controle_comando_id FROM dispositivo WHERE id=?',[device]));return !!row.led_aceso&&row.controle_comando_id===commandId;});
+  await secondPublisher.unsubscribeAsync(commandTopic);
+});

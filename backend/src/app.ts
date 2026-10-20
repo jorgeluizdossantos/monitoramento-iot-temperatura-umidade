@@ -17,13 +17,18 @@ import { createMonitoringRouter } from './modules/telemetria/monitoring.routes';
 import type { HistoryService } from './modules/telemetria/history.service';
 import { createHistoryRouter } from './modules/telemetria/history.routes';
 import { createStreamRouter, type StreamHub } from './modules/stream/stream';
+import { createDemoRouter } from './modules/demo/demo.routes';
+import type { DemoService } from './modules/demo/demo.service';
+import type { Router } from 'express';
 
-export function createApp(dependencies: { healthRepository: HealthRepository; logger: Logger; auth?: { service: AuthService; env: Environment }; cadastros?: CadastroService; pending?: PendingService; monitoring?: MonitoringService; history?: HistoryService; stream?: StreamHub }) {
+export function createApp(dependencies: { healthRepository: HealthRepository; logger: Logger; auth?: { service: AuthService; env: Environment }; cadastros?: CadastroService; pending?: PendingService; monitoring?: MonitoringService; history?: HistoryService; stream?: StreamHub; demo?: DemoService; control?: Router }) {
   const app = express();
   app.disable('x-powered-by');
   app.use(helmet());
   app.use(express.json({ limit: '32kb' }));
   app.get('/health', createHealthController(createHealthService(dependencies.healthRepository)));
+  if (dependencies.demo) app.use('/api/v1/demo', createDemoRouter(dependencies.demo));
+  if (dependencies.control) app.use('/api/v1', dependencies.control);
   if (dependencies.auth) app.use('/api/v1/auth', createAuthRouter(dependencies.auth.service, dependencies.auth.env));
   if (dependencies.cadastros && dependencies.auth) app.use('/api/v1', createCadastroRouter(dependencies.cadastros, dependencies.auth.service, dependencies.auth.env));
   if (dependencies.pending && dependencies.auth) app.use('/api/v1/dispositivos-pendentes', createPendingRouter(dependencies.pending, dependencies.auth.service, dependencies.auth.env.PUBLIC_ORIGIN));

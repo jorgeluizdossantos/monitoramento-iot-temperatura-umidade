@@ -11,8 +11,8 @@ export function mysqlOptions(env: Environment): PoolOptions {
     waitForConnections: true, queueLimit: 20,
     timezone: 'Z', charset: 'utf8mb4', supportBigNumbers: true, bigNumberStrings: true,
     multipleStatements: false,
-    ...(env.database.caFile ? { ssl: {
-      ca: fs.readFileSync(path.resolve(backendRoot, env.database.caFile)),
+    ...(env.database.caFile || env.database.caPem ? { ssl: {
+      ca: env.database.caPem || fs.readFileSync(path.resolve(backendRoot, env.database.caFile!)),
       rejectUnauthorized: true, verifyIdentity: true,
     } } : {}),
   };

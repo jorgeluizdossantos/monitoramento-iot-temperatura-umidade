@@ -56,6 +56,9 @@ export function createMysqlTelemetryRepository(db: Database, onCommitted?: (comp
             await c.execute('INSERT INTO evento_porta (dispositivo_id,ambiente_id,aberta,ocorrido_em,recebido_em) VALUES (?,?,?,?,?)', [device.id, device.ambiente_id, message.open, message.measuredAt, message.receivedAt]);
             result = 'stored';
           }
+        } else if (message.kind === 'controle') {
+          await c.execute('UPDATE dispositivo SET led_aceso=?,limite_led=?,controle_recebido_em=?,controle_comando_id=? WHERE id=?', [message.led, message.limit, message.receivedAt, message.commandId, device.id]);
+          result = 'stored';
         } else {
           if (message.status === 'online' && !message.retained) {
             await c.execute("UPDATE dispositivo SET status_conexao='online',ultimo_contato_em=GREATEST(COALESCE(ultimo_contato_em,?),?) WHERE id=?", [message.receivedAt, message.receivedAt, device.id]);

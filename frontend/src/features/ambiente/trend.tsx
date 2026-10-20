@@ -142,7 +142,7 @@ export default function Trend({
                         dataKey={`${kind}_media`}
                         stroke="#00507d"
                         strokeWidth={2}
-                        dot={false}
+                        dot={{ r: 2 }}
                         isAnimationActive={false}
                       />
                       <Line
@@ -150,7 +150,7 @@ export default function Trend({
                         dataKey={`${kind}_min`}
                         stroke="#61708a"
                         strokeDasharray="4 3"
-                        dot={false}
+                        dot={{ r: 2 }}
                         isAnimationActive={false}
                       />
                       <Line
@@ -158,7 +158,7 @@ export default function Trend({
                         dataKey={`${kind}_max`}
                         stroke="#a33b16"
                         strokeDasharray="2 2"
-                        dot={false}
+                        dot={{ r: 2 }}
                         isAnimationActive={false}
                       />
                     </LineChart>

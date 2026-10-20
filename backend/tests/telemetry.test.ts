@@ -6,6 +6,13 @@ const config = parseMqttEnvironment({}, false);
 const time = new Date('2026-10-12T10:00:00.000Z');
 const message = (payload: unknown, suffix = 'dados', retained = false) => ({ topic: `engeasier/esp32-001/${suffix}`, payload: Buffer.from(typeof payload === 'string' ? payload : JSON.stringify(payload)), receivedAt: time, retained });
 const data = { id: 'esp32-001', temperatura: 23.46, umidade: 50.12, timestamp: time.toISOString() };
+it('restringe dispositivos e valida confirmações do controle sem aceitar retenção', () => {
+  const restricted = parseMqttEnvironment({ MQTT_DEVICE_IDS: 'esp32-002' }, false);
+  expect(() => normalizeMessage(message(data), restricted)).toThrow('lista');
+  expect(normalizeMessage(message({ id: data.id, led: true, limite: 28, comando_id: null }, 'controle'), config)).toMatchObject({ kind: 'controle', led: true, limit: 28 });
+  expect(() => normalizeMessage(message({ id: data.id, led: true, limite: 51, comando_id: null }, 'controle'), config)).toThrow();
+  expect(() => normalizeMessage(message({ id: data.id, led: true, limite: null, comando_id: null }, 'controle', true), config)).toThrow('retido');
+});
 it('normaliza identidade, valores e horário sem tipos do driver', () => {
   expect(normalizeMessage(message(data), config)).toMatchObject({ kind: 'dados', deviceId: data.id, temperature: 23.5, humidity: 50.1, measuredAt: time, timestampSource: 'device' });
   expect(normalizeMessage(message({ dispositivo: data.id, temperatura: 20, umidade: 40 }), config)).toMatchObject({ timestampSource: 'receipt', measuredAt: time });

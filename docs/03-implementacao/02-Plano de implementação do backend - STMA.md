@@ -10,6 +10,29 @@
 > health, lint, testes e CI aprovados. Evidência: commit ea1ea4c, tag backend-fase-1,
 > execução GitHub Actions 38311559868. Fase 2 concluída: commit 7d664fe, tag backend-fase-2, CI 38314809772 aprovado. Fase 3 concluída: commit 28b071d, tag backend-fase-3, CI 38316891647 aprovado. Fase 4 concluída: testes locais/CI aprovados e ESP32 físico validado com HiveMQ Lab e MySQL local. Fase 5 concluída: 94 testes locais e CI 38445259187 aprovados; endpoints autenticados verificados na bancada. Fase 6 concluída: CI 38451967878 aprovado com 107 testes e versão ativada localmente em 14/10/2026. Fase 7 não iniciada.
 
+## Atualização de escopo — MVP de bancada (19/10/2026)
+
+Prevalece sobre o resumo histórico acima: **Fases 1–6 concluídas; Fase 7 em
+andamento, com hospedagem do backend e MQTT privado/TLS remoto ainda pendentes**.
+O proprietário autorizou HiveMQ público + Node local + MySQL Aiven para operar
+o MVP, preservando os perfis e planos de produção.
+
+- [x] Analisar HTML/firmware originais e preservar os arquivos de referência.
+- [x] Perfil `.env.mvp` com WSS, allowlist de dispositivo e banco Aiven.
+- [x] Migração 002 aditiva (quatro campos de controle; mantém 13 tabelas e view).
+- [x] Hierarquia de laboratório, contas operacionais e conta limitada de manutenção no Aiven, com autorização explícita.
+- [x] Firmware v2 com JSON por dispositivo, UTC/NTP, porta, LWT, LED e limite.
+- [x] API de controle com escopo de empresa, papéis, auditoria e confirmação por UUID.
+- [x] Firmware compilado e gravado na COM13; telemetria real persistida no Aiven.
+- [ ] Encerrar evidências de controle físico, regressão e publicação desta adaptação.
+- [ ] Hospedagem contínua do Express e implantação remota completa — **pós-MVP**.
+- [ ] Broker privado, ACL e TLS no ESP32, validação em produção — **pós-MVP**.
+
+Guia: [MVP de bancada](../mvp-bancada-aiven.md). Execução didática e evidências:
+[roteiro-backend](../roteiro-backend.md), seção 16. Esta adaptação não encerra a
+Fase 7. Próximo passo imediato: fechar a validação do MVP; depois retomar os itens
+pendentes mediante escolha da hospedagem e do broker de produção.
+
 ## 1. Resumo
 
 O backend é um único serviço Node.js que faz duas coisas sobre o banco `stma_db`: recebe a telemetria dos ESP32 pelo MQTT e serve a API REST do painel. Começa como um monólito modular, com ingestão e API no mesmo processo, e só se divide se o volume exigir. O plano tem sete fases, da base do projeto até a implantação, e cada uma termina com um critério de aceite verificável.

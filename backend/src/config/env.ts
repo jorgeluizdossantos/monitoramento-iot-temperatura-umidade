@@ -3,6 +3,7 @@ import path from 'node:path';
 import dotenv from 'dotenv';
 import { z } from 'zod';
 import { parseMqttEnvironment } from './mqtt';
+import { parseDatabaseRoles } from './database-roles';
 
 export const backendRoot = path.resolve(__dirname, '../..');
 const positiveInteger = (fallback: number, max: number) =>
@@ -22,6 +23,7 @@ export function parseEnvironment(env: NodeJS.ProcessEnv) {
     AUTH_IP_LIMIT: positiveInteger(20, 1000),
     AUTH_EMAIL_LIMIT: positiveInteger(5, 100),
     JOBS_ENABLED: z.enum(['true', 'false']).default('false').transform(v => v === 'true'),
+    DEMO_ENABLED: z.enum(['true', 'false']).default('false').transform(v => v === 'true'),
   }).safeParse(env);
   if (!common.success) throw new Error(`Configuração inválida: ${common.error.issues.map(i => i.path.join('.')).join(', ')}`);
   const prefix = common.data.DB_TARGET === 'aiven' ? 'DB_AIVEN_' : 'DB_LOCAL_';
@@ -36,7 +38,8 @@ export function parseEnvironment(env: NodeJS.ProcessEnv) {
     user: env[`${prefix}USER`], password: env[`${prefix}PASSWORD`],
   });
   if (!database.success) throw new Error(`Configuração inválida: ${database.error.issues.map(i => prefix + String(i.path[0]).toUpperCase()).join(', ')}`);
-  if (common.data.DB_TARGET === 'aiven' && !env.DB_AIVEN_CA_FILE?.trim()) throw new Error('Preencha DB_AIVEN_CA_FILE.');
+  if (common.data.DB_TARGET === 'aiven' && !env.DB_AIVEN_CA_FILE?.trim() && !env.DB_AIVEN_CA_PEM?.trim()) throw new Error('Preencha DB_AIVEN_CA_FILE ou DB_AIVEN_CA_PEM.');
+  if (env.DB_AIVEN_CA_PEM && !env.DB_AIVEN_CA_PEM.includes('-----BEGIN CERTIFICATE-----')) throw new Error('DB_AIVEN_CA_PEM deve conter o certificado PEM.');
   if (common.data.NODE_ENV === 'production' && common.data.DB_TARGET !== 'aiven') {
     throw new Error('Nesta versão, produção exige DB_TARGET=aiven com TLS.');
   }
@@ -44,9 +47,11 @@ export function parseEnvironment(env: NodeJS.ProcessEnv) {
   if (!['http:', 'https:'].includes(origin.protocol) || origin.origin !== common.data.PUBLIC_ORIGIN) throw new Error('PUBLIC_ORIGIN deve conter somente a origem HTTP(S), sem caminho.');
   if (common.data.NODE_ENV === 'production' && (!common.data.SESSION_COOKIE_SECURE || origin.protocol !== 'https:')) throw new Error('Produção exige cookie Secure e PUBLIC_ORIGIN HTTPS.');
   return {
+    databaseRoles: parseDatabaseRoles(env, common.data.DB_TARGET, database.data.user),
     ...common.data, mqtt: parseMqttEnvironment(env, common.data.NODE_ENV === 'production'), database: {
       ...database.data,
       caFile: common.data.DB_TARGET === 'aiven' ? env.DB_AIVEN_CA_FILE : undefined,
+      caPem: common.data.DB_TARGET === 'aiven' ? env.DB_AIVEN_CA_PEM : undefined,
     },
   };
 }
@@ -56,5 +61,10 @@ export type Environment = ReturnType<typeof parseEnvironment>;
 export function loadEnvironment() {
   const file = path.join(backendRoot, '.env');
   const local = fs.existsSync(file) ? dotenv.parse(fs.readFileSync(file)) : {};
-  return parseEnvironment({ ...local, ...process.env });
+  const profileName = process.env.STMA_ENV_FILE;
+  if (profileName && !/^\.env\.[a-z0-9_-]+$/.test(profileName)) throw new Error('STMA_ENV_FILE deve indicar um perfil .env.nome dentro do backend.');
+  const profile = profileName ? dotenv.parse(fs.readFileSync(path.join(backendRoot, profileName))) : {};
+  const testFile = path.join(backendRoot, '.env.test');
+  const test = process.env.NODE_ENV === 'test' && fs.existsSync(testFile) ? dotenv.parse(fs.readFileSync(testFile)) : {};
+  return parseEnvironment({ ...local, ...profile, ...test, ...process.env });
 }

@@ -33,6 +33,7 @@ const icons = {
   sem_dados: CircleHelp,
 };
 const RoomAnalysis = lazy(() => import('../ambiente/room-analysis'));
+const DeviceControl = lazy(() => import('../ambiente/device-control'));
 const connectionLabels: Record<Connection, string> = {
   connecting: "Conectando ao tempo real…",
   live: "Tempo real conectado",
@@ -238,6 +239,7 @@ export default function Panel() {
         </div>
       )}
       {id && selected[0] && <Suspense fallback={<p role="status">Carregando análise…</p>}><RoomAnalysis key={id} row={selected[0][0]}/></Suspense>}
+      {id && selected[0] && <Suspense fallback={<p role="status">Carregando controles…</p>}>{selected[0].filter(r => r.dispositivo_id != null).map(r => <DeviceControl key={r.dispositivo_id} id={r.dispositivo_id!} name={r.device_id ?? 'Dispositivo'}/>)}</Suspense>}
     </>
   );
 }
@@ -365,6 +367,7 @@ function DeviceReading({ row }: { row: Reading }) {
           {date(row.ultima_leitura_em)}
         </time>
       </p>
+      <p className="reading-time">Último estado da porta: {row.porta_aberta === null ? 'não recebido' : row.porta_aberta ? 'Aberta' : 'Fechada'}{row.porta_alterada_em && <> · alteração em {date(row.porta_alterada_em)}</>}. {!live && 'Dispositivo sem leitura atual; estado pode estar desatualizado.'}</p>
     </section>
   );
 }

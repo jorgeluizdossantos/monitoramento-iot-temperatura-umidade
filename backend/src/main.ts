@@ -20,23 +20,38 @@ import { createStreamHub } from './modules/stream/stream';
 import { createMysqlMaintenanceRepository } from './modules/maintenance/mysql-maintenance.repository';
 import { createMaintenanceService } from './modules/maintenance/maintenance.service';
 import { startMaintenanceScheduler } from './modules/maintenance/scheduler';
+import { environmentForRole } from './config/database-roles';
+import { createMysqlDemoRepository } from './modules/demo/mysql-demo.repository';
+import { createDemoService } from './modules/demo/demo.service';
+import { createControlService } from './modules/telemetria/control.service';
+import { createMysqlControlRepository } from './modules/telemetria/mysql-control.repository';
+import { createControlRouter } from './modules/telemetria/control.routes';
 
 async function main() {
   const env = loadEnvironment();
+  // Validar todos os papéis antes de abrir pools; nunca usar credencial da API como fallback.
+  const maintenanceEnv = env.JOBS_ENABLED ? environmentForRole(env, 'maintenance') : undefined;
+  const demoEnv = env.DEMO_ENABLED ? environmentForRole(env, 'demo') : undefined;
   const logger = createLogger(env.LOG_LEVEL);
   const database = createDatabase(env);
+  const maintenanceDatabase = maintenanceEnv ? createDatabase(maintenanceEnv) : undefined;
+  const demoDatabase = demoEnv ? createDatabase(demoEnv) : undefined;
+  const databases = [database, maintenanceDatabase, demoDatabase].filter(db => db !== undefined);
+  const closeDatabases = () => Promise.all(databases.map(db => db.close()));
   const healthRepository = createMysqlHealthRepository(database);
-  try { await healthRepository.ping(); }
-  catch { await database.close(); throw new Error('Banco indisponível; confira o perfil e a conexão.'); }
+  try { await Promise.all(databases.map(db => createMysqlHealthRepository(db).ping())); }
+  catch { await closeDatabases(); throw new Error('Banco indisponível; confira o perfil e a conexão.'); }
   const authService = await createAuthService(createMysqlAuthRepository(database), env.SESSION_TTL_HOURS);
   const cadastros = createCadastroService(createMysqlCadastroRepository(database));
   const pending = createPendingService(createMysqlPendingRepository(database));
   const monitoring = createMonitoringService(createMysqlMonitoringRepository(database));
   const history = createHistoryService(createMysqlHistoryRepository(database));
   const stream = createStreamHub();
-  const maintenance = env.JOBS_ENABLED ? startMaintenanceScheduler(createMaintenanceService(createMysqlMaintenanceRepository(database, stream.publish)), logger) : undefined;
+  const maintenance = maintenanceDatabase ? startMaintenanceScheduler(createMaintenanceService(createMysqlMaintenanceRepository(maintenanceDatabase, stream.publish)), logger) : undefined;
+  const demo = demoDatabase ? createDemoService(createMysqlDemoRepository(demoDatabase)) : undefined;
   const consumer = env.mqtt.MQTT_ENABLED ? startMqttConsumer(env.mqtt, createTelemetryService(createMysqlTelemetryRepository(database, stream.publish), env.mqtt, logger), logger) : undefined;
-  const server = createApp({ healthRepository, logger, auth: { service: authService, env }, cadastros, pending, monitoring, history, stream }).listen(env.PORT, () => {
+  const control = consumer ? createControlRouter(createControlService(createMysqlControlRepository(database), consumer.publishCommand, env.mqtt.MQTT_DEVICE_IDS), authService, env.PUBLIC_ORIGIN) : undefined;
+  const server = createApp({ healthRepository, logger, auth: { service: authService, env }, cadastros, pending, monitoring, history, stream, demo, control }).listen(env.PORT, () => {
     logger.info({ port: env.PORT, databaseTarget: env.DB_TARGET }, 'Backend STMA iniciado');
   });
   let stopping = false;
@@ -46,7 +61,7 @@ async function main() {
     stream.close();
     const deadline = setTimeout(() => process.exit(1), 30000).unref();
     const httpClosed = new Promise<void>(resolve => server.close(() => resolve()));
-    void Promise.all([httpClosed, consumer?.stop(), maintenance?.stop()]).then(() => database.close()).then(() => clearTimeout(deadline)).catch(() => { process.exitCode = 1; });
+    void Promise.all([httpClosed, consumer?.stop(), maintenance?.stop()]).then(closeDatabases).then(() => clearTimeout(deadline)).catch(() => { process.exitCode = 1; });
   }
   server.on('error', () => { logger.error('Falha ao abrir porta HTTP'); process.exitCode = 1; stop(); });
   process.once('SIGINT', stop);

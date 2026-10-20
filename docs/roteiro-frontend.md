@@ -523,3 +523,72 @@ Fase 5 concluída tecnicamente. Falta **uma fase do frontend**, a Fase 6, que ag
 aceite: demonstração, acessibilidade, testes finais e implantação. O deploy completo
 continua condicionado às pendências de hospedagem do backend. Plano, roteiros e
 regras de negócio estão atualizados; não houve implantação pública nesta etapa.
+
+### Suporte ao teste local — 18/10/2026
+
+O login do superadmin falhava porque BOOTSTRAP_PASSWORD havia sido alterada no
+.env, sem modificar o hash da conta existente. Após o proprietário ajustar a senha
+para 12–128 caracteres, ela foi sincronizada exclusivamente no MySQL local com
+Argon2id; sessões antigas foram revogadas e a operação registrada em auditoria,
+sem senha ou hash no registro. Login e autenticação foram confirmados pelo serviço
+de autenticação, e a sessão de teste foi revogada. O banco Aiven não foi alterado.
+
+A mensagem “Muitas tentativas” corresponde ao limitador de login, cuja janela é de
+15 minutos. A proteção permanece habilitada. No desenvolvimento, reiniciar o
+backend limpa os contadores em memória; alternativamente, aguardar a janela
+expirar. BOOTSTRAP_PASSWORD é entrada de provisionamento, não senha sincronizada
+automaticamente com o banco. Esta correção não inicia a Fase 6.
+
+### Contas para avaliação dos quatro perfis — 18/10/2026
+
+A pedido do proprietário, foram disponibilizados os quatro níveis no MySQL local.
+A senha vigente do superadmin foi preservada; a do administrador do Laboratório STMA
+foi renovada e foram criadas contas de operador e leitor nessa empresa. As operações
+foram auditadas e as sessões anteriores do administrador revogadas. Os quatro logins
+foram validados pelo serviço de autenticação e as sessões de teste encerradas.
+Credenciais entregues somente em `backend/.local/acessos-teste-local.txt`, ignorado
+pelo Git. Não copiar senhas para documentação versionada. Não houve alteração no Aiven.
+Para avaliar todos os cadastros e a telemetria, iniciar pelo administrador da empresa.
+O superadmin permanece restrito ao escopo global de empresas e placas pendentes.
+
+## Complemento do MVP — bancada física e Aiven (19/10/2026)
+
+A solicitação atual autoriza adaptar as fases já implementadas à telemetria real,
+sem declarar a Fase 6 ou a hospedagem do backend concluídas. Guia completo:
+[mvp-bancada-aiven.md](mvp-bancada-aiven.md).
+
+1. **Contrato do painel:** acrescentados `porta_aberta` e `porta_alterada_em` à
+   validação Zod. Dados ausentes são tratados explicitamente; estado antigo não
+   vira uma afirmação de porta atual. O backend consulta o último evento por placa.
+2. **Detalhe do ambiente:** componente `features/ambiente/device-control.tsx`
+   consulta estado por dispositivo a cada três segundos. Leitor vê estado;
+   administrador/operador recebem ações. A aparência usa os componentes/classes
+   do design existente, sem criar uma página paralela desconectada do sistema.
+3. **Comandos:** botão manual e formulário de limite chamam a API autenticada.
+   Resposta 202 mostra “aguardando confirmação”; somente o UUID retornado pelo
+   firmware e persistido no Aiven produz “Comando confirmado pelo ESP32”. Após
+   20 segundos sem confirmação, orientar a conferir estado. Não exibir sucesso
+   apenas porque o botão foi clicado ou o broker aceitou a mensagem.
+4. **Regras:** estado com mais de 30 s bloqueia ações; automático ativo bloqueia
+   manual. Limite 0–50 °C, passo 0,1, separado das faixas ideais de alertas. A API
+   repete todas as validações de autorização e de disponibilidade.
+5. **Testes iniciais:** build e 27 testes unitários aprovados. Dez testes de painel
+   no Edge aprovados, incluindo espera pelo UUID, bloqueio de manual com automático,
+   leitor sem botões e operador impedido de atuar sobre estado antigo.
+6. **Uso:** backend `npm run dev:mvp`, frontend `npm run dev`, endereço
+   http://127.0.0.1:5173. Use as contas Aiven de laboratório do arquivo privado
+   `backend/.local/acessos-mvp-aiven.txt`. Superadmin não opera telemetria da empresa.
+
+Faltava neste registro intermediário concluir comandos físicos, regressão integral
+e publicação. Evidências finais serão acrescentadas abaixo; a Fase 6 continua
+pendente, assim como o backend hospedado de forma contínua.
+
+### Evidência funcional do complemento
+
+Login Aiven, painel, detalhe e comando manual foram validados pela interface real;
+a API recebeu confirmação física do limite automático 28 °C e o estado anterior
+foi restaurado. Capturas locais revisadas, preservando o layout do projeto.
+O primeiro ponto isolado da série agora aparece nos gráficos (marcadores de raio
+2); isso evita gráfico aparentemente vazio durante a primeira hora de telemetria.
+Os 39 cenários Edge e 27 testes unitários passaram; teste específico desse ponto
+foi acrescentado à suíte do painel. Publicação/CI registrados no fechamento abaixo.

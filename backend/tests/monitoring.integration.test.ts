@@ -14,6 +14,10 @@ import { createMysqlAuthRepository } from '../src/modules/auth/mysql-auth.reposi
 import { hashToken } from '../src/modules/auth/auth.service';
 import { createHistoryService } from '../src/modules/telemetria/history.service';
 import { createMysqlHistoryRepository } from '../src/modules/telemetria/mysql-history.repository';
+import { createControlRouter } from '../src/modules/telemetria/control.routes';
+import { createControlService } from '../src/modules/telemetria/control.service';
+import { createMysqlControlRepository } from '../src/modules/telemetria/mysql-control.repository';
+import { createMysqlTelemetryRepository } from '../src/modules/telemetria/mysql-telemetry.repository';
 const env=loadEnvironment();
 if(env.DB_TARGET!=='local'||env.NODE_ENV!=='test')throw new Error('Exige MySQL local de teste');
 const db=createDatabase(env); const suffix=randomUUID();
@@ -39,7 +43,7 @@ beforeAll(async()=>{
   await sql('INSERT INTO sessao(usuario_id,token_hash,expira_em) VALUES (?,?,DATE_ADD(UTC_TIMESTAMP(3),INTERVAL 1 HOUR))',[id,hashToken(token)]);
  }
  const auth=await createAuthService(createMysqlAuthRepository(db),8);
- app=createApp({healthRepository:{ping:async()=>{}},logger:createLogger('silent'),auth:{service:auth,env},monitoring:createMonitoringService(createMysqlMonitoringRepository(db)),history:createHistoryService(createMysqlHistoryRepository(db))});
+ app=createApp({healthRepository:{ping:async()=>{}},logger:createLogger('silent'),auth:{service:auth,env},monitoring:createMonitoringService(createMysqlMonitoringRepository(db)),history:createHistoryService(createMysqlHistoryRepository(db)),control:createControlRouter(createControlService(createMysqlControlRepository(db),async()=>{},[]),auth,env.PUBLIC_ORIGIN)});
  server=app.listen(0,'127.0.0.1');
  await new Promise<void>(resolve=>server.once('listening',resolve));
 });
@@ -76,6 +80,19 @@ it('alertas são paginados e leitor não reconhece; outra empresa recebe 404',as
  // Mesmo identificador existe, mas a consulta no escopo alheio não o revela.
  const foreignOperator=await add("INSERT INTO usuario(empresa_id,nome,email,senha_hash,perfil) VALUES (?,'Foreign',?,'unused','operador')",[other,`foreign-${suffix}@example.test`]);
  await expect(service.acknowledge(alert,{}, {actor:{id:foreignOperator,empresa_id:other,nome:'Foreign',email:'foreign@test.invalid',perfil:'operador'},ip:null})).rejects.toMatchObject({status:404});
+});
+it('controle persiste confirmação, limita empresa e impede comando de leitor',async()=>{
+ expect((await request(server).post('/api/v1/auth/login').send({})).status).toBe(400);
+ expect((await request(server).get('/api/v1/auth/me').agent(requestAgent).set('Cookie',cookie(tokens.reader))).status).toBe(200);
+ const repo=createMysqlTelemetryRepository(db);
+ await repo.ingest({kind:'controle',deviceId:`test-${suffix}`,receivedAt:new Date(),retained:false,led:true,limit:null,commandId:null});
+ await sql("UPDATE dispositivo SET status_conexao='online' WHERE id=?",[device]);
+ const url=`/api/v1/dispositivos/${device}/controle`;
+ const own=await request(server).get(url).agent(requestAgent).set('Cookie',cookie(tokens.reader));expect(own.status).toBe(200);expect(own.body.dados.led).toBe(true);
+ expect((await request(server).get(url).agent(requestAgent).set('Cookie',cookie(tokens.foreign))).status).toBe(404);
+ expect((await request(server).post(url).agent(requestAgent).set('Cookie',cookie(tokens.reader)).send({tipo:'led',valor:false})).status).toBe(403);
+ const sent=await request(server).post(url).agent(requestAgent).set('Cookie',cookie(tokens.operator)).send({tipo:'led',valor:false});expect(sent.status).toBe(202);expect(sent.body.comando_id).toMatch(/^[a-f0-9-]{36}$/);
+ expect((await request(server).post(url).agent(requestAgent).set('Cookie',cookie(tokens.operator)).set('Origin','https://other.invalid').send({tipo:'led',valor:false})).status).toBe(403);
 });
 it('reconhecimento idempotente preserva autor e episódio aberto, com uma auditoria',async()=>{
  const url=`/api/v1/alertas/${alert}/reconhecer`;

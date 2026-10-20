@@ -7,7 +7,9 @@ export function createMysqlMonitoringRepository(db: Database): MonitoringReposit
   return {
     panel: company => db.withConnection(async c => {
       const [rows] = await c.execute<RowDataPacket[]>(`SELECT v.*,s.nome AS setor,u.id AS unidade_id,u.nome AS unidade,
-        a.temp_min_ideal,a.temp_max_ideal,a.umid_min_ideal,a.umid_max_ideal,a.temp_tolerancia,a.umid_tolerancia
+        a.temp_min_ideal,a.temp_max_ideal,a.umid_min_ideal,a.umid_max_ideal,a.temp_tolerancia,a.umid_tolerancia,
+        (SELECT ep.aberta FROM evento_porta ep WHERE ep.dispositivo_id=v.dispositivo_id AND ep.ambiente_id=v.ambiente_id ORDER BY ep.ocorrido_em DESC,ep.id DESC LIMIT 1) porta_aberta,
+        (SELECT ep.ocorrido_em FROM evento_porta ep WHERE ep.dispositivo_id=v.dispositivo_id AND ep.ambiente_id=v.ambiente_id ORDER BY ep.ocorrido_em DESC,ep.id DESC LIMIT 1) porta_alterada_em
         FROM vw_ambiente_estado v JOIN ambiente a ON a.id=v.ambiente_id
         JOIN setor s ON s.id=a.setor_id AND s.empresa_id=a.empresa_id
         JOIN unidade u ON u.id=s.unidade_id AND u.empresa_id=s.empresa_id
