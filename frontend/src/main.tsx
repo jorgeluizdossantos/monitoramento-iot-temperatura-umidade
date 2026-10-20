@@ -8,4 +8,6 @@ import '@fontsource/inter/700.css';
 import '@fontsource/jetbrains-mono/500.css';
 import { App } from './app/app';
 import './styles.css';
+import { initializeTheme } from './shared/ui/theme-toggle';
+initializeTheme();
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><QueryClientProvider client={queryClient}><App/></QueryClientProvider></React.StrictMode>);

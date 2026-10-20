@@ -215,3 +215,16 @@ Fontes de implementação: `backend/src/modules/telemetria/control.service.ts`,
 `control.routes.ts`, `mysql-control.repository.ts`, `telemetry.service.ts`,
 `mysql-telemetry.repository.ts` e `firmware/mqtt_esp32_limite_stma_v2`.
 Interface: `frontend/src/features/ambiente/device-control.tsx`.
+
+## Demonstração pública — Fase 6 do frontend (20/10/2026)
+
+`/demo` consome apenas `GET /api/v1/demo/painel`, sem sessão ou filtro de empresa.
+A API expõe a projeção de empresas marcadas `eh_demo=1`; o frontend valida o
+indicador `demonstracao=true` e não oferece mutações nem controles físicos. Dados
+fictícios continuam persistidos no MySQL; não há fallback estático inventado se a
+API falhar. Dispositivo offline é mostrado como última leitura, não como atual.
+Essa página não substitui o painel autenticado da bancada Aiven.
+
+Fontes: `frontend/src/features/demo`, `backend/src/modules/demo` e
+`backend/src/db/runtime-grants.ts` (conta de consulta). Temas/preferência e mensagens
+de falha são apresentação; as regras de negócio e autorização permanecem na API.

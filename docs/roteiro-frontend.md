@@ -602,3 +602,62 @@ isolado do gráfico. Os 11 cenários atualizados do painel também passaram no E
 local. CI backend aprovado com 122 testes. Planos atualizados com MVP concluído e
 pendências preservadas. Próxima fase: **Fase 6 — acabamento, demonstração e implantação**,
 ainda não iniciada por esta adaptação. Hospedagem contínua do backend segue pós-MVP.
+
+## Fase 6 — execução autorizada em 20/10/2026
+
+Status: implementação e validação técnica em andamento; implantação remota ainda
+pendente da origem pública do backend e criação do projeto Vercel. Não marcar a
+fase integralmente concluída enquanto esses critérios não forem comprovados.
+
+### Escopo e decisões
+
+O proprietário reafirmou que broker público continua entregando dados reais ao
+Node local, que grava no Aiven. A Fase 6 mantém esse fluxo. Foi oferecida uma opção
+de demonstração estática, mas ela não foi adotada; `/demo` usa somente a API pública
+já planejada, com dados fictícios de empresa marcada `eh_demo=1` no MySQL. Ela não
+substitui o painel da bancada e não exibe seu dispositivo real.
+
+### Implementação didática
+
+1. **Contrato de demo:** `features/demo/model.ts` valida `demonstracao=true`, campos
+   públicos, valores e horários. A tela não recebe identificador de placa/usuário,
+   não envia filtro de empresa e oferece somente consulta/atualização por GET.
+2. **Acesso público:** `SessionBoundary` deixa `/demo` abrir sem consultar sessão.
+   A indisponibilidade do login não impede conhecer a demonstração; a API demo
+   pode apresentar sua própria indisponibilidade. As rotas operacionais mantêm os
+   guards e autorizações do backend. Perfil leitor continua sem controles físicos.
+3. **Apresentação:** estados usam texto/ícone, horários Bahia, ausência de dados
+   explícita e leitura offline identificada como histórica. Não há sucesso fictício
+   se a API falha. A página de endereço inexistente recebeu retorno ao início.
+4. **Temas:** botão claro/escuro persiste apenas preferência no localStorage; sessão
+   e token não são armazenados ali. Falha do armazenamento não impede o uso. Cores,
+   foco visível e movimento reduzido foram revisados mantendo o visual do projeto.
+5. **Tratamento de falha de renderização:** `RouteBoundary` oferece recarga e evita
+   tela em branco. Não serializa dados ou erros internos para o usuário.
+6. **Testes:** adicionados axe/WCAG 2 A/AA e 2.1 AA para demo, login, painel,
+   histórico, formulário de cadastro e alertas nos dois temas; testes verificam
+   ausência de escritas públicas, erro/repetição/vazio, teclado e preferência.
+7. **Hospedagem:** `scripts/configure-vercel.cjs` gera rewrites com API antes da
+   SPA, valida origem HTTPS sem credenciais/caminho e recusa destinos locais.
+   O arquivo de exemplo não é uma publicação. O README detalha criação do projeto
+   Vercel e validações necessárias; não contém URL inventada de produção.
+
+### Evidências intermediárias
+
+Build e 29 testes unitários aprovados. Prova real de demonstração aprovada com
+build React, Express, fixture MySQL e conta demo de leitura; consulta sem login e
+sem campos privados. Regressão real de histórico aprovada: 100 mil leituras,
+20 linhas renderizadas, primeira página em 178 ms, CSV com 100.001 linhas e
+reconhecimento de alerta persistido. Fixtures próprias removidas ao terminar;
+nenhum seed nem conta foi criado no Aiven nesta fase.
+
+Primeira análise axe encontrou link sem distinção visual no tema escuro: aplicado
+sublinhado. Uma tentativa de teste interceptou módulos Vite por padrão de URL amplo;
+o mock foi limitado a `/api/v1/**`. Outra tentativa sofreu recarga de HMR enquanto
+os arquivos eram editados e foi descartada como aceite. Não se relaxaram regras axe.
+
+Instalação de ferramentas precisou de `NODE_USE_SYSTEM_CA=1` neste Windows; a
+verificação TLS continuou ativa. Firefox Playwright instalado, mas o executável
+não iniciou (`spawn UNKNOWN`) inclusive fora do sandbox. Firefox será validado no
+CI Linux. WebKit mobile é emulação automatizada; não comprova Safari em iPhone real.
+Resultados finais da matriz e CI serão registrados no fechamento.

@@ -364,3 +364,11 @@ Este registro substitui as indicações históricas de “Fase 7 não iniciada�
 - [ ] Encerrar fase com evidências e tag, sem antecipar frontend.
 
 Próximos passos: concluir verificações locais enquanto o proprietário cria o EMQX; depois validar TLS com a placa e configurar o servidor remoto. Roteiro: seção 15 de `docs/roteiro-backend.md`.
+
+## Integração com a Fase 6 do frontend — 20/10/2026
+
+Demonstração pública, temas, acessibilidade e preparação de deploy evoluídos no
+frontend. Fluxo real broker público → Node local → Aiven mantido. A URL pública do
+Express e o perfil de produção ainda são dependências para Vercel operar o sistema
+remotamente. Não há implantação remota do backend concluída. Testes desta fase usam
+fixtures locais; não foi provisionada conta/seed demo adicional no Aiven.

@@ -3,18 +3,21 @@ import { Link, Navigate, useLocation } from 'react-router-dom';
 import { allowedRoles, homeFor, refreshSession, useAuth } from './auth';
 
 export function SessionBoundary({ children }: { children: ReactNode }) {
+  const publicPage = useLocation().pathname === '/demo';
   const status = useAuth(state => state.status);
   const error = useAuth(state => state.error);
   useEffect(() => {
+    if (publicPage) return;
     void refreshSession();
     const check = () => { if (document.visibilityState === 'visible') void refreshSession(); };
     const timer = window.setInterval(check, 60000);
     window.addEventListener('focus', check);
     document.addEventListener('visibilitychange', check);
     return () => { clearInterval(timer); window.removeEventListener('focus', check); document.removeEventListener('visibilitychange', check); };
-  }, []);
+  }, [publicPage]);
+  if (publicPage) return children;
   if (status === 'loading') return <div className="session-screen" role="status">Verificando sua sessão…</div>;
-  if (status === 'error') return <div className="session-screen"><h1>Não foi possível verificar o acesso</h1><p role="alert">{error}</p><button className="primary-button" onClick={() => void refreshSession()}>Tentar novamente</button></div>;
+  if (status === 'error') return <div className="session-screen"><h1>Não foi possível verificar o acesso</h1><p role="alert">{error}</p><button className="primary-button" onClick={() => void refreshSession()}>Tentar novamente</button><p><Link to="/demo">Conhecer a demonstração pública</Link></p></div>;
   return children;
 }
 export function Guard({ children }: { children: ReactNode }) {

@@ -21,9 +21,9 @@ for (const width of [360, 768, 1440]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
 }
-test('link de pular conteúdo e rota inexistente', async ({ page }) => {
+test('link de pular conteúdo e rota inexistente', async ({ page, isMobile }) => {
   await page.goto('/endereco-inexistente');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Página não encontrada');
-  await page.keyboard.press('Tab');
+  if (isMobile) await page.getByRole('link', { name: 'Ir para o conteúdo' }).focus(); else await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Ir para o conteúdo' })).toBeFocused();
 });

@@ -3,11 +3,15 @@
 Portfólio de Desenvolvimento de Sistemas do SENAI, voltado a projetos elétricos
 e automação industrial. Implementação gradual, com documentação didática.
 
-**Fases 1–6 concluídas; 107 testes e CI aprovados. ESP32 validado com HiveMQ Lab e MySQL local.** Node.js 22, Express, TypeScript
-estrito e MySQL sem ORM. A API oferece autenticação e cadastros de empresas,
-unidades, setores, ambientes, usuários e dispositivos, com auditoria.
-Ingestão MQTT, adoção de dispositivos, histórico/CSV/série, episódios de alerta e SSE autenticado estão implementados. Fase 6 concluída: resumo horário, offline, expurgo e sessões. Frontend autorizado em paralelo às pendências da Fase 7; Fase 5 (histórico, gráficos, CSV e alertas) implementada. Resta a Fase 6 do frontend: acabamento, demonstração e implantação, após aceite.
+**MVP funcional: backend local, HiveMQ público e MySQL Aiven.** Firmware, ingestão,
+API e frontend autenticado validados com dados físicos. Backend Fases 1–6 concluídas;
+Fase 7 (produção) permanece aberta. Frontend Fases 1–5 concluídas; Fase 6 em andamento:
+demonstração pela API, temas, acessibilidade, navegadores e preparação Vercel.
+A implantação remota integrada depende de uma API HTTPS acessível.
 
+Para usar a bancada já configurada, siga [MVP de bancada](docs/mvp-bancada-aiven.md).
+Para instalar e testar o frontend ou preparar Vercel, siga
+[README do frontend](frontend/README.md). Não há segredos nem senha universal no Git.
 ## Documentação vigente
 
 - [Roteiro didático do backend](docs/roteiro-backend.md): configuração, comandos, arquitetura e evidências.

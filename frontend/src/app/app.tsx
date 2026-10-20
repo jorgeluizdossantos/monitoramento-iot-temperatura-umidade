@@ -3,6 +3,9 @@ import { BrowserRouter, NavLink, Navigate, Route, Routes, useLocation } from 're
 import { Activity, Bell, Boxes, LayoutDashboard, LogIn, Menu, Radio, X, LogOut } from 'lucide-react';
 import { allowedRoles, homeFor, signOut, useAuth } from '../features/auth/auth';
 import { Guard, SessionBoundary } from '../features/auth/session-boundary';
+import { ThemeToggle } from '../shared/ui/theme-toggle';
+import { RouteBoundary } from '../shared/ui/route-boundary';
+const Demo = lazy(() => import('../features/demo/demo-page'));
 const Section = lazy(() => import('./section'));
 const Panel = lazy(() => import('../features/painel/panel-page'));
 const History = lazy(() => import('../features/ambiente/history-page'));
@@ -52,15 +55,15 @@ function Shell() {
       <nav aria-label="Navegação principal">{visibleLinks.map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} end={to === '/cadastros'}><Icon size={20} aria-hidden="true"/>{label}</NavLink>)}</nav>
       <div className="sidebar-footer"><span className="version">STMA / 0.1</span><p>Monitoramento de<br/>temperatura e umidade</p></div>
     </aside>
-    <div className="workspace"><div className="topbar"><span>Supervisão de ambientes</span>{user ? <div className="user-menu"><div><strong>{user.nome}</strong><span>{({ superadmin: 'Superadministrador', administrador: 'Administrador', operador: 'Operador', leitor: 'Leitor' })[user.perfil]}</span></div><button type="button" className="logout-button" disabled={leaving} onClick={() => void logout()}><LogOut size={18} aria-hidden="true"/>{leaving ? 'Saindo…' : 'Sair'}</button></div> : <span className="badge">Acesso ao sistema</span>}</div>
+    <div className="workspace"><div className="topbar"><span>Supervisão de ambientes</span><ThemeToggle/>{user ? <div className="user-menu"><div><strong>{user.nome}</strong><span>{({ superadmin: 'Superadministrador', administrador: 'Administrador', operador: 'Operador', leitor: 'Leitor' })[user.perfil]}</span></div><button type="button" className="logout-button" disabled={leaving} onClick={() => void logout()}><LogOut size={18} aria-hidden="true"/>{leaving ? 'Saindo…' : 'Sair'}</button></div> : <span className="badge">Acesso ao sistema</span>}</div>
       {logoutError && <p className="form-error" role="alert">{logoutError}</p>}
-      <main id="main" tabIndex={-1}><Suspense fallback={<p role="status">Carregando seção…</p>}><Routes>
+      <main id="main" tabIndex={-1}><RouteBoundary key={pathname}><Suspense fallback={<p role="status">Carregando seção…</p>}><Routes>
         <Route path="/" element={<Navigate to={user ? homeFor(user) : '/entrar'} replace/>}/>
         <Route path="/entrar" element={<Login/>}/>
-        <Route path="/demo" element={<Section/>}/>
+        <Route path="/demo" element={<Demo/>}/>
         {['/painel', '/alertas', '/ambientes/:id', '/ambientes/:id/historico', '/cadastros', '/cadastros/:entidade'].map(path => <Route key={path} path={path} element={<Guard>{path.startsWith('/cadastros') ? <Cadastros/> : path === '/alertas' ? <Alerts/> : path.endsWith('/historico') ? <History/> : <Panel/>}</Guard>}/>)}
         <Route path="*" element={<Section/>}/>
-      </Routes></Suspense></main>
+      </Routes></Suspense></RouteBoundary></main>
       <footer>STMA <span>Monitoramento remoto de temperatura e umidade</span></footer>
     </div>
   </div>;

@@ -1169,3 +1169,14 @@ Fase 7 continua aberta para hospedagem, credenciais restritas da API, broker pri
 TLS físico e aceite remoto. Próxima etapa do frontend: Fase 6 mediante aceite.
 Não houve contratação de serviço pago. A publicação no repositório de wxlv7h
 continua dependendo da URL específica e do acesso de colaborador.
+
+## Acompanhamento da Fase 6 do frontend — 20/10/2026
+
+Frontend público de demonstração passou a consumir a projeção da API preparada na
+Fase 7; sem login e sem escrita, com conta MySQL demo de leitura. Prova local com
+build real e fixture removida ao terminar. A bancada Aiven e o broker público seguem
+no fluxo autenticado existente; não receberam simulação estática nem novos cadastros.
+O Node local estava sem responder durante a conferência e foi reiniciado com
+`dev:mvp`; assinaturas MQTT e rotinas Aiven voltaram a executar. Ainda é necessário
+manter esse processo ligado. A hospedagem contínua e o perfil MQTT/HTTPS de produção
+continuam pós-MVP. A configuração Vercel do frontend depende da URL pública da API.

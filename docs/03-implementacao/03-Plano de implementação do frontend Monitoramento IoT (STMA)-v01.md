@@ -4,7 +4,7 @@ Oct 12, 2026 · @Jorge Luiz dos Santos
 
 ## Adaptação autorizada do MVP — 19/10/2026
 
-Fases 1–5 implementadas; a **Fase 6 continua pendente**. O complemento abaixo
+Fases 1–5 implementadas; a **Fase 6 está em andamento desde 20/10/2026**. O complemento abaixo
 conecta as telas existentes à bancada real e não representa implantação Vercel.
 
 - [x] Painel/detalhe mostram o último estado da porta, com indicação de dado antigo.
@@ -24,7 +24,7 @@ diretamente ao MySQL nem expõe credenciais MQTT.
 ## 1. Resumo
 
 **Acompanhamento — 14/10/2026:** o proprietário autorizou iniciar este plano com a Fase 7
-do backend ainda aberta. Fases 1 e 2 implementadas em 15/10/2026, Fase 3 em 16/10/2026 e Fases 4 e 5 em 17/10/2026; Fase 6 aguarda aceite. React 18/Vite/TypeScript substituem a reserva antiga
+do backend ainda aberta. Fases 1 e 2 implementadas em 15/10/2026, Fase 3 em 16/10/2026 e Fases 4 e 5 em 17/10/2026; Fase 6 autorizada e iniciada em 20/10/2026. React 18/Vite/TypeScript substituem a reserva antiga
 de frontend sem framework. Registro didático: `docs/roteiro-frontend.md`.
 
 Correções de contrato conforme backend já aprovado: fila global/adoção exclusivas do
@@ -230,5 +230,35 @@ O frontend vai para a Vercel a partir do GitHub, com uma implantação de pré-v
 - [x] Conferir contratos de painel e stream: implementados e validados nas fases 1 e 4.
 - [x] Criar repositório, projeto Vite e CI: Fase 1 concluída.
 - [x] Aplicar identidade visual STITCH/web, adaptada ao plano.
-- [ ] Obter aceite da Fase 5 e iniciar a Fase 6.
+- [x] Obter aceite e iniciar a Fase 6: autorizado em 20/10/2026.
 - [ ] Resolver hospedagem e configuração remota do backend antes do deploy completo.
+
+## Revisão de execução — Fase 6 autorizada em 20/10/2026
+
+Status: **em andamento**, com implementação técnica e validação local; deploy
+integrado depende das pendências da Fase 7 do backend.
+
+- [x] Página pública `/demo` ligada à API e à projeção MySQL somente de leitura.
+- [x] Demonstração independente de sessão; erro, vazio, repetição e offline explícitos.
+- [x] Preservado o painel real com ingestão do broker público e persistência Aiven.
+- [x] Temas claro/escuro, preferência local, foco visível, redução de movimento e retorno da página 404.
+- [x] Tratamento de falha de renderização sem expor erros internos.
+- [x] Testes axe nas seis telas principais e nos dois temas; correções em validação.
+- [x] README para instalação por terceiro e roteiro detalhado de configuração Vercel.
+- [x] Gerador de rewrites HTTPS que preserva API antes do fallback SPA.
+- [x] Provas locais com API/MySQL reais: demonstração; histórico 100 mil + CSV e reconhecimento.
+- [ ] Encerrar matriz de navegadores e CI e registrar evidências finais.
+- [ ] Validar manualmente em Safari/iPhone real (WebKit mobile automatizado não é o aparelho).
+- [ ] Obter origem HTTPS pública do backend, criar projeto Vercel e validar deploy completo.
+
+Em resposta à consulta desta fase, o proprietário confirmou conta Vercel existente,
+sem projeto criado, e reafirmou que a solução MQTT pública deve persistir os dados
+reais no Aiven. Não foi adotada demonstração estática nem substituição da bancada.
+A página pública RF017 usa apenas dados fictícios explicitamente cadastrados no
+MySQL; no perfil MVP atual permanece desabilitada até provisionar sua conta/dados.
+
+Próximos passos: concluir CI; executar validação manual móvel; após resolver acesso
+público/produção do backend, gerar `vercel.json` com sua URL real, importar o
+repositório na Vercel (Root Directory `frontend`) e validar login, perfis, SSE,
+CSV e leitura física pelo domínio HTTPS. Nenhuma publicação remota é declarada
+concluída por um build ou arquivo de configuração de exemplo.
