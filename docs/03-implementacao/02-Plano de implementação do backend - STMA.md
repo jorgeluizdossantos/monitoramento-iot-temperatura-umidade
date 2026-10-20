@@ -24,13 +24,13 @@ o MVP, preservando os perfis e planos de produção.
 - [x] Firmware v2 com JSON por dispositivo, UTC/NTP, porta, LWT, LED e limite.
 - [x] API de controle com escopo de empresa, papéis, auditoria e confirmação por UUID.
 - [x] Firmware compilado e gravado na COM13; telemetria real persistida no Aiven.
-- [ ] Encerrar evidências de controle físico, regressão e publicação desta adaptação.
+- [x] Controle físico, regressão e publicação: commit d30cba1; CI backend 39355577458 aprovado (122 testes).
 - [ ] Hospedagem contínua do Express e implantação remota completa — **pós-MVP**.
 - [ ] Broker privado, ACL e TLS no ESP32, validação em produção — **pós-MVP**.
 
 Guia: [MVP de bancada](../mvp-bancada-aiven.md). Execução didática e evidências:
 [roteiro-backend](../roteiro-backend.md), seção 16. Esta adaptação não encerra a
-Fase 7. Próximo passo imediato: fechar a validação do MVP; depois retomar os itens
+Fase 7. MVP validado e publicado. Próximo passo: retomar os itens
 pendentes mediante escolha da hospedagem e do broker de produção.
 
 ## 1. Resumo

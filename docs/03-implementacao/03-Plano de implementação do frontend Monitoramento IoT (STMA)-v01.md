@@ -13,7 +13,7 @@ conecta as telas existentes à bancada real e não representa implantação Verc
 - [x] Aguardar UUID confirmado pelo ESP32; mostrar falha/timeout sem sucesso presumido.
 - [x] Bloquear comando sem estado recente e manual enquanto automático ativo.
 - [x] Build e 27 testes unitários; dez cenários de painel/controle no Edge aprovados.
-- [ ] Concluir regressão completa, prova física pela interface e publicação desta adaptação.
+- [x] Regressão, prova física e publicação: d30cba1; CI frontend 39355577471 aprovado (27 unitários + 40 Chromium).
 - [ ] Fase 6: acabamento, demonstração e implantação Vercel, conforme plano.
 
 Guia de execução: [MVP de bancada](../mvp-bancada-aiven.md). Registros:

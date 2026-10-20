@@ -141,3 +141,9 @@ aprovados após os ajustes; MQTT tinha nove cenários aprovados e recebeu um cen
 adicional de publicação/retorno de controle. Frontend: 27 testes unitários e 39
 cenários Edge aprovados; acrescentado teste do primeiro ponto no gráfico.
 Resultados finais desses acréscimos e CI ficam nos roteiros.
+
+Validação final da versão `d30cba1`: CI backend 39355577458 aprovado com 122 testes;
+CI frontend 39355577471 aprovado com 27 unitários e 40 testes de navegador. O ponto
+isolado do gráfico e o retorno do comando MQTT estão cobertos. O benchmark local
+continuou intermitente; no CI isolado, páginas inicial/final em 30/35 ms, sem relaxar
+limites. Consulte os roteiros para o histórico completo das tentativas.

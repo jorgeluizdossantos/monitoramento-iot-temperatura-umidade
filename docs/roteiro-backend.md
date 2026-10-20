@@ -1149,3 +1149,23 @@ O original do usuário foi preservado. Código novo em
 `firmware/mqtt_esp32_limite_stma_v2`; pacote local para download em
 `firmware/mqtt_esp32_limite_stma_v2.zip`, contendo somente `.ino`, exemplo de
 configuração e README. O `config.h` privado nunca entra nesse pacote nem no Git.
+
+### 16.7 Aceite técnico e publicação
+
+Implementação publicada no commit `d30cba1`. CI backend aprovado:
+https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/39355577458.
+Foram 122 testes (56 unitários, 56 MySQL e 10 MQTT), além de lint, typecheck,
+migrações e build. No CI, páginas inicial/final de 100 mil leituras em 30/35 ms,
+com CSV completo. Uma repetição local posterior voltou a exceder 3 s; portanto a
+instabilidade local permanece registrada, sem alterar a exigência nem tratar essa
+tentativa como sucesso. O CI em banco isolado aprovou a versão publicada.
+
+Ajuste final de autorização: expressão MySQL de hierarquia ativa pode retornar
+texto "0"/"1" no Aiven. O serviço converte explicitamente para número; teste recusa
+"0", evitando confundir texto não vazio com dispositivo ativo.
+
+MVP funcional concluído. Backend local ativo com `.env.mvp`; firmware v2 já gravado.
+Fase 7 continua aberta para hospedagem, credenciais restritas da API, broker privado,
+TLS físico e aceite remoto. Próxima etapa do frontend: Fase 6 mediante aceite.
+Não houve contratação de serviço pago. A publicação no repositório de wxlv7h
+continua dependendo da URL específica e do acesso de colaborador.

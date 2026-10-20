@@ -592,3 +592,13 @@ O primeiro ponto isolado da série agora aparece nos gráficos (marcadores de ra
 2); isso evita gráfico aparentemente vazio durante a primeira hora de telemetria.
 Os 39 cenários Edge e 27 testes unitários passaram; teste específico desse ponto
 foi acrescentado à suíte do painel. Publicação/CI registrados no fechamento abaixo.
+
+### Publicação e testes finais
+
+Commit `d30cba1`, CI frontend aprovado:
+https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/39355577471.
+Build, 27 testes unitários e 40 testes Chromium aprovados, incluindo o ponto inicial
+isolado do gráfico. Os 11 cenários atualizados do painel também passaram no Edge
+local. CI backend aprovado com 122 testes. Planos atualizados com MVP concluído e
+pendências preservadas. Próxima fase: **Fase 6 — acabamento, demonstração e implantação**,
+ainda não iniciada por esta adaptação. Hospedagem contínua do backend segue pós-MVP.
