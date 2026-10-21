@@ -722,3 +722,17 @@ URL HTTPS pública do backend, criação/publicação do projeto Vercel e aceite
 integrado. Logo, a Fase 6 **não foi marcada como integralmente concluída**. A Fase 7
 do backend continua aberta e o fluxo real broker público → Node local → Aiven foi
 preservado. Nenhum serviço pago foi contratado e nenhuma credencial foi publicada.
+
+### Retomada — 21/10/2026
+
+Pipelines da última publicação `a99a7ad` conferidos: frontend 39416717607 e backend
+39416717633 aprovados. API e Vite estavam parados e foram iniciados novamente com
+os perfis existentes. A disponibilidade contínua ainda depende do computador e dos
+processos locais; Aiven segue como destino dos dados reais.
+
+Preparado [aceite-safari-fase6.md](aceite-safari-fase6.md), com procedimento LAN,
+origem autorizada temporária, testes manuais e restauração. Nenhuma porta LAN foi
+aberta nem perfil privado sobrescrito nesta preparação. Casos permanecem pendentes
+até execução no aparelho. Solicitada disponibilidade de iPhone/iPad e confirmação
+específica para ativar demo separada no Aiven (seed existente e usuário SQL de leitura).
+A bancada física não será convertida em empresa pública de demonstração.

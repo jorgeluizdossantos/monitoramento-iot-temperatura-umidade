@@ -146,3 +146,7 @@ A execução técnica da Fase 6 foi validada: 29 testes unitários e 165 cenári
 Chromium, Firefox e WebKit mobile, com axe nos dois temas. CI de referência:
 [39415983518](https://github.com/jorgeluizdossantos/monitoramento-iot-temperatura-umidade/actions/runs/39415983518).
 O aceite completo continua dependente de Safari/iPhone físico e implantação remota.
+
+Para o aceite no aparelho real, use [roteiro Safari/iPadOS](../docs/aceite-safari-fase6.md).
+Ele permite testar pela mesma rede Wi-Fi antes de existir deploy público, com
+origem autorizada temporária e instruções de restauração. Sua execução permanece pendente.

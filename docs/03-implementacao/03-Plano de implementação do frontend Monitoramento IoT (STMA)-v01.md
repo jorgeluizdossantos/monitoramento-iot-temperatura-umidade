@@ -276,3 +276,14 @@ a ativação da demo no ambiente de destino com conta de leitura/dados fictício
 a publicação integrada Vercel com origem HTTPS pública do Node. A bancada real
 no Aiven continua funcional pelo backend local. Não há novas fases de código
 previstas; faltam esses itens de aceite e implantação.
+### Continuação de 21/10/2026
+
+- [x] Conferir CI da última publicação: frontend 39416717607 e backend 39416717633 aprovados.
+- [x] Reiniciar API/Vite locais e confirmar assinatura MQTT e execução das rotinas Aiven.
+- [x] Preparar [roteiro de aceite Safari/iPadOS](../aceite-safari-fase6.md), com teste por LAN e restauração da origem local.
+- [ ] Executar o roteiro em aparelho real após informar sua disponibilidade.
+- [ ] Ativar a demonstração Aiven após confirmação específica dos registros fictícios e conta SQL de leitura.
+- [ ] Publicação Vercel integrada: segue dependente da origem pública HTTPS do backend.
+
+A preparação do roteiro não substitui os testes manuais. Nenhum seed demo foi
+aplicado no Aiven nesta retomada e não houve exposição de serviço para a LAN.
