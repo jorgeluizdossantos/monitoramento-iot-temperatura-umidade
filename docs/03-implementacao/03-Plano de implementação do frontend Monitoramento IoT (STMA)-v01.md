@@ -287,3 +287,7 @@ previstas; faltam esses itens de aceite e implantação.
 
 A preparação do roteiro não substitui os testes manuais. Nenhum seed demo foi
 aplicado no Aiven nesta retomada e não houve exposição de serviço para a LAN.
+
+Conferência da placa nesta retomada: offline no Aiven, COM13 ausente e última
+leitura de 20/10 às 11:12 (Bahia). A prova com leituras novas aguarda o ESP32
+ligado/conectado; processos locais iniciados não foram contados como prova física.

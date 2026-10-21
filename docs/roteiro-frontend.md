@@ -736,3 +736,10 @@ aberta nem perfil privado sobrescrito nesta preparação. Casos permanecem pende
 até execução no aparelho. Solicitada disponibilidade de iPhone/iPad e confirmação
 específica para ativar demo separada no Aiven (seed existente e usuário SQL de leitura).
 A bancada física não será convertida em empresa pública de demonstração.
+
+Conferência da bancada após iniciar os serviços: broker assinado, mas dispositivo
+`esp32-a8032a1e7214` offline. Aiven preserva 1.991 leituras, sendo a última em
+20/10/2026 14:12:57.309 UTC (11:12:57 em America/Bahia), 30,0 °C e 64%.
+COM13 não apareceu na enumeração atual de portas. Nenhuma nova leitura física foi
+comprovada nesta retomada. Solicitada reconexão/alimentação da placa para testar
+dados novos; não houve gravação de firmware nem alteração do hardware.

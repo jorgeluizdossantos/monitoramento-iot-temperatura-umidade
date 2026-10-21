@@ -1185,3 +1185,13 @@ CI da entrega técnica de Fase 6 do frontend aprovado em 20/10/2026: frontend
 39415983518 (29 unitários + 165 navegadores), backend 39415983669 (122 testes).
 Validação real do frontend com login Aiven, cartão da placa e temas/logout também
 passou, sem acionamento físico nesta fase. Implantação remota continua pendente.
+
+### Estado da bancada — 21/10/2026
+
+API/Vite reiniciados nos perfis existentes; assinatura HiveMQ e rotinas Aiven
+confirmadas. A consulta ao banco encontrou o dispositivo offline, 1.991 leituras
+acumuladas e última medição em 20/10 às 11:12:57 (Bahia). A COM13 não está presente
+na enumeração atual. A retomada dos processos não equivale à comprovação de nova
+telemetria: é necessário ligar/reconectar o ESP32. Nenhuma conta, seed ou perfil de
+demonstração foi adicionado no Aiven nesta retomada. Perguntas específicas sobre
+ativação demo e disponibilidade do aparelho Safari permanecem pendentes.
